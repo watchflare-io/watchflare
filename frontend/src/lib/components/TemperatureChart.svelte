@@ -1,5 +1,6 @@
 <script lang="ts">
 	import UPlotChart from '$lib/components/UPlotChart.svelte';
+	import { dynamicChartColor } from '$lib/chart-utils';
 	import { userStore } from '$lib/stores/user';
 	import * as api from '$lib/api';
 	import type { Metric, SensorDataPoint, TimeRange } from '$lib/types';
@@ -19,13 +20,6 @@
 		return `${v.toFixed(1)}°C`;
 	}
 
-	const CHART_COLORS = [
-		'var(--chart-1)',
-		'var(--chart-2)',
-		'var(--chart-3)',
-		'var(--chart-4)',
-		'var(--chart-5)',
-	];
 
 	// CPU-related sensor patterns (sorted first in the legend)
 	const CPU_PATTERNS = ['tdie', 'coretemp', 'k10temp', 'cpu', 'package', 'tctl'];
@@ -131,14 +125,14 @@
 		hasSensorReadings
 			? sensorKeys.map((key, i): uPlot.Series => ({
 				label: key,
-				stroke: CHART_COLORS[i % CHART_COLORS.length],
+				stroke: dynamicChartColor(i, sensorKeys.length),
 				width: 2,
 				value: (_u: uPlot, v: number | null) => fmtTemp(v),
 			}))
 			: [{
 				label: 'CPU Temp',
-				stroke: CHART_COLORS[0],
-				fill: CHART_COLORS[0],
+				stroke: dynamicChartColor(0, 1),
+				fill: dynamicChartColor(0, 1),
 				width: 2,
 				value: (_u: uPlot, v: number | null) => fmtTemp(v),
 			}] as uPlot.Series[]
@@ -151,6 +145,15 @@
 			values: (_u: uPlot, ticks: number[]) => ticks.map(v => fmtTemp(v)),
 		}
 	]);
+
+	const scales: uPlot.Scales = {
+		y: {
+			range: (_u: uPlot, min: number, max: number): uPlot.Range.MinMax => {
+				const padding = Math.max((max - min) * 0.1, 2);
+				return [Math.floor(min - padding), Math.ceil(max + padding)];
+			}
+		}
+	};
 </script>
 
-<UPlotChart data={chartData} {series} {axes} {timeRange} />
+<UPlotChart data={chartData} {series} {axes} {scales} {timeRange} />

@@ -24,7 +24,7 @@
 <!-- display:contents lets each card become a direct grid item of the parent bento grid -->
 <div class="contents">
 	<!-- CPU Chart — 4×2 -->
-	<div class="col-span-8 md:col-span-4 rounded-lg border bg-card p-4">
+	<div class="rounded-lg border bg-card p-4">
 		<div class="mb-3 flex items-center justify-between">
 			<h3 class="text-sm font-medium">CPU Usage</h3>
 			<span class="text-xs text-muted-foreground tabular-nums">{formatPercent(stats.avgCPU)}</span>
@@ -33,7 +33,7 @@
 	</div>
 
 	<!-- Memory Chart — 4×2 -->
-	<div class="col-span-8 md:col-span-4 rounded-lg border bg-card p-4">
+	<div class="rounded-lg border bg-card p-4">
 		<div class="mb-3 flex items-center justify-between">
 			<h3 class="text-sm font-medium">Memory Usage</h3>
 			<span class="text-xs text-muted-foreground tabular-nums">

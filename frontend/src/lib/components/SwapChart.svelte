@@ -36,8 +36,8 @@
 	const series: uPlot.Series[] = [
 		{
 			label: 'Swap Used',
-			stroke: 'var(--chart-5)',
-			fill: 'var(--chart-5)',
+			stroke: 'var(--chart-17)',
+			fill: 'var(--chart-17)',
 			width: 2,
 			fillTo: 0,
 			value: (_u: uPlot, v: number | null) => v != null ? formatBytes(v) : '—',

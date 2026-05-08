@@ -50,16 +50,34 @@
     --warning: oklch(0.65 0.15 60); /* Muted orange - 70-90% */
     --danger: oklch(0.55 0.22 27); /* Muted red - >90% */
 
-    /* Chart Colors - Earthy, minimal palette */
-    --chart-1: oklch(0.35 0.08 145); /* Military green - CPU */
-    --chart-2: oklch(0.5 0.12 175); /* Teal - Memory */
-    --chart-3: oklch(0.45 0.1 120); /* Forest green - Disk */
-    --chart-4: oklch(0.6 0.12 90); /* Olive - Load */
-    --chart-5: oklch(0.55 0.08 200); /* Slate blue - Network */
+    /* Chart Colors — 20 vivid, well-spaced hues */
+    --chart-1: oklch(0.42 0.22 252); /* Blue            - CPU */
+    --chart-2: oklch(0.74 0.22 90); /* Yellow          - Memory */
+    --chart-3: oklch(0.52 0.22 210); /* Cornflower blue - Disk */
+    --chart-4: oklch(0.48 0.24 306); /* Purple          - Load Avg 1min */
+    --chart-5: oklch(0.53 0.22 16); /* Red             - extra */
+    --chart-6: oklch(0.56 0.22 182); /* Teal            - Load Avg 15min */
+    --chart-7: oklch(0.53 0.26 262); /* Cobalt          - Network RX */
+    --chart-8: oklch(0.55 0.26 332); /* Pink            - Network TX */
+    --chart-9: oklch(0.56 0.24 106); /* Lime            - DiskIO Read */
+    --chart-10: oklch(0.52 0.22 232); /* Sky blue        - DiskIO Write */
+    --chart-11: oklch(0.6 0.24 32); /* Orange          - extra */
+    --chart-12: oklch(0.62 0.22 66); /* Amber           - extra */
+    --chart-13: oklch(0.53 0.28 318); /* Magenta         - extra */
+    --chart-14: oklch(0.56 0.2 216); /* Periwinkle      - extra */
+    --chart-15: oklch(0.58 0.22 142); /* Sage green      - extra */
+    --chart-16: oklch(0.56 0.26 20); /* Vivid red       - extra */
+    --chart-17: oklch(0.6 0.26 280); /* Indigo          - Swap */
+    --chart-18: oklch(0.6 0.24 120); /* Spring green    - extra */
+    --chart-19: oklch(0.62 0.24 78); /* Gold            - Load Avg 5min */
+    --chart-20: oklch(0.58 0.22 196); /* Cyan            - extra */
 
     /* Table header - sticky thead background */
     --table-header: oklch(0.979 0.001 145); /* ~#f9f9f8 */
     --table-header-active: oklch(0.945 0.005 145); /* hover/active column */
+
+    /* Dynamic chart color lightness (for programmatically generated series colors) */
+    --chart-dyn-l: 0.56;
 
     /* Surface - Elevated surfaces (sidebar, header, inputs, selects) */
     --surface: oklch(1 0 0); /* Pure white */
@@ -91,13 +109,34 @@
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.551 0.027 264.364);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --table-header: oklch(0.26 0.034 264.665); /* slightly lighter than card in dark */
-    --table-header-active: oklch(0.32 0.034 264.665); /* hover/active column in dark */
+    --chart-1: oklch(0.65 0.24 252); /* Blue            - CPU */
+    --chart-2: oklch(0.88 0.22 90); /* Yellow          - Memory */
+    --chart-3: oklch(0.76 0.22 210); /* Cornflower blue - Disk */
+    --chart-4: oklch(0.66 0.26 306); /* Purple          - Load Avg 1min */
+    --chart-5: oklch(0.7 0.24 16); /* Red             - extra */
+    --chart-6: oklch(0.78 0.22 182); /* Teal            - Load Avg 15min */
+    --chart-7: oklch(0.74 0.26 262); /* Cobalt          - Network RX */
+    --chart-8: oklch(0.78 0.26 332); /* Pink            - Network TX */
+    --chart-9: oklch(0.8 0.22 106); /* Lime            - DiskIO Read */
+    --chart-10: oklch(0.76 0.24 232); /* Sky blue        - DiskIO Write */
+    --chart-11: oklch(0.8 0.22 32); /* Orange          - extra */
+    --chart-12: oklch(0.84 0.22 66); /* Amber           - extra */
+    --chart-13: oklch(0.7 0.28 318); /* Magenta         - extra */
+    --chart-14: oklch(0.82 0.2 216); /* Periwinkle      - extra */
+    --chart-15: oklch(0.82 0.22 142); /* Sage green      - extra */
+    --chart-16: oklch(0.82 0.26 20); /* Vivid red-orange - extra */
+    --chart-17: oklch(0.7 0.28 280); /* Indigo          - Swap */
+    --chart-18: oklch(0.86 0.24 120); /* Spring green    - extra */
+    --chart-19: oklch(0.86 0.24 78); /* Gold            - Load Avg 5min */
+    --chart-20: oklch(0.84 0.22 196); /* Cyan            - extra */
+    --table-header: oklch(
+        0.26 0.034 264.665
+    ); /* slightly lighter than card in dark */
+    --table-header-active: oklch(
+        0.32 0.034 264.665
+    ); /* hover/active column in dark */
+
+    --chart-dyn-l: 0.74;
 
     --surface: oklch(0.21 0.034 264.665);
     --surface-foreground: oklch(0.985 0.002 247.839);
@@ -110,6 +149,7 @@
 }
 
 @theme inline {
+    --breakpoint-2xl: 1440px;
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
@@ -141,6 +181,21 @@
     --color-chart-3: var(--chart-3);
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
+    --color-chart-6: var(--chart-6);
+    --color-chart-7: var(--chart-7);
+    --color-chart-8: var(--chart-8);
+    --color-chart-9: var(--chart-9);
+    --color-chart-10: var(--chart-10);
+    --color-chart-11: var(--chart-11);
+    --color-chart-12: var(--chart-12);
+    --color-chart-13: var(--chart-13);
+    --color-chart-14: var(--chart-14);
+    --color-chart-15: var(--chart-15);
+    --color-chart-16: var(--chart-16);
+    --color-chart-17: var(--chart-17);
+    --color-chart-18: var(--chart-18);
+    --color-chart-19: var(--chart-19);
+    --color-chart-20: var(--chart-20);
     --color-table-header: var(--table-header);
     --color-table-header-active: var(--table-header-active);
     --color-surface: var(--surface);
@@ -169,6 +224,11 @@
         max-width: 1440px;
         margin-inline: auto;
     }
+}
+
+/* Dashboard stats grid: auto-fill columns with a 190px minimum */
+@utility grid-stats {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
 
 /* Hide scrollbar while keeping scroll functionality */

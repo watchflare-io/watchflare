@@ -1,6 +1,12 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { uiStore, sidebarCollapsed, sidebarTransitioning, userStore, alertsStore } from "$lib/stores";
+    import {
+        uiStore,
+        sidebarCollapsed,
+        sidebarTransitioning,
+        userStore,
+        alertsStore,
+    } from "$lib/stores";
     import DesktopSidebar from "$lib/components/DesktopSidebar.svelte";
     import MobileSidebar from "$lib/components/MobileSidebar.svelte";
     import Header from "$lib/components/Header.svelte";
@@ -20,7 +26,10 @@
             window.location.href = "/login";
         }
         alertsStore.loadIncidents();
-        incidentPollInterval = setInterval(() => alertsStore.loadIncidents(), 30_000);
+        incidentPollInterval = setInterval(
+            () => alertsStore.loadIncidents(),
+            30_000,
+        );
     });
 
     onDestroy(() => {
@@ -35,10 +44,13 @@
         <DesktopSidebar />
         <MobileSidebar />
 
-        <AlertsDrawer open={rightSidebarOpen} onClose={() => uiStore.setRightSidebar(false)} />
+        <AlertsDrawer
+            open={rightSidebarOpen}
+            onClose={() => uiStore.setRightSidebar(false)}
+        />
 
         <main
-            class="min-h-svh pt-26 p-4 sm:p-8 sm:pt-28 {$sidebarCollapsed
+            class="min-h-svh pt-26 p-2 sm:p-8 sm:pt-28 {$sidebarCollapsed
                 ? 'lg:ml-20'
                 : 'lg:ml-64'} {$sidebarTransitioning
                 ? 'transition-[margin] duration-300 ease-in-out'

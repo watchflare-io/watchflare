@@ -1,9 +1,8 @@
 <script lang="ts">
 	import UPlotChart from '$lib/components/UPlotChart.svelte';
+	import { dynamicChartColor } from '$lib/chart-utils';
 	import type { TimeRange } from '$lib/types';
 	import type uPlot from 'uplot';
-
-	const CHART_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'];
 
 	let { pivotedData = [], containerNames = [], timeRange }: {
 		pivotedData: Record<string, unknown>[];
@@ -28,8 +27,8 @@
 	let series = $derived(
 		containerNames.map((name, i): uPlot.Series => ({
 			label: name,
-			stroke: CHART_COLORS[i % CHART_COLORS.length],
-			fill: CHART_COLORS[i % CHART_COLORS.length],
+			stroke: dynamicChartColor(i, containerNames.length, 0),
+			fill: dynamicChartColor(i, containerNames.length, 0),
 			width: 2,
 			value: (_u: uPlot, v: number | null) => v != null ? v.toFixed(1) + '%' : '—',
 		}))

@@ -415,6 +415,7 @@ export interface ListGlobalPackagesResponse {
   outdated_count: number; // global unfiltered
   security_count: number; // global unfiltered
   outdated_hosts_count: number; // global unfiltered — hosts with ≥1 outdated/security package
+  security_hosts_count: number; // global unfiltered — hosts with ≥1 security package
   available_managers: string[]; // global unfiltered, for the manager filter dropdown
 }
 

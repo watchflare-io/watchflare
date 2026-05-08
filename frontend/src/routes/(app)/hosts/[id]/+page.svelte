@@ -141,7 +141,7 @@
             <div class="h-9 w-full sm:w-48 rounded-lg bg-muted"></div>
         </div>
         <!-- Charts grid 1 -->
-        <div class="grid gap-4 xl:grid-cols-2 mb-4">
+        <div class="grid gap-4 2xl:grid-cols-2 mb-4">
             {#each Array(2) as _}
                 <div class="rounded-lg border bg-card p-4">
                     <div class="mb-3 flex items-center justify-between">
@@ -153,7 +153,7 @@
             {/each}
         </div>
         <!-- Charts grid 2 -->
-        <div class="grid gap-4 xl:grid-cols-2">
+        <div class="grid gap-4 2xl:grid-cols-2">
             {#each Array(2) as _}
                 <div class="rounded-lg border bg-card p-4">
                     <div class="mb-3 flex items-center justify-between">

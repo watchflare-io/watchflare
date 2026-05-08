@@ -24,22 +24,19 @@
 	const series: uPlot.Series[] = [
 		{
 			label: '1 min',
-			stroke: 'var(--chart-1)',
-			fill: 'var(--chart-1)',
+			stroke: 'var(--chart-4)',
 			width: 2,
 			value: (_u: uPlot, v: number | null) => v != null ? v.toFixed(2) : '—',
 		},
 		{
 			label: '5 min',
-			stroke: 'var(--chart-2)',
-			fill: 'var(--chart-2)',
+			stroke: 'var(--chart-19)',
 			width: 2,
 			value: (_u: uPlot, v: number | null) => v != null ? v.toFixed(2) : '—',
 		},
 		{
 			label: '15 min',
-			stroke: 'var(--chart-3)',
-			fill: 'var(--chart-3)',
+			stroke: 'var(--chart-6)',
 			width: 2,
 			value: (_u: uPlot, v: number | null) => v != null ? v.toFixed(2) : '—',
 		}

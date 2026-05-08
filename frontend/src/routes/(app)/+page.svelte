@@ -40,10 +40,11 @@
     }
 
     let loading = $state(true);
-    let packagesStats = $state({ outdatedCount: 0, securityCount: 0, outdatedHostsCount: 0 });
+    let packagesStats = $state({ outdatedCount: 0, securityCount: 0, outdatedHostsCount: 0, securityHostsCount: 0 });
     let user = $derived($currentUser);
     let stats = $derived($dashboardStats);
     let droppedAlerts = $derived($alertsStore.droppedMetrics);
+    let activeIncidents = $derived($alertsStore.activeIncidents);
     let selectedTimeRange = $derived($currentTimeRange);
 
     let firstMetric = $derived(
@@ -109,6 +110,7 @@
                 outdatedCount: pkgData.outdated_count,
                 securityCount: pkgData.security_count,
                 outdatedHostsCount: pkgData.outdated_hosts_count,
+                securityHostsCount: pkgData.security_hosts_count,
             };
         } catch (err) {
             logger.error("Failed to load data:", err);
@@ -165,11 +167,10 @@
         <div class="h-7 w-48 rounded bg-muted mb-2"></div>
         <div class="h-4 w-64 rounded bg-muted"></div>
     </div>
-    <!-- Skeleton: bento grid -->
-    <div class="grid grid-cols-8 gap-4 mb-6 animate-pulse">
-        <!-- Stat cards (2×1 each) -->
+    <!-- Skeleton: stat cards -->
+    <div class="grid grid-stats gap-4 mb-4 animate-pulse">
         {#each Array(8) as _}
-            <div class="col-span-4 md:col-span-2 flex flex-col gap-2 rounded-lg border bg-card p-4">
+            <div class="flex flex-col gap-2 rounded-lg border bg-card p-4">
                 <div class="flex items-center justify-between">
                     <div class="h-4 w-16 rounded bg-muted"></div>
                     <div class="h-8 w-8 rounded-md bg-muted"></div>
@@ -178,9 +179,11 @@
                 <div class="h-3 w-10 rounded bg-muted mt-auto"></div>
             </div>
         {/each}
-        <!-- Chart cards (4×2 each) -->
+    </div>
+    <!-- Skeleton: chart cards -->
+    <div class="grid gap-4 mb-6 2xl:grid-cols-2 animate-pulse">
         {#each Array(2) as _}
-            <div class="col-span-8 md:col-span-4 rounded-lg border bg-card p-4">
+            <div class="rounded-lg border bg-card p-4">
                 <div class="mb-3 flex items-center justify-between">
                     <div class="h-4 w-20 rounded bg-muted"></div>
                     <div class="h-4 w-12 rounded bg-muted"></div>
@@ -220,12 +223,13 @@
     <!-- Dropped Metrics Alerts -->
     <DroppedMetricsAlert alerts={droppedAlerts} />
 
-    <!-- Bento grid: stats + charts in a single 8-column grid -->
-    <div class="grid grid-cols-8 gap-4 mb-6">
-        <!-- Stat cards — each 2×1 (col-span-2 on md+, col-span-4 on mobile) -->
-        <DashboardStats {stats} {trends} timeRange={selectedTimeRange} hasSufficientTrendData={hasSufficientTrendData} aggregatedMetrics={$aggregatedMetrics} {packagesStats} droppedAlerts={droppedAlerts} />
+    <!-- Stat cards: auto-fill grid -->
+    <div class="grid grid-stats gap-4 mb-4">
+        <DashboardStats {stats} {trends} timeRange={selectedTimeRange} hasSufficientTrendData={hasSufficientTrendData} aggregatedMetrics={$aggregatedMetrics} {packagesStats} {activeIncidents} />
+    </div>
 
-        <!-- Chart cards — each 4×2 (col-span-4 on md+, col-span-8 on mobile) -->
+    <!-- Chart cards -->
+    <div class="grid gap-4 mb-6 2xl:grid-cols-2">
         <DashboardCharts
             aggregatedMetrics={$aggregatedMetrics}
             {stats}

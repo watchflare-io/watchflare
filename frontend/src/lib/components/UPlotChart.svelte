@@ -71,7 +71,30 @@
         });
     }
 
-    // Resolve CSS variable to a Canvas-compatible hex color (cached)
+    // oklch(L C H) → '#rrggbb' via oklab → linear-sRGB → sRGB.
+    // Used when the canvas can't resolve oklch (iOS Safari canvas lags CSS support).
+    function oklchToHex(L: number, C: number, H: number): string {
+        const h = (H * Math.PI) / 180;
+        const a = C * Math.cos(h);
+        const b = C * Math.sin(h);
+        const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+        const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+        const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+        const rl = 4.0767416621 * l_ ** 3 - 3.3077115913 * m_ ** 3 + 0.2309699292 * s_ ** 3;
+        const gl = -1.2684380046 * l_ ** 3 + 2.6097574011 * m_ ** 3 - 0.3413193965 * s_ ** 3;
+        const bl = -0.0041960863 * l_ ** 3 - 0.7034186147 * m_ ** 3 + 1.7076147010 * s_ ** 3;
+        const gamma = (c: number) => {
+            const abs = Math.abs(c);
+            return abs <= 0.0031308 ? c * 12.92 : Math.sign(c) * (1.055 * abs ** (1 / 2.4) - 0.055);
+        };
+        const toInt = (c: number) => Math.max(0, Math.min(255, Math.round(gamma(c) * 255)));
+        return "#" + [toInt(rl), toInt(gl), toInt(bl)].map(n => n.toString(16).padStart(2, "0")).join("");
+    }
+
+    // Resolve a CSS color or variable to '#rrggbb' (cached).
+    // 1. getComputedStyle rgb/rgba  → parse directly (Safari/iOS serialises oklch→rgb)
+    // 2. getComputedStyle oklch     → manual math   (iOS canvas can't parse oklch)
+    // 3. anything else              → canvas readback (Chrome returns #hex from oklch)
     function resolveColor(color: string): string {
         const cached = colorCache.get(color);
         if (cached) return cached;
@@ -80,11 +103,35 @@
         document.body.appendChild(el);
         const computed = getComputedStyle(el).color;
         document.body.removeChild(el);
-        const ctx = document.createElement("canvas").getContext("2d")!;
-        ctx.fillStyle = computed;
-        const hex = ctx.fillStyle;
-        colorCache.set(color, hex);
-        return hex;
+
+        function rgbToHex(m: RegExpMatchArray): string {
+            return "#" + [m[1], m[2], m[3]].map(n => parseInt(n).toString(16).padStart(2, "0")).join("");
+        }
+
+        let resolved: string;
+
+        const rgbMatch = computed.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (rgbMatch) {
+            // Safari/iOS: getComputedStyle converts oklch → rgb
+            resolved = rgbToHex(rgbMatch);
+        } else {
+            const oklchMatch = computed.match(/^oklch\(([\d.e+-]+)\s+([\d.e+-]+)\s+([\d.e+-]+)/i);
+            if (oklchMatch) {
+                // Chrome/modern browsers keep oklch in getComputedStyle;
+                // avoid canvas since iOS canvas may not support oklch fillStyle
+                resolved = oklchToHex(parseFloat(oklchMatch[1]), parseFloat(oklchMatch[2]), parseFloat(oklchMatch[3]));
+            } else {
+                // Fallback: canvas (handles named colors, hsl, etc.)
+                const ctx = document.createElement("canvas").getContext("2d")!;
+                ctx.fillStyle = computed;
+                const fb = ctx.fillStyle;
+                const fbMatch = fb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                resolved = fbMatch ? rgbToHex(fbMatch) : (fb.startsWith("#") ? fb : "#000000");
+            }
+        }
+
+        colorCache.set(color, resolved);
+        return resolved;
     }
 
     function tooltipPlugin(): uPlot.Plugin {
