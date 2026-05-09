@@ -165,7 +165,8 @@ func TestBroadcastHostUpdate(t *testing.T) {
 
 func TestBroadcastMetricsUpdate_Minified(t *testing.T) {
 	b := newTestBroker()
-	c := b.AddClient("c1")
+	// Per-host client receives metrics_update for its host.
+	c := b.AddClientWithHostFilter("c1", "srv1")
 
 	b.BroadcastMetricsUpdate(MetricsUpdate{
 		HostID:          "srv1",
@@ -190,6 +191,18 @@ func TestBroadcastMetricsUpdate_Minified(t *testing.T) {
 	}
 	if minified.MemoryUsed != 1024 {
 		t.Errorf("memory used: got %d, want 1024", minified.MemoryUsed)
+	}
+}
+
+func TestBroadcast_GlobalClient_SkipsPerHostMetrics(t *testing.T) {
+	b := newTestBroker()
+	global := b.AddClient("global")
+
+	b.BroadcastMetricsUpdate(MetricsUpdate{HostID: "srv1", CPUUsagePercent: 42.5})
+	b.BroadcastContainerMetricsUpdate(ContainerMetricsUpdate{HostID: "srv1"})
+
+	if len(global.Channel) != 0 {
+		t.Errorf("global client: expected 0 per-host metric events, got %d", len(global.Channel))
 	}
 }
 
@@ -305,7 +318,8 @@ func TestBroadcastAggregatedMetricsUpdate(t *testing.T) {
 
 func TestBroadcastContainerMetricsUpdate(t *testing.T) {
 	b := newTestBroker()
-	c := b.AddClient("c1")
+	// Per-host client receives container_metrics_update for its host.
+	c := b.AddClientWithHostFilter("c1", "srv1")
 
 	b.BroadcastContainerMetricsUpdate(ContainerMetricsUpdate{HostID: "srv1"})
 

@@ -234,14 +234,21 @@ func (b *Broker) Broadcast(event Event) {
 	defer b.mu.RUnlock()
 
 	for _, client := range b.clients {
-		// Per-host clients: apply filtering rules.
 		if client.HostID != "" {
+			// Per-host clients: apply filtering rules.
 			// Aggregated metrics are not meaningful on a single-host detail page.
 			if event.Type == EventTypeAggregatedMetricsUpdate {
 				continue
 			}
 			// Skip events that belong to a different host.
 			if event.HostID != "" && event.HostID != client.HostID {
+				continue
+			}
+		} else {
+			// Global clients (dashboard): skip per-host raw metrics — only aggregated
+			// metrics are consumed there. Per-host metrics_update and container_metrics_update
+			// are handled exclusively on the per-host SSE stream.
+			if event.Type == EventTypeMetricsUpdate || event.Type == EventTypeContainerMetricsUpdate {
 				continue
 			}
 		}
