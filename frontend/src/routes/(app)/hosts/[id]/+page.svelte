@@ -65,18 +65,16 @@
     function handleSSEMessage(event: SSEEvent) {
         if (event.type === "metrics_update") {
             const metric = event.data;
-            if (metric.host_id === hostId) {
-                metrics = pruneMetricsByTime([...metrics, metric], timeRange);
-                ctx.setLatestMetric(metric);
-                const now = Date.now();
-                if (now - lastCacheUpdate >= 5000) {
-                    lastCacheUpdate = now;
-                    ctx.setOverviewCache({
-                        metrics,
-                        containerMetrics,
-                        timeRange,
-                    });
-                }
+            metrics = pruneMetricsByTime([...metrics, metric], timeRange);
+            ctx.setLatestMetric(metric);
+            const now = Date.now();
+            if (now - lastCacheUpdate >= 5000) {
+                lastCacheUpdate = now;
+                ctx.setOverviewCache({
+                    metrics,
+                    containerMetrics,
+                    timeRange,
+                });
             }
         }
         if (event.type === "container_metrics_update") {
@@ -84,23 +82,21 @@
                 host_id: string;
                 metrics: ContainerMetric[];
             };
-            if (update.host_id === hostId) {
-                const cutoff = Date.now() / 1000 - rangeSeconds(timeRange) - 60;
-                containerMetrics = [
-                    ...containerMetrics,
-                    ...update.metrics,
-                ].filter(
-                    (m) => new Date(m.timestamp).getTime() / 1000 >= cutoff,
-                );
-                const now = Date.now();
-                if (now - lastCacheUpdate >= 5000) {
-                    lastCacheUpdate = now;
-                    ctx.setOverviewCache({
-                        metrics,
-                        containerMetrics,
-                        timeRange,
-                    });
-                }
+            const cutoff = Date.now() / 1000 - rangeSeconds(timeRange) - 60;
+            containerMetrics = [
+                ...containerMetrics,
+                ...update.metrics,
+            ].filter(
+                (m) => new Date(m.timestamp).getTime() / 1000 >= cutoff,
+            );
+            const now = Date.now();
+            if (now - lastCacheUpdate >= 5000) {
+                lastCacheUpdate = now;
+                ctx.setOverviewCache({
+                    metrics,
+                    containerMetrics,
+                    timeRange,
+                });
             }
         }
     }

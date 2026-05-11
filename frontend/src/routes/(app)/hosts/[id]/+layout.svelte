@@ -175,7 +175,7 @@
         ssePageCallbacks.forEach((cb) => cb(event));
         if (event.type === "host_update") {
             const update = event.data as HostUpdateEvent;
-            if (host && update.id === host.id) {
+            if (host) {
                 host = {
                     ...host,
                     status: update.status,
@@ -190,14 +190,12 @@
             }
         }
         if (event.type === "metrics_update") {
-            const metric = event.data as MetricsUpdateEvent;
-            if (host && metric.host_id === host.id) {
-                latestMetric = metric;
+            if (host) {
+                latestMetric = event.data as MetricsUpdateEvent;
             }
         }
         if (event.type === "package_inventory_update") {
-            const update = event.data as { host_id: string };
-            if (host && update.host_id === host.id) {
+            if (host) {
                 packageInventorySignal++;
             }
         }
