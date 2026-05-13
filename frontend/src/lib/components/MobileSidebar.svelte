@@ -5,6 +5,7 @@
     import { get } from "svelte/store";
     import { Settings, ChevronDown } from "lucide-svelte";
     import { navItems, settingsItems } from "$lib/navigation";
+    import { alertCount } from "$lib/stores/alerts";
     import SSEStatusBadge from "./SSEStatusBadge.svelte";
     import UserMenuButton from "./UserMenuButton.svelte";
 
@@ -94,6 +95,7 @@
         <nav class="flex-1 space-y-1 p-4">
             {#each navItems as item}
                 {@const Icon = item.icon}
+                {@const badge = item.href === '/incidents' ? $alertCount : 0}
                 <a
                     href={item.href}
                     onclick={closeMobileMenu}
@@ -105,7 +107,12 @@
                         : 'text-surface-foreground hover:bg-surface-accent'}"
                 >
                     <Icon class="h-5 w-5 shrink-0" />
-                    <span>{item.label}</span>
+                    <span class="flex-1">{item.label}</span>
+                    {#if badge > 0}
+                        <span class="min-w-5 h-5 rounded-full px-1.5 text-xs font-medium flex items-center justify-center {isActive(item.href) ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-destructive text-destructive-foreground'}">
+                            {badge}
+                        </span>
+                    {/if}
                 </a>
             {/each}
 

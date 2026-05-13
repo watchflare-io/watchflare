@@ -8,6 +8,7 @@
     import SSEStatusBadge from "./SSEStatusBadge.svelte";
     import UserMenuButton from "./UserMenuButton.svelte";
     import { navItems, settingsItems } from "$lib/navigation";
+    import { alertCount } from "$lib/stores/alerts";
 
     const transitioning = $derived($sidebarTransitioning);
     const collapsed = $derived($sidebarCollapsed);
@@ -66,6 +67,7 @@
         <nav class="flex-1 flex flex-col gap-1 p-2">
             {#each navItems as item}
                 {@const Icon = item.icon}
+                {@const badge = item.href === '/incidents' ? $alertCount : 0}
                 <a
                     href={item.href}
                     aria-current={isActive(item.href) ? "page" : undefined}
@@ -77,9 +79,14 @@
                     title={item.label}
                 >
                     <Icon class="h-5 w-5 shrink-0" />
-                    <span class="whitespace-nowrap overflow-hidden {textClass}"
+                    <span class="whitespace-nowrap overflow-hidden flex-1 {textClass}"
                         >{item.label}</span
                     >
+                    {#if badge > 0 && !collapsed}
+                        <span class="shrink-0 ml-1 min-w-5 h-5 rounded-full px-1.5 text-xs font-medium flex items-center justify-center {isActive(item.href) ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-destructive text-destructive-foreground'}">
+                            {badge}
+                        </span>
+                    {/if}
                 </a>
             {/each}
 

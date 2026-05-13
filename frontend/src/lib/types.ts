@@ -540,6 +540,24 @@ export interface GetActiveIncidentsResponse {
   incidents: ActiveIncident[];
 }
 
+export interface GlobalIncident {
+  id: string;
+  host_id: string;
+  host_name: string;
+  metric_type: AlertMetricType;
+  started_at: string;
+  resolved_at: string | null;
+  threshold_value: number;
+  current_value: number;
+}
+
+export interface GetAllIncidentsResponse {
+  incidents: GlobalIncident[];
+  total_count: number;
+  limit: number;
+  offset: number;
+}
+
 export interface HostIncident {
   id: string;
   metric_type: AlertMetricType;

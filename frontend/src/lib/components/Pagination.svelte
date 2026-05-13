@@ -25,7 +25,7 @@
 
 	const start = $derived((currentPage - 1) * pageSize + 1);
 	const end = $derived(Math.min(currentPage * pageSize, totalItems));
-	const visible = $derived(totalItems > pageSize);
+	const visible = $derived(totalItems > 0);
 </script>
 
 {#if visible}

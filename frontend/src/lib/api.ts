@@ -25,6 +25,7 @@ import type {
   GetAlertRulesResponse,
   GetHostAlertRulesResponse,
   GetActiveIncidentsResponse,
+  GetAllIncidentsResponse,
   GetHostIncidentsResponse,
   IncidentStatusFilter,
   AlertMetricType,
@@ -640,6 +641,17 @@ export async function deleteHostAlertRule(
 
 export async function getActiveIncidents(): Promise<GetActiveIncidentsResponse> {
   return apiRequest<GetActiveIncidentsResponse>("/settings/alerts/active");
+}
+
+export async function getAllIncidents(
+  params: {
+    status?: IncidentStatusFilter;
+    limit?: number;
+    offset?: number;
+  } = {},
+): Promise<GetAllIncidentsResponse> {
+  const qs = buildQueryString(params);
+  return apiRequest<GetAllIncidentsResponse>(`/settings/alerts/incidents${qs}`);
 }
 
 export async function getHostIncidents(
