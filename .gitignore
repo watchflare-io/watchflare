@@ -40,7 +40,7 @@ backend/data/
 *.crt
 *.key
 
-# Documentation (kept locally, published on watchflare.io/docs)
+# Documentation (kept locally, published on docs.watchflare.io)
 docs/private/
 
 # IDE
