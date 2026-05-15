@@ -115,13 +115,6 @@
     <title>Settings - Watchflare</title>
 </svelte:head>
 
-<div class="mb-6">
-    <h1 class="text-xl sm:text-2xl font-semibold text-foreground">General</h1>
-    <p class="text-sm text-muted-foreground mt-1">
-        Application preferences and configuration
-    </p>
-</div>
-
 {#if !cookieSecure}
     <div
         role="alert"

@@ -23,6 +23,27 @@
 
     let settingsOpen = $state($page.url.pathname.startsWith("/settings"));
 
+    let settingsIconEl = $state<HTMLElement | null>(null);
+    let flyoutOpen = $state(false);
+    let flyoutY = $state(0);
+    let flyoutCloseTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function openFlyout() {
+        if (flyoutCloseTimer) clearTimeout(flyoutCloseTimer);
+        if (settingsIconEl) {
+            flyoutY = settingsIconEl.getBoundingClientRect().top;
+        }
+        flyoutOpen = true;
+    }
+
+    function scheduleFlyoutClose() {
+        flyoutCloseTimer = setTimeout(() => { flyoutOpen = false; }, 150);
+    }
+
+    function cancelFlyoutClose() {
+        if (flyoutCloseTimer) clearTimeout(flyoutCloseTimer);
+    }
+
     $effect(() => {
         if ($page.url.pathname.startsWith("/settings")) {
             settingsOpen = true;
@@ -92,17 +113,23 @@
 
             <!-- Settings group -->
             {#if collapsed}
-                <!-- Collapsed: icon only, links to General -->
-                <a
-                    href="/settings"
-                    aria-current={isActive('/settings') ? "page" : undefined}
-                    class="flex items-center rounded-lg py-3.25 px-3.25 text-sm font-medium transition-colors {isActive('/settings')
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-surface-foreground hover:bg-surface-accent'}"
-                    title="Settings"
+                <!-- Collapsed: icon only, flyout on hover -->
+                <div
+                    bind:this={settingsIconEl}
+                    onmouseenter={openFlyout}
+                    onmouseleave={scheduleFlyoutClose}
                 >
-                    <Settings class="h-5 w-5 shrink-0" />
-                </a>
+                    <a
+                        href="/settings"
+                        aria-current={isActive('/settings') ? "page" : undefined}
+                        class="flex items-center rounded-lg py-3.25 px-3.25 text-sm font-medium transition-colors {isActive('/settings')
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-surface-foreground hover:bg-surface-accent'}"
+                        title="Settings"
+                    >
+                        <Settings class="h-5 w-5 shrink-0" />
+                    </a>
+                </div>
             {:else}
                 <!-- Expanded: group with sub-items -->
                 <div>
@@ -148,4 +175,29 @@
             </div>
         </div>
     </div>
+
+    <!-- Settings flyout (outside overflow-hidden, fixed positioning) -->
+    {#if collapsed && flyoutOpen}
+        <div
+            style="top: {flyoutY}px"
+            class="fixed left-20 ml-2 z-50 w-44 rounded-lg border bg-surface shadow-lg overflow-hidden"
+            onmouseenter={cancelFlyoutClose}
+            onmouseleave={scheduleFlyoutClose}
+            role="menu"
+        >
+            <div class="px-3 py-2 text-xs font-semibold text-muted-foreground border-b" role="presentation">Settings</div>
+            {#each settingsItems as sub}
+                <a
+                    href={sub.href}
+                    role="menuitem"
+                    onclick={() => flyoutOpen = false}
+                    class="block px-3 py-2 text-sm font-medium transition-colors {$page.url.pathname === sub.href
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-surface-foreground hover:bg-surface-accent'}"
+                >
+                    {sub.label}
+                </a>
+            {/each}
+        </div>
+    {/if}
 </aside>

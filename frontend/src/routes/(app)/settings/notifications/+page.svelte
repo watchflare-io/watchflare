@@ -327,11 +327,6 @@
     <title>Notifications - Watchflare</title>
 </svelte:head>
 
-<div class="mb-6">
-    <h1 class="text-xl sm:text-2xl font-semibold text-foreground">Notifications</h1>
-    <p class="text-sm text-muted-foreground mt-1">Email notification settings</p>
-</div>
-
 {#if loadError}
     <div role="alert" class="mb-4 flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2.5">
         <TriangleAlert class="h-4 w-4 text-destructive shrink-0 mt-0.5" />
