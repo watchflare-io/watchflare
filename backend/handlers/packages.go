@@ -294,6 +294,7 @@ type globalPackage struct {
 	PackageManager    string `json:"package_manager"`
 	HostCount         int64  `json:"host_count"`
 	AvailableVersion  string `json:"available_version"`
+	CurrentVersion    string `json:"current_version"`
 	HasSecurityUpdate bool   `json:"has_security_update"`
 	UpdateChecked     bool   `json:"update_checked"`
 }
@@ -452,6 +453,7 @@ func ListAllPackages(c *gin.Context) {
 			package_manager,
 			COUNT(DISTINCT host_id) AS host_count,
 			MAX(available_version) AS available_version,
+			MAX(CASE WHEN update_checked AND available_version = '' THEN version END) AS current_version,
 			BOOL_OR(has_security_update) AS has_security_update,
 			BOOL_AND(update_checked) AS update_checked
 		FROM packages

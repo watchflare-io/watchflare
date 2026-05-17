@@ -404,6 +404,7 @@ export interface GlobalPackage {
   package_manager: string;
   host_count: number;
   available_version: string;
+  current_version: string;
   has_security_update: boolean;
   update_checked: boolean;
 }

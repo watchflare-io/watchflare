@@ -628,7 +628,7 @@
                         >
                         <span class="w-full text-xs text-muted-foreground">
                             Latest: <span class="font-mono"
-                                >{pkg.available_version || "—"}</span
+                                >{pkg.available_version || pkg.current_version || "—"}</span
                             >
                         </span>
                     </div>
@@ -792,6 +792,8 @@
                                         {/if}
                                         {pkg.available_version}
                                     </span>
+                                {:else if pkg.current_version}
+                                    <span class="text-muted-foreground">{pkg.current_version}</span>
                                 {:else}
                                     <span class="text-muted-foreground">—</span>
                                 {/if}
