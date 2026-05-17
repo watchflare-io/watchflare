@@ -1,248 +1,145 @@
+@import "@fontsource-variable/inter";
 @import "tailwindcss";
-
 @import "tw-animate-css";
+@import "./styles/tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
-:root {
-    /* Watchflare Design System - Light Theme */
-    --radius: 0.5rem; /* More minimal */
-
-    /* Base colors - Cream background */
-    --background: oklch(0.98 0.005 85); /* #FAFAF9 cream */
-    --foreground: oklch(0.2 0.01 120); /* Almost black with hint of green */
-
-    /* Card colors */
-    --card: oklch(1 0 0); /* Pure white cards on cream bg */
-    --card-foreground: oklch(0.2 0.01 120);
-
-    /* Popover colors */
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.2 0.01 120);
-
-    /* Primary - Military Green (#3A5235) */
-    --primary: oklch(0.35 0.08 145);
-    --primary-foreground: oklch(1 0 0);
-
-    /* Secondary */
-    --secondary: oklch(0.96 0.005 145);
-    --secondary-foreground: oklch(0.2 0.01 120);
-
-    /* Muted - Subtle gray with green tint */
-    --muted: oklch(0.95 0.003 145);
-    --muted-foreground: oklch(0.5 0.01 145);
-
-    /* Accent - Light military green */
-    --accent: oklch(0.94 0.02 145);
-    --accent-foreground: oklch(0.2 0.01 120);
-
-    /* Destructive - Red */
-    --destructive: oklch(0.55 0.22 27);
-    --destructive-foreground: oklch(1 0 0);
-
-    /* Borders & Input - Subtle */
-    --border: oklch(0.9 0.005 145);
-    --input: oklch(0.9 0.005 145);
-    --ring: oklch(0.35 0.08 145);
-
-    /* Monitoring Status Colors */
-    --success: oklch(0.5 0.12 145); /* Military green - 0-70% */
-    --warning: oklch(0.65 0.15 60); /* Muted orange - 70-90% */
-    --danger: oklch(0.55 0.22 27); /* Muted red - >90% */
-
-    /* Chart Colors — 20 vivid, well-spaced hues */
-    --chart-1: oklch(0.42 0.22 252); /* Blue            - CPU */
-    --chart-2: oklch(0.74 0.22 90); /* Yellow          - Memory */
-    --chart-3: oklch(0.52 0.22 210); /* Cornflower blue - Disk */
-    --chart-4: oklch(0.48 0.24 306); /* Purple          - Load Avg 1min */
-    --chart-5: oklch(0.53 0.22 16); /* Red             - extra */
-    --chart-6: oklch(0.56 0.22 182); /* Teal            - Load Avg 15min */
-    --chart-7: oklch(0.53 0.26 262); /* Cobalt          - Network RX */
-    --chart-8: oklch(0.55 0.26 332); /* Pink            - Network TX */
-    --chart-9: oklch(0.56 0.24 106); /* Lime            - DiskIO Read */
-    --chart-10: oklch(0.52 0.22 232); /* Sky blue        - DiskIO Write */
-    --chart-11: oklch(0.6 0.24 32); /* Orange          - extra */
-    --chart-12: oklch(0.62 0.22 66); /* Amber           - extra */
-    --chart-13: oklch(0.53 0.28 318); /* Magenta         - extra */
-    --chart-14: oklch(0.56 0.2 216); /* Periwinkle      - extra */
-    --chart-15: oklch(0.58 0.22 142); /* Sage green      - extra */
-    --chart-16: oklch(0.56 0.26 20); /* Vivid red       - extra */
-    --chart-17: oklch(0.6 0.26 280); /* Indigo          - Swap */
-    --chart-18: oklch(0.6 0.24 120); /* Spring green    - extra */
-    --chart-19: oklch(0.62 0.24 78); /* Gold            - Load Avg 5min */
-    --chart-20: oklch(0.58 0.22 196); /* Cyan            - extra */
-
-    /* Table header - sticky thead background */
-    --table-header: oklch(0.979 0.001 145); /* ~#f9f9f8 */
-    --table-header-active: oklch(0.945 0.005 145); /* hover/active column */
-
-    /* Dynamic chart color lightness (for programmatically generated series colors) */
-    --chart-dyn-l: 0.56;
-
-    /* Surface - Elevated surfaces (sidebar, header, inputs, selects) */
-    --surface: oklch(1 0 0); /* Pure white */
-    --surface-foreground: oklch(0.2 0.01 120);
-    --surface-primary: oklch(0.35 0.08 145); /* Military green */
-    --surface-primary-foreground: oklch(1 0 0);
-    --surface-accent: oklch(0.96 0.005 145);
-    --surface-accent-foreground: oklch(0.2 0.01 120);
-    --surface-border: oklch(0.9 0.005 145);
-    --surface-ring: oklch(0.35 0.08 145);
-}
-
-.dark {
-    --background: oklch(0.13 0.028 261.692);
-    --foreground: oklch(0.985 0.002 247.839);
-    --card: oklch(0.21 0.034 264.665);
-    --card-foreground: oklch(0.985 0.002 247.839);
-    --popover: oklch(0.21 0.034 264.665);
-    --popover-foreground: oklch(0.985 0.002 247.839);
-    --primary: oklch(0.928 0.006 264.531);
-    --primary-foreground: oklch(0.21 0.034 264.665);
-    --secondary: oklch(0.278 0.033 256.848);
-    --secondary-foreground: oklch(0.985 0.002 247.839);
-    --muted: oklch(0.278 0.033 256.848);
-    --muted-foreground: oklch(0.707 0.022 261.325);
-    --accent: oklch(0.278 0.033 256.848);
-    --accent-foreground: oklch(0.985 0.002 247.839);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.551 0.027 264.364);
-    --chart-1: oklch(0.65 0.24 252); /* Blue            - CPU */
-    --chart-2: oklch(0.88 0.22 90); /* Yellow          - Memory */
-    --chart-3: oklch(0.76 0.22 210); /* Cornflower blue - Disk */
-    --chart-4: oklch(0.66 0.26 306); /* Purple          - Load Avg 1min */
-    --chart-5: oklch(0.7 0.24 16); /* Red             - extra */
-    --chart-6: oklch(0.78 0.22 182); /* Teal            - Load Avg 15min */
-    --chart-7: oklch(0.74 0.26 262); /* Cobalt          - Network RX */
-    --chart-8: oklch(0.78 0.26 332); /* Pink            - Network TX */
-    --chart-9: oklch(0.8 0.22 106); /* Lime            - DiskIO Read */
-    --chart-10: oklch(0.76 0.24 232); /* Sky blue        - DiskIO Write */
-    --chart-11: oklch(0.8 0.22 32); /* Orange          - extra */
-    --chart-12: oklch(0.84 0.22 66); /* Amber           - extra */
-    --chart-13: oklch(0.7 0.28 318); /* Magenta         - extra */
-    --chart-14: oklch(0.82 0.2 216); /* Periwinkle      - extra */
-    --chart-15: oklch(0.82 0.22 142); /* Sage green      - extra */
-    --chart-16: oklch(0.82 0.26 20); /* Vivid red-orange - extra */
-    --chart-17: oklch(0.7 0.28 280); /* Indigo          - Swap */
-    --chart-18: oklch(0.86 0.24 120); /* Spring green    - extra */
-    --chart-19: oklch(0.86 0.24 78); /* Gold            - Load Avg 5min */
-    --chart-20: oklch(0.84 0.22 196); /* Cyan            - extra */
-    --table-header: oklch(
-        0.26 0.034 264.665
-    ); /* slightly lighter than card in dark */
-    --table-header-active: oklch(
-        0.32 0.034 264.665
-    ); /* hover/active column in dark */
-
-    --chart-dyn-l: 0.74;
-
-    --surface: oklch(0.21 0.034 264.665);
-    --surface-foreground: oklch(0.985 0.002 247.839);
-    --surface-primary: oklch(0.488 0.243 264.376);
-    --surface-primary-foreground: oklch(0.985 0.002 247.839);
-    --surface-accent: oklch(0.278 0.033 256.848);
-    --surface-accent-foreground: oklch(0.985 0.002 247.839);
-    --surface-border: oklch(1 0 0 / 10%);
-    --surface-ring: oklch(0.551 0.027 264.364);
-}
-
 @theme inline {
-    --breakpoint-2xl: 1440px;
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-    --color-success: var(--success);
-    --color-warning: var(--warning);
-    --color-danger: var(--danger);
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-    --color-chart-6: var(--chart-6);
-    --color-chart-7: var(--chart-7);
-    --color-chart-8: var(--chart-8);
-    --color-chart-9: var(--chart-9);
-    --color-chart-10: var(--chart-10);
-    --color-chart-11: var(--chart-11);
-    --color-chart-12: var(--chart-12);
-    --color-chart-13: var(--chart-13);
-    --color-chart-14: var(--chart-14);
-    --color-chart-15: var(--chart-15);
-    --color-chart-16: var(--chart-16);
-    --color-chart-17: var(--chart-17);
-    --color-chart-18: var(--chart-18);
-    --color-chart-19: var(--chart-19);
-    --color-chart-20: var(--chart-20);
-    --color-table-header: var(--table-header);
-    --color-table-header-active: var(--table-header-active);
-    --color-surface: var(--surface);
-    --color-surface-foreground: var(--surface-foreground);
-    --color-surface-primary: var(--surface-primary);
-    --color-surface-primary-foreground: var(--surface-primary-foreground);
-    --color-surface-accent: var(--surface-accent);
-    --color-surface-accent-foreground: var(--surface-accent-foreground);
-    --color-surface-border: var(--surface-border);
-    --color-surface-ring: var(--surface-ring);
+	/* Fonts */
+	--font-sans: var(--font-sans);
+	--font-mono: var(--font-mono);
+
+	/* Shadows */
+	--shadow-sm: var(--shadow-sm);
+	--shadow-md: var(--shadow-md);
+	--shadow-lg: var(--shadow-lg);
+	--shadow-xl: var(--shadow-xl);
+
+	/* Radius */
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+
+	/* Base colors */
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+
+	/* Card */
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+
+	/* Popover */
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+
+	/* Primary */
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+
+	/* Secondary */
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+
+	/* Muted */
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+
+	/* Accent */
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+
+	/* Destructive */
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+
+	/* Borders */
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+
+	/* Status */
+	--color-success: var(--success);
+	--color-warning: var(--warning);
+	--color-danger: var(--danger);
+
+	/* Surface */
+	--color-surface: var(--surface);
+	--color-surface-foreground: var(--surface-foreground);
+	--color-surface-primary: var(--surface-primary);
+	--color-surface-primary-foreground: var(--surface-primary-foreground);
+	--color-surface-accent: var(--surface-accent);
+	--color-surface-accent-foreground: var(--surface-accent-foreground);
+
+	/* Table */
+	--color-table-header: var(--table-header);
+	--color-table-header-active: var(--table-header-active);
+
+	/* Charts */
+	--color-chart-1:  var(--chart-1);
+	--color-chart-2:  var(--chart-2);
+	--color-chart-3:  var(--chart-3);
+	--color-chart-4:  var(--chart-4);
+	--color-chart-5:  var(--chart-5);
+	--color-chart-6:  var(--chart-6);
+	--color-chart-7:  var(--chart-7);
+	--color-chart-8:  var(--chart-8);
+	--color-chart-9:  var(--chart-9);
+	--color-chart-10: var(--chart-10);
+	--color-chart-11: var(--chart-11);
+	--color-chart-12: var(--chart-12);
+	--color-chart-13: var(--chart-13);
+	--color-chart-14: var(--chart-14);
+	--color-chart-15: var(--chart-15);
+	--color-chart-16: var(--chart-16);
+	--color-chart-17: var(--chart-17);
+	--color-chart-18: var(--chart-18);
+	--color-chart-19: var(--chart-19);
+	--color-chart-20: var(--chart-20);
 }
 
 @layer base {
-    * {
-        @apply border-border outline-ring/50;
-    }
-    body {
-        @apply bg-background text-foreground;
-    }
-    button,
-    select,
-    [role="button"] {
-        cursor: pointer;
-    }
-    main > * {
-        max-width: 1440px;
-        margin-inline: auto;
-    }
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground;
+		font-family: var(--font-sans);
+	}
+	button,
+	select,
+	[role="button"] {
+		cursor: pointer;
+	}
+	main > * {
+		max-width: 1440px;
+		margin-inline: auto;
+	}
+}
+
+/* Breakpoints */
+@theme inline {
+	--breakpoint-2xl: 1440px;
 }
 
 /* Dashboard stats grid: auto-fill columns with a 190px minimum */
 @utility grid-stats {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
 
 /* Hide scrollbar while keeping scroll functionality */
 @utility no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-    &::-webkit-scrollbar {
-        display: none;
-    }
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 /* Prevent iOS Safari auto-zoom on input focus (triggered when font-size < 16px) */
 input,
 select,
 textarea {
-    font-size: 16px !important;
+	font-size: 16px !important;
 }

@@ -58,7 +58,7 @@
 
     function valueColor(pct: number): string {
         if (pct >= 85) return "text-destructive";
-        if (pct >= 70) return "text-amber-500";
+        if (pct >= 70) return "text-warning";
         return "text-foreground";
     }
 
@@ -75,7 +75,7 @@
     <div class="flex flex-col rounded-lg border bg-card">
         <div class="flex flex-col gap-2 p-4 flex-1">
             <div class="flex items-center justify-between">
-                <p class="text-sm text-muted-foreground">Hosts</p>
+                <h3 class="text-sm text-muted-foreground">Hosts</h3>
                 <div class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0">
                     <Server class="h-4 w-4" />
                 </div>
@@ -91,8 +91,8 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-destructive shrink-0"></span>
                     <span class="text-xs text-destructive">{stats.offlineHosts} offline</span>
                 {:else if stats.totalHosts > 0}
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span class="text-xs text-emerald-500">All online</span>
+                    <span class="h-1.5 w-1.5 rounded-full bg-success shrink-0"></span>
+                    <span class="text-xs text-success">All online</span>
                 {:else}
                     <span class="text-xs text-muted-foreground">—</span>
                 {/if}
@@ -105,7 +105,7 @@
     <div class="flex flex-col rounded-lg border bg-card">
         <div class="flex flex-col gap-2 p-4 flex-1">
             <div class="flex items-center justify-between">
-                <p class="text-sm text-muted-foreground">CPU</p>
+                <h3 class="text-sm text-muted-foreground">CPU</h3>
                 <div class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0">
                     <Cpu class="h-4 w-4" />
                 </div>
@@ -120,8 +120,8 @@
                     <span class="text-xs text-destructive">{Math.abs(trends.cpu.delta).toFixed(1)}%</span>
                     <span class="text-xs text-muted-foreground">vs {timeRange}<span class="hidden sm:inline">&nbsp;ago</span></span>
                 {:else if hasSufficientTrendData && trends.cpu.direction === "down"}
-                    <ArrowDown class="h-3 w-3 text-emerald-500 ml-0.5" />
-                    <span class="text-xs text-emerald-500">{Math.abs(trends.cpu.delta).toFixed(1)}%</span>
+                    <ArrowDown class="h-3 w-3 text-success ml-0.5" />
+                    <span class="text-xs text-success">{Math.abs(trends.cpu.delta).toFixed(1)}%</span>
                     <span class="text-xs text-muted-foreground">vs {timeRange}<span class="hidden sm:inline">&nbsp;ago</span></span>
                 {:else}
                     <span class="text-xs text-muted-foreground">—</span>
@@ -134,7 +134,7 @@
     <div class="flex flex-col rounded-lg border bg-card">
         <div class="flex flex-col gap-2 p-4 flex-1">
             <div class="flex items-center justify-between">
-                <p class="text-sm text-muted-foreground">Memory</p>
+                <h3 class="text-sm text-muted-foreground">Memory</h3>
                 <div class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0">
                     <MemoryStick class="h-4 w-4" />
                 </div>
@@ -152,8 +152,8 @@
                     <span class="text-xs text-destructive">{Math.abs(trends.memory.delta).toFixed(1)}%</span>
                     <span class="text-xs text-muted-foreground">vs {timeRange}<span class="hidden sm:inline">&nbsp;ago</span></span>
                 {:else if hasSufficientTrendData && trends.memory.direction === "down"}
-                    <ArrowDown class="h-3 w-3 text-emerald-500 ml-0.5" />
-                    <span class="text-xs text-emerald-500">{Math.abs(trends.memory.delta).toFixed(1)}%</span>
+                    <ArrowDown class="h-3 w-3 text-success ml-0.5" />
+                    <span class="text-xs text-success">{Math.abs(trends.memory.delta).toFixed(1)}%</span>
                     <span class="text-xs text-muted-foreground">vs {timeRange}<span class="hidden sm:inline">&nbsp;ago</span></span>
                 {:else}
                     <span class="text-xs text-muted-foreground">—</span>
@@ -166,7 +166,7 @@
     <div class="flex flex-col rounded-lg border bg-card">
         <div class="flex flex-col gap-2 p-4 flex-1">
             <div class="flex items-center justify-between">
-                <p class="text-sm text-muted-foreground">Disk</p>
+                <h3 class="text-sm text-muted-foreground">Disk</h3>
                 <div class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0">
                     <HardDrive class="h-4 w-4" />
                 </div>
@@ -181,8 +181,8 @@
                     <span class="text-xs text-destructive">{Math.abs(trends.disk.delta).toFixed(1)}%</span>
                     <span class="text-xs text-muted-foreground">vs {timeRange}<span class="hidden sm:inline">&nbsp;ago</span></span>
                 {:else if hasSufficientTrendData && trends.disk.direction === "down"}
-                    <ArrowDown class="h-3 w-3 text-emerald-500 ml-0.5" />
-                    <span class="text-xs text-emerald-500">{Math.abs(trends.disk.delta).toFixed(1)}%</span>
+                    <ArrowDown class="h-3 w-3 text-success ml-0.5" />
+                    <span class="text-xs text-success">{Math.abs(trends.disk.delta).toFixed(1)}%</span>
                     <span class="text-xs text-muted-foreground">vs {timeRange}<span class="hidden sm:inline">&nbsp;ago</span></span>
                 {:else}
                     <span class="text-xs text-muted-foreground">—</span>
@@ -195,7 +195,7 @@
     <div class="flex flex-col rounded-lg border bg-card">
         <div class="flex flex-col gap-2 p-4 flex-1">
             <div class="flex items-center justify-between">
-                <p class="text-sm text-muted-foreground">Load Avg 1min</p>
+                <h3 class="text-sm text-muted-foreground">Load Avg 1min</h3>
                 <div class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0">
                     <Activity class="h-4 w-4" />
                 </div>
@@ -210,8 +210,8 @@
                     <span class="text-xs text-destructive">{Math.abs(trends.loadAvg.delta).toFixed(2)}</span>
                     <span class="text-xs text-muted-foreground">vs {timeRange}<span class="hidden sm:inline">&nbsp;ago</span></span>
                 {:else if hasSufficientTrendData && trends.loadAvg.direction === "down"}
-                    <ArrowDown class="h-3 w-3 text-emerald-500 ml-0.5" />
-                    <span class="text-xs text-emerald-500">{Math.abs(trends.loadAvg.delta).toFixed(2)}</span>
+                    <ArrowDown class="h-3 w-3 text-success ml-0.5" />
+                    <span class="text-xs text-success">{Math.abs(trends.loadAvg.delta).toFixed(2)}</span>
                     <span class="text-xs text-muted-foreground">vs {timeRange}<span class="hidden sm:inline">&nbsp;ago</span></span>
                 {:else}
                     <span class="text-xs text-muted-foreground">—</span>
@@ -224,12 +224,12 @@
     <div class="flex flex-col rounded-lg border bg-card">
         <div class="flex flex-col gap-2 p-4 flex-1">
             <div class="flex items-center justify-between">
-                <p class="text-sm text-muted-foreground">Outdated packages</p>
+                <h3 class="text-sm text-muted-foreground">Outdated packages</h3>
                 <div class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0">
                     <Package class="h-4 w-4" />
                 </div>
             </div>
-            <p class="text-3xl font-bold tabular-nums {packagesStats.outdatedCount > 0 ? 'text-amber-500' : 'text-foreground'}">
+            <p class="text-3xl font-bold tabular-nums {packagesStats.outdatedCount > 0 ? 'text-warning' : 'text-foreground'}">
                 {packagesStats.outdatedCount}
             </p>
             <p class="text-xs text-muted-foreground">
@@ -249,7 +249,7 @@
     <div class="flex flex-col rounded-lg border bg-card">
         <div class="flex flex-col gap-2 p-4 flex-1">
             <div class="flex items-center justify-between">
-                <p class="text-sm text-muted-foreground">Security updates</p>
+                <h3 class="text-sm text-muted-foreground">Security updates</h3>
                 <div class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0">
                     <ShieldAlert class="h-4 w-4" />
                 </div>
@@ -274,7 +274,7 @@
     <div class="flex flex-col rounded-lg border bg-card">
         <div class="flex flex-col gap-2 p-4 flex-1">
             <div class="flex items-center justify-between">
-                <p class="text-sm text-muted-foreground">Active alerts</p>
+                <h3 class="text-sm text-muted-foreground">Active alerts</h3>
                 <div class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0">
                     <AlertTriangle class="h-4 w-4" />
                 </div>

@@ -48,12 +48,14 @@
 				</p>
 				<div class="mt-3 flex gap-2">
 					<button
+         type="button"
 						onclick={onUpdateIP}
 						class="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
 					>
 						Update to {host.ip_address_v4}
 					</button>
 					<button
+         type="button"
 						onclick={onIgnoreIP}
 						class="rounded-lg border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
 					>
@@ -77,7 +79,7 @@
 					</p>
 				</div>
 			</div>
-			<button onclick={onDismissReactivation} class="text-primary hover:text-primary/80" aria-label="Dismiss reactivation notice">
+			<button type="button" onclick={onDismissReactivation} class="text-primary hover:text-primary/80" aria-label="Dismiss reactivation notice">
 				<X class="h-5 w-5" />
 			</button>
 		</div>

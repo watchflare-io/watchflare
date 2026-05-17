@@ -83,6 +83,7 @@
 		<!-- OS Tabs -->
 		<div class="flex gap-1 border-b mb-4">
 			<button
+       type="button"
 				class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors {selectedOS === 'linux'
 					? 'border-primary text-foreground'
 					: 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -92,6 +93,7 @@
 				Linux
 			</button>
 			<button
+       type="button"
 				class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors {selectedOS === 'macos'
 					? 'border-primary text-foreground'
 					: 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -114,6 +116,7 @@
 		<div class="relative">
 			<pre class="bg-foreground text-background px-4 py-3 rounded-lg font-mono text-xs leading-relaxed overflow-x-auto pr-20">{selectedOS === 'linux' ? linuxCmd : macosCmd}</pre>
 			<button
+       type="button"
 				class="absolute top-2 right-2 px-2.5 py-1.5 bg-muted-foreground/30 text-white rounded text-xs font-medium transition-colors hover:bg-muted-foreground/50"
 				onclick={() => handleCopy(selectedOS === 'linux' ? linuxCmd : macosCmd)}
 			>

@@ -59,6 +59,11 @@
     function closeMobileMenu() {
         mobileMenuOpen.set(false);
     }
+
+    $effect(() => {
+        document.body.style.overflow = $mobileMenuOpen ? "hidden" : "";
+        return () => { document.body.style.overflow = ""; };
+    });
 </script>
 
 <!-- Mobile backdrop -->
@@ -100,7 +105,7 @@
                     href={item.href}
                     onclick={closeMobileMenu}
                     aria-current={isActive(item.href) ? "page" : undefined}
-                    class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors {isActive(
+                    class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {isActive(
                         item.href,
                     )
                         ? 'bg-primary text-primary-foreground'

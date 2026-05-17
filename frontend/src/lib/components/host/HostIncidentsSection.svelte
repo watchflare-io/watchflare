@@ -119,6 +119,7 @@
         <div class="flex rounded-lg border bg-card p-0.5">
             {#each ["all", "active", "resolved"] as IncidentStatusFilter[] as filter}
                 <button
+                    type="button"
                     onclick={() => handleFilterChange(filter)}
                     class="rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors {statusFilter ===
                     filter
@@ -133,10 +134,41 @@
 
     <div class="rounded-xl border bg-card overflow-hidden">
         {#if loading}
-            <div class="flex items-center justify-center py-20">
-                <p class="text-sm text-muted-foreground">
-                    Loading incidents...
-                </p>
+            <!-- Mobile skeleton -->
+            <div class="sm:hidden p-3 flex flex-col gap-2 animate-pulse">
+                {#each Array(3) as _}
+                    <div class="rounded-lg border bg-card">
+                        <div class="rounded-t-lg bg-table-header px-4 py-2.5 border-b flex items-center justify-between">
+                            <div class="h-4 w-28 rounded bg-muted"></div>
+                            <div class="h-5 w-16 rounded-full bg-muted"></div>
+                        </div>
+                        <div class="px-4 py-2.5 flex flex-col gap-2">
+                            <div class="h-3 w-40 rounded bg-muted"></div>
+                            <div class="h-3 w-24 rounded bg-muted"></div>
+                        </div>
+                    </div>
+                {/each}
+            </div>
+            <!-- Desktop skeleton -->
+            <div class="hidden sm:block animate-pulse">
+                <div class="border-b bg-table-header px-4 py-2.5 flex gap-8">
+                    <div class="h-4 w-16 rounded bg-muted"></div>
+                    <div class="h-4 w-20 rounded bg-muted"></div>
+                    <div class="h-4 w-24 rounded bg-muted"></div>
+                    <div class="h-4 w-20 rounded bg-muted"></div>
+                    <div class="h-4 w-16 rounded bg-muted"></div>
+                    <div class="h-4 w-20 rounded bg-muted"></div>
+                </div>
+                {#each Array(3) as _}
+                    <div class="border-b px-4 py-3 flex gap-8">
+                        <div class="h-4 w-16 rounded bg-muted"></div>
+                        <div class="h-4 w-32 rounded bg-muted"></div>
+                        <div class="h-4 w-28 rounded bg-muted"></div>
+                        <div class="h-4 w-24 rounded bg-muted"></div>
+                        <div class="h-4 w-20 rounded bg-muted"></div>
+                        <div class="h-4 w-24 rounded bg-muted"></div>
+                    </div>
+                {/each}
             </div>
         {:else}
             <!-- Mobile: cards -->
@@ -205,6 +237,7 @@
                 {/each}
                 {#if incidents.length < totalCount}
                     <button
+                        type="button"
                         onclick={() => loadIncidents(false)}
                         disabled={loadingMore}
                         class="rounded-lg border bg-card w-full py-3 text-xs font-medium text-primary hover:text-primary/80 hover:bg-muted/20 transition-colors disabled:opacity-40"
@@ -321,6 +354,7 @@
 
             {#if incidents.length < totalCount}
                 <button
+                    type="button"
                     onclick={() => loadIncidents(false)}
                     disabled={loadingMore}
                     class="hidden sm:block w-full border-t px-4 py-3 text-xs font-medium text-primary hover:text-primary/80 hover:bg-muted/20 transition-colors disabled:opacity-40"

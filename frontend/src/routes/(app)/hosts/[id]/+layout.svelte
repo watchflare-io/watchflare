@@ -487,6 +487,7 @@
                 </p>
                 <div class="flex items-center gap-2 shrink-0">
                     <button
+                        type="button"
                         onclick={() => {
                             handleCopy(regeneratedToken);
                             copiedToken = true;
@@ -504,6 +505,7 @@
                               : "Copy Token"}
                     </button>
                     <button
+                        type="button"
                         onclick={() => {
                             regeneratedToken = "";
                         }}
@@ -648,6 +650,7 @@
     </div>
     <div class="flex gap-3 justify-end">
         <button
+            type="button"
             onclick={() => {
                 showRename = false;
                 newHostName = "";
@@ -657,6 +660,7 @@
             Cancel
         </button>
         <button
+            type="button"
             onclick={handleRename}
             disabled={newHostName.length < 2}
             class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
@@ -686,12 +690,14 @@
     </div>
     <div class="flex gap-3 justify-end">
         <button
+            type="button"
             onclick={closeChangeIPModal}
             class="rounded-lg border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
         >
             Cancel
         </button>
         <button
+            type="button"
             onclick={handleChangeIP}
             disabled={!newIP.trim()}
             class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"

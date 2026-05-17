@@ -92,14 +92,19 @@
                 <a
                     href={item.href}
                     aria-current={isActive(item.href) ? "page" : undefined}
-                    class="flex items-center rounded-lg py-3.25 px-3.25 text-sm font-medium transition-colors {isActive(
+                    class="flex items-center rounded-lg py-3.25 px-3.25 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {isActive(
                         item.href,
                     )
                         ? 'bg-primary text-primary-foreground'
                         : 'text-surface-foreground hover:bg-surface-accent'}"
                     title={item.label}
                 >
-                    <Icon class="h-5 w-5 shrink-0" />
+                    <span class="relative shrink-0">
+                        <Icon class="h-5 w-5" />
+                        {#if badge > 0 && collapsed}
+                            <span class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive"></span>
+                        {/if}
+                    </span>
                     <span class="whitespace-nowrap overflow-hidden flex-1 {textClass}"
                         >{item.label}</span
                     >

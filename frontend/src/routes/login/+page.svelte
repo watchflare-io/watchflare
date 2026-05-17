@@ -95,6 +95,7 @@
                     <input
                         id="email"
                         type="email"
+                        autocomplete="email"
                         bind:value={email}
                         placeholder="admin@watchflare.io"
                         disabled={loading}
@@ -125,6 +126,7 @@
                     <input
                         id="password"
                         type="password"
+                        autocomplete="current-password"
                         bind:value={password}
                         placeholder="••••••••"
                         disabled={loading}
@@ -147,6 +149,7 @@
                 <!-- Error Message -->
                 {#if error}
                     <div
+                        role="alert"
                         class="mb-4 rounded-lg border border-destructive bg-destructive/10 p-3"
                     >
                         <p class="text-sm text-destructive">{error}</p>

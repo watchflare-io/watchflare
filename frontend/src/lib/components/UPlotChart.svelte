@@ -5,6 +5,7 @@
     import { formatTooltipDate } from "$lib/chart-utils";
     import { userStore } from "$lib/stores/user";
     import type { TimeRange } from "$lib/types";
+    import { ChartLine } from "lucide-svelte";
 
     const TIME_RANGE_SECONDS: Record<string, number> = {
         "1h": 3600,
@@ -733,13 +734,16 @@
         <div class="absolute inset-0" bind:this={container}></div>
     {:else}
         <div
-            class="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground"
+            class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground"
         >
-            {#if timeRange && TIME_RANGE_LABELS[timeRange]}
-                Not enough data for {TIME_RANGE_LABELS[timeRange]} view
-            {:else}
-                No data available
-            {/if}
+            <ChartLine class="h-6 w-6 opacity-30" />
+            <p class="text-sm">
+                {#if timeRange && TIME_RANGE_LABELS[timeRange]}
+                    Not enough data for {TIME_RANGE_LABELS[timeRange]} view
+                {:else}
+                    No data available
+                {/if}
+            </p>
         </div>
     {/if}
 </div>

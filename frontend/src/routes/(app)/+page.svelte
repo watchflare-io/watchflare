@@ -168,7 +168,7 @@
         <div class="h-4 w-64 rounded bg-muted"></div>
     </div>
     <!-- Skeleton: stat cards -->
-    <div class="grid grid-stats gap-4 mb-4 animate-pulse">
+    <div class="grid grid-stats gap-5 mb-5 animate-pulse">
         {#each Array(8) as _}
             <div class="flex flex-col gap-2 rounded-lg border bg-card p-4">
                 <div class="flex items-center justify-between">
@@ -181,7 +181,7 @@
         {/each}
     </div>
     <!-- Skeleton: chart cards -->
-    <div class="grid gap-4 mb-6 2xl:grid-cols-2 animate-pulse">
+    <div class="grid gap-5 mb-8 2xl:grid-cols-2 animate-pulse">
         {#each Array(2) as _}
             <div class="rounded-lg border bg-card p-4">
                 <div class="mb-3 flex items-center justify-between">
@@ -224,12 +224,12 @@
     <DroppedMetricsAlert alerts={droppedAlerts} />
 
     <!-- Stat cards: auto-fill grid -->
-    <div class="grid grid-stats gap-4 mb-4">
+    <div class="grid grid-stats gap-5 mb-5">
         <DashboardStats {stats} {trends} timeRange={selectedTimeRange} hasSufficientTrendData={hasSufficientTrendData} aggregatedMetrics={$aggregatedMetrics} {packagesStats} {activeIncidents} />
     </div>
 
     <!-- Chart cards -->
-    <div class="grid gap-4 mb-6 2xl:grid-cols-2">
+    <div class="grid gap-5 mb-8 2xl:grid-cols-2">
         <DashboardCharts
             aggregatedMetrics={$aggregatedMetrics}
             {stats}

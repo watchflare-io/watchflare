@@ -6,6 +6,7 @@
     import { PACKAGES_PER_PAGE } from "$lib/constants";
     import type { Host, Package, PackageStats } from "$lib/types";
     import Pagination from "$lib/components/Pagination.svelte";
+    import PackageStatusBadge from "$lib/components/PackageStatusBadge.svelte";
     import {
         getManagerLabel,
         getManagerColor,
@@ -85,8 +86,20 @@
     let searchTerm = $state(cached?.searchTerm ?? "");
     let selectedManagers: Set<string> = $state(new Set(cached?.selectedManagers ?? []));
     let allManagerKeys: string[] = $state(cached?.allManagerKeys ?? []);
+    const COLUMNS_STORAGE_KEY = "wf_pkg_columns";
+    function loadStoredColumns(): ColumnKey[] {
+        try {
+            const stored = localStorage.getItem(COLUMNS_STORAGE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored) as string[];
+                const valid = parsed.filter((k) => ALL_COLUMNS.some((c) => c.key === k));
+                if (valid.length > 0) return valid as ColumnKey[];
+            }
+        } catch {}
+        return DEFAULT_VISIBLE_COLUMNS;
+    }
     let visibleColumns: Set<ColumnKey> = $state(
-        new Set((cached?.visibleColumns ?? DEFAULT_VISIBLE_COLUMNS) as ColumnKey[]),
+        new Set((cached?.visibleColumns ?? loadStoredColumns()) as ColumnKey[]),
     );
     let offset = $state(cached?.offset ?? 0);
     const STATUS_LABELS: Record<StatusFilter, string> = {
@@ -258,6 +271,7 @@
         if (next.has(key)) next.delete(key);
         else next.add(key);
         visibleColumns = next;
+        try { localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify([...next])); } catch {}
         saveToCache();
     }
 
@@ -352,6 +366,7 @@
 <!-- Error -->
 {#if error}
     <div
+        role="alert"
         class="mb-6 rounded-lg border border-destructive bg-destructive/10 p-4"
     >
         <p class="text-sm text-destructive">{error}</p>
@@ -387,9 +402,7 @@
 {/if}
 
 <!-- Search & Filters -->
-<div class="mb-4 flex flex-col gap-2">
-    <!-- Row 1: search + collect -->
-    <div class="flex items-center gap-2">
+<div class="mb-4 flex items-center gap-2 flex-wrap">
         <input
             type="text"
             bind:value={searchTerm}
@@ -402,9 +415,10 @@
                 }
             }}
             placeholder="Search packages..."
-            class="flex-1 min-w-0 h-9 rounded-lg border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            class="flex-1 min-w-0 h-9 rounded-lg border bg-card px-3 text-sm text-foreground placeholder:text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         />
         <button
+            type="button"
             onclick={handleForceCollect}
             disabled={collecting ||
                 awaitingInventory ||
@@ -423,18 +437,10 @@
             />
             <span class="hidden sm:inline">Collect Now</span>
         </button>
-    </div>
-
-    <!-- Row 2: status indicator (left) + filters (right) -->
-    <div class="flex items-center gap-2">
-        <div class="flex-1 text-xs text-muted-foreground">
-            {#if collectError}
-                <span class="text-destructive">{collectError}</span>
-            {/if}
-        </div>
 
         {#if hasActiveFilters}
             <button
+                type="button"
                 onclick={clearAllFilters}
                 class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
                 title="Clear all filters"
@@ -449,6 +455,7 @@
             <DropdownMenu.Trigger>
                 {#snippet child({ props })}
                     <button
+                        type="button"
                         {...props}
                         class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
                         {isStatusFiltered
@@ -518,6 +525,7 @@
             <DropdownMenu.Trigger>
                 {#snippet child({ props })}
                     <button
+                        type="button"
                         {...props}
                         class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
                         {isFiltered
@@ -593,6 +601,7 @@
             <DropdownMenu.Trigger>
                 {#snippet child({ props })}
                     <button
+                        type="button"
                         {...props}
                         class="hidden md:inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
                         {extraColumnsCount > 0
@@ -647,9 +656,10 @@
                 {/each}
             </DropdownMenu.Content>
         </DropdownMenu.Root>
-    </div>
-    <!-- end row 2 -->
 </div>
+{#if collectError}
+    <p class="mb-2 text-xs text-destructive">{collectError}</p>
+{/if}
 
 {#snippet sortIcon(column: string)}
     {#if sortColumn === column}
@@ -662,7 +672,7 @@
         </svg>
     {:else}
         <svg
-            class="h-3 w-3 shrink-0 opacity-0 group-hover:opacity-50 transition-opacity"
+            class="h-3 w-3 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity"
             viewBox="0 0 12 12"
             fill="currentColor"
         >
@@ -689,9 +699,24 @@
                 </div>
             {/each}
         </div>
-        <!-- Desktop: simple loading -->
-        <div class="hidden md:flex items-center justify-center py-20">
-            <p class="text-muted-foreground">Loading packages...</p>
+        <!-- Desktop: skeleton -->
+        <div class="hidden md:block animate-pulse">
+            <div class="bg-table-header sticky top-0 [box-shadow:0_1px_0_var(--border)] px-4 py-2.5 flex gap-6">
+                <div class="h-4 w-24 rounded bg-muted"></div>
+                <div class="h-4 w-20 rounded bg-muted"></div>
+                <div class="h-4 w-20 rounded bg-muted"></div>
+                <div class="h-4 w-16 rounded bg-muted"></div>
+                <div class="h-4 w-20 rounded bg-muted"></div>
+            </div>
+            {#each Array(8) as _}
+                <div class="border-b px-4 py-3 flex items-center gap-6">
+                    <div class="h-4 w-32 rounded bg-muted"></div>
+                    <div class="h-4 w-20 rounded bg-muted font-mono"></div>
+                    <div class="h-4 w-20 rounded bg-muted"></div>
+                    <div class="h-5 w-16 rounded-full bg-muted"></div>
+                    <div class="h-4 w-24 rounded bg-muted"></div>
+                </div>
+            {/each}
         </div>
     {:else}
         <!-- Mobile: cards -->
@@ -711,27 +736,7 @@
                                 >{pkg.name}</span
                             >
                         </span>
-                        {#if pkg.has_security_update}
-                            <span
-                                class="shrink-0 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border-destructive/20"
-                                >Security Update</span
-                            >
-                        {:else if pkg.available_version}
-                            <span
-                                class="shrink-0 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-warning/10 text-warning border-warning/20"
-                                >Outdated</span
-                            >
-                        {:else if pkg.update_checked}
-                            <span
-                                class="shrink-0 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-success/10 text-success border-success/20"
-                                >Up to date</span
-                            >
-                        {:else}
-                            <span
-                                class="shrink-0 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-border"
-                                >Not checked</span
-                            >
-                        {/if}
+                        <PackageStatusBadge hasSecurityUpdate={pkg.has_security_update} availableVersion={pkg.available_version} updateChecked={pkg.update_checked} />
                     </div>
                     <!-- Body: version + latest + manager -->
                     <div class="px-4 py-2.5 flex items-center gap-2 flex-wrap">
@@ -751,6 +756,8 @@
                                 {/if}
                                 {pkg.available_version}
                             </span>
+                        {:else if pkg.update_checked}
+                            <span class="text-xs font-mono text-muted-foreground">{pkg.version || "—"}</span>
                         {/if}
                         <span
                             class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium {getManagerColor(
@@ -786,12 +793,12 @@
             <table class="w-full min-w-120">
                 <thead>
                     <tr
-                        class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)]"
+                        class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)] whitespace-nowrap"
                     >
                         {#if col("name")}
                             <th
                                 scope="col"
-                                class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground"
+                                class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                             >
                                 <button
                                     type="button"
@@ -807,7 +814,7 @@
                         {#if col("version")}
                             <th
                                 scope="col"
-                                class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground"
+                                class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                             >
                                 <button
                                     type="button"
@@ -825,7 +832,7 @@
                         {#if col("status")}
                             <th
                                 scope="col"
-                                class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
+                                class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
                             >
                                 <button type="button"
                                     onclick={() => handleSort("status")}
@@ -840,7 +847,7 @@
                         {#if col("manager")}
                             <th
                                 scope="col"
-                                class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
+                                class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
                             >
                                 <button type="button"
                                     onclick={() => handleSort("manager")}
@@ -857,7 +864,7 @@
                         {#if col("latest_version")}
                             <th
                                 scope="col"
-                                class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground whitespace-nowrap"
+                                class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground whitespace-nowrap"
                             >
                                 <button type="button"
                                     onclick={() => handleSort("latest_version")}
@@ -874,7 +881,7 @@
                         {#if col("arch")}
                             <th
                                 scope="col"
-                                class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground w-28"
+                                class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground w-28"
                             >
                                 <button type="button"
                                     onclick={() => handleSort("arch")}
@@ -891,14 +898,14 @@
                         {#if col("description")}
                             <th
                                 scope="col"
-                                class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground w-64"
+                                class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground w-64"
                                 >Description</th
                             >
                         {/if}
                         {#if col("first_seen")}
                             <th
                                 scope="col"
-                                class="px-4 py-2 text-right text-sm font-semibold text-muted-foreground w-36"
+                                class="px-4 py-2.5 text-right text-sm font-semibold text-muted-foreground w-36"
                             >
                                 <button type="button"
                                     onclick={() => handleSort("first_seen")}
@@ -915,7 +922,7 @@
                         {#if col("last_seen")}
                             <th
                                 scope="col"
-                                class="px-4 py-2 text-right text-sm font-semibold text-muted-foreground w-36"
+                                class="px-4 py-2.5 text-right text-sm font-semibold text-muted-foreground w-36"
                             >
                                 <button type="button"
                                     onclick={() => handleSort("last_seen")}
@@ -955,27 +962,7 @@
                             {/if}
                             {#if col("status")}
                                 <td class="px-4 py-3 w-px whitespace-nowrap">
-                                    {#if pkg.has_security_update}
-                                        <span
-                                            class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border-destructive/20"
-                                            >Security Update</span
-                                        >
-                                    {:else if pkg.available_version}
-                                        <span
-                                            class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-warning/10 text-warning border-warning/20"
-                                            >Outdated</span
-                                        >
-                                    {:else if pkg.update_checked}
-                                        <span
-                                            class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-success/10 text-success border-success/20"
-                                            >Up to date</span
-                                        >
-                                    {:else}
-                                        <span
-                                            class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-border"
-                                            >Not checked</span
-                                        >
-                                    {/if}
+                                    <PackageStatusBadge hasSecurityUpdate={pkg.has_security_update} availableVersion={pkg.available_version} updateChecked={pkg.update_checked} />
                                 </td>
                             {/if}
                             {#if col("manager")}
@@ -1013,10 +1000,10 @@
                                                 >
                                             {/if}
                                         </span>
+                                    {:else if pkg.update_checked}
+                                        <span class="font-mono text-muted-foreground">{pkg.version || "—"}</span>
                                     {:else}
-                                        <span class="text-muted-foreground/40"
-                                            >—</span
-                                        >
+                                        <span class="text-muted-foreground/40">—</span>
                                     {/if}
                                 </td>
                             {/if}

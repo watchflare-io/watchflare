@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import { getStatusClass, isAgentOutdated } from "$lib/utils";
+    import { isAgentOutdated } from "$lib/utils";
+    import HostStatusBadge from "$lib/components/HostStatusBadge.svelte";
     import type { Host } from "$lib/types";
 
     const {
@@ -42,7 +43,7 @@
         </svg>
     {:else}
         <svg
-            class="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity"
+            class="h-3 w-3 opacity-40 group-hover:opacity-100 transition-opacity"
             viewBox="0 0 12 12"
             fill="currentColor"
         >
@@ -124,19 +125,7 @@
                 </td>
                 <td class="px-4 py-3">
                     <div class="flex items-center gap-2">
-                        <span
-                            class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium {getStatusClass(
-                                host.status,
-                            )}"
-                        >
-                            <span
-                                class="h-1.5 w-1.5 rounded-full {host.status ===
-                                'online'
-                                    ? 'bg-success'
-                                    : 'bg-muted-foreground'}"
-                            ></span>
-                            {host.status}
-                        </span>
+                        <HostStatusBadge status={host.status} />
                         {#if hasIPMismatch(host)}
                             <span
                                 class="inline-flex items-center text-warning"
@@ -173,12 +162,13 @@
                                 </svg>
                                 Reactivated
                                 <button
+                                    type="button"
                                     onclick={(e) => {
                                         e.stopPropagation();
                                         onDismissReactivation(host.id);
                                     }}
                                     class="ml-0.5 text-primary hover:text-primary/80"
-                                    title="Dismiss"
+                                    aria-label="Dismiss reactivation notice"
                                 >
                                     <svg
                                         class="h-3 w-3"
@@ -217,6 +207,7 @@
                 <td class="px-4 py-3 text-right">
                     <div class="flex items-center justify-end gap-3">
                         <button
+                            type="button"
                             onclick={(e) => {
                                 e.stopPropagation();
                                 goto(`/hosts/${host.id}`);
@@ -226,6 +217,7 @@
                             View
                         </button>
                         <button
+                            type="button"
                             onclick={(e) => onDelete(host, e)}
                             class="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors"
                         >

@@ -537,7 +537,7 @@
                 aria-label="Test recipient email address"
                 placeholder="recipient@example.com"
                 bind:value={testRecipient}
-                class="w-64 rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                class="w-full sm:w-64 rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
             <button
                 type="button"

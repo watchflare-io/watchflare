@@ -7,7 +7,7 @@
 
 <div class="mb-6">
 	<h1 class="text-xl sm:text-2xl font-semibold text-foreground mb-3">Settings</h1>
-	<div class="flex gap-1 border-b">
+	<div class="flex gap-1 border-b border-border">
 		{#each settingsItems as item}
 			<a
 				href={item.href}

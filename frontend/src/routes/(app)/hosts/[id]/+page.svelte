@@ -162,7 +162,7 @@
         </div>
     </div>
 {:else if metricsError}
-    <div class="flex items-center justify-center py-20">
+    <div role="alert" class="flex items-center justify-center py-20">
         <p class="text-sm text-destructive">{metricsError}</p>
     </div>
 {:else}

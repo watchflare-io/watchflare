@@ -6,7 +6,9 @@
         sidebarTransitioning,
     } from "$lib/stores/sidebar";
     import { uiStore, alertCount } from "$lib/stores";
-    import { Search } from "lucide-svelte";
+    import { userStore, themeStore } from "$lib/stores/user";
+    import { Search, Sun, Moon, Monitor } from "lucide-svelte";
+    import type { Theme } from "$lib/types";
     import CommandPalette from "./CommandPalette.svelte";
 
     let commandPaletteOpen = $state(false);
@@ -32,6 +34,14 @@
 
     const isMac =
         typeof navigator !== "undefined" && navigator.platform?.includes("Mac");
+
+    const THEME_CYCLE: Theme[] = ["light", "dark", "system"];
+
+    function cycleTheme() {
+        const current = $themeStore;
+        const next = THEME_CYCLE[(THEME_CYCLE.indexOf(current) + 1) % THEME_CYCLE.length];
+        userStore.updateTheme(next);
+    }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -50,8 +60,9 @@
         <div class="flex items-center gap-2 shrink-0">
             <!-- Burger button (mobile only) -->
             <button
+                type="button"
                 onclick={toggleMenu}
-                class="flex h-9.5 w-9.5 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted lg:hidden"
+                class="flex h-9.5 w-9.5 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
                 aria-label="Toggle menu"
             >
                 {#if $mobileMenuOpen}
@@ -87,8 +98,9 @@
 
             <!-- Left sidebar toggle (desktop only) -->
             <button
+                type="button"
                 onclick={toggleLeftSidebar}
-                class="hidden lg:flex h-9.5 w-9.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                class="hidden lg:flex h-9.5 w-9.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label={$sidebarCollapsed
                     ? "Expand sidebar"
                     : "Collapse sidebar"}
@@ -108,24 +120,18 @@
 
         <!-- Search button -->
         <button
+            type="button"
             onclick={() => (commandPaletteOpen = true)}
-            class="flex items-center justify-center sm:justify-start gap-2 w-9.5 h-9.5 sm:w-fit sm:h-full rounded-lg border bg-background px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
+            class="flex items-center justify-center w-9.5 h-9.5 rounded-lg text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:justify-start sm:w-64 sm:gap-2.5 sm:rounded-lg sm:border sm:border-transparent sm:bg-foreground/[4%] sm:px-3 sm:text-sm sm:hover:border-border"
         >
             <Search class="h-4 w-4 shrink-0" />
             <span class="hidden md:inline">Search hosts...</span>
             <span class="hidden sm:inline md:hidden">Search...</span>
-            <div class="ml-auto hidden sm:flex items-center gap-0.5">
-                <kbd
-                    class="rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-                >
-                    {isMac ? "⌘" : "Ctrl"}
-                </kbd>
-                <kbd
-                    class="rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-                >
-                    K
-                </kbd>
-            </div>
+            <kbd
+                class="ml-auto hidden sm:inline-flex items-center font-mono text-[11px] leading-relaxed px-1.5 py-0.5 rounded border bg-background text-muted-foreground"
+            >
+                {isMac ? "⌘K" : "Ctrl K"}
+            </kbd>
         </button>
 
         <!-- Logo (mobile/tablet only, centered absolutely) -->
@@ -135,11 +141,30 @@
             >W</a
         >
 
-        <!-- Alerts -->
-        <div class="flex items-center gap-3 shrink-0 ms-auto h-full">
+        <!-- Right actions -->
+        <div class="flex items-center gap-1 shrink-0 ms-auto h-full">
+            <!-- Theme toggle -->
             <button
+                type="button"
+                onclick={cycleTheme}
+                class="flex h-9.5 w-9.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label="Toggle theme"
+                title={$themeStore === 'light' ? 'Light' : $themeStore === 'dark' ? 'Dark' : 'System'}
+            >
+                {#if $themeStore === 'light'}
+                    <Sun class="h-4 w-4" />
+                {:else if $themeStore === 'dark'}
+                    <Moon class="h-4 w-4" />
+                {:else}
+                    <Monitor class="h-4 w-4" />
+                {/if}
+            </button>
+
+            <!-- Alerts -->
+            <button
+                type="button"
                 onclick={toggleAlerts}
-                class="relative flex h-9.5 w-9.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                class="relative flex h-9.5 w-9.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Toggle alerts"
             >
                 <svg
@@ -162,6 +187,7 @@
                 {/if}
             </button>
         </div>
+
     </div>
 </header>
 

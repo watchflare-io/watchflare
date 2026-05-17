@@ -133,14 +133,15 @@
             Alert history across all hosts
         </p>
     </div>
-    <div class="flex rounded-lg border bg-card p-0.5">
+    <div class="flex items-center gap-1">
         {#each ["all", "active", "resolved"] as IncidentStatusFilter[] as filter}
             <button
+                type="button"
                 onclick={() => handleFilterChange(filter)}
-                class="rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors {statusFilter ===
+                class="rounded-full px-3.5 py-1.5 text-sm font-medium capitalize transition-colors {statusFilter ===
                 filter
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'}"
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'}"
             >
                 {filter}
             </button>
@@ -268,30 +269,37 @@
                         class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)] whitespace-nowrap"
                     >
                         <th
+                            scope="col"
                             class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                             >Status</th
                         >
                         <th
+                            scope="col"
                             class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                             >Host</th
                         >
                         <th
+                            scope="col"
                             class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                             >Metric</th
                         >
                         <th
+                            scope="col"
                             class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                             >Value / Threshold</th
                         >
                         <th
+                            scope="col"
                             class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                             >Started</th
                         >
                         <th
+                            scope="col"
                             class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                             >Duration</th
                         >
                         <th
+                            scope="col"
                             class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                             >Resolved</th
                         >
