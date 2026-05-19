@@ -54,7 +54,11 @@
         if (limit !== DEFAULT_PAGE_SIZE) params.set("limit", String(limit));
         if (offset > 0) params.set("offset", String(offset));
         const qs = params.toString();
-        history.replaceState(history.state, '', qs ? `?${qs}` : location.pathname);
+        history.replaceState(
+            history.state,
+            "",
+            qs ? `?${qs}` : location.pathname,
+        );
     }
 
     function handleFilterChange(filter: IncidentStatusFilter) {
@@ -150,14 +154,17 @@
 </div>
 
 <!-- Table -->
-<div class="rounded-xl border bg-card overflow-hidden mb-6">
+<div class="rounded-xl border bg-card overflow-hidden mb-2">
     {#if initialLoading}
         <div class="animate-pulse">
             <!-- Desktop skeleton -->
             <div class="hidden sm:block">
                 <div class="border-b bg-table-header px-4 py-2.5 flex gap-4">
                     {#each [8, 20, 18, 16, 14, 10, 14] as w}
-                        <div class="h-4 rounded bg-muted" style="width:{w}%"></div>
+                        <div
+                            class="h-4 rounded bg-muted"
+                            style="width:{w}%"
+                        ></div>
                     {/each}
                 </div>
                 {#each Array(8) as _}
@@ -176,7 +183,9 @@
             <div class="sm:hidden p-3 flex flex-col gap-2">
                 {#each Array(5) as _}
                     <div class="rounded-lg border bg-card">
-                        <div class="rounded-t-lg bg-table-header px-4 py-2.5 border-b flex items-center justify-between">
+                        <div
+                            class="rounded-t-lg bg-table-header px-4 py-2.5 border-b flex items-center justify-between"
+                        >
                             <div class="h-4 w-28 rounded bg-muted"></div>
                             <div class="h-5 w-16 rounded-full bg-muted"></div>
                         </div>
@@ -229,9 +238,7 @@
                                     incident.started_at,
                                     timeFormat,
                                 )}
-                                >{formatRelativeTime(
-                                    incident.started_at,
-                                )}</span
+                                >{formatRelativeTime(incident.started_at)}</span
                             >
                             {#if incident.metric_type !== "host_down"}
                                 · <span class="font-mono"
@@ -305,9 +312,15 @@
                         >
                     </tr>
                 </thead>
-                <tbody class="divide-y transition-opacity {tableLoading ? 'opacity-50 pointer-events-none' : ''}">
+                <tbody
+                    class="divide-y transition-opacity {tableLoading
+                        ? 'opacity-50 pointer-events-none'
+                        : ''}"
+                >
                     {#each incidents as incident (incident.id)}
-                        <tr class="hover:bg-muted/20 transition-colors whitespace-nowrap">
+                        <tr
+                            class="hover:bg-muted/20 transition-colors whitespace-nowrap"
+                        >
                             <td class="px-4 py-3">
                                 {#if incident.resolved_at}
                                     <span
@@ -347,14 +360,10 @@
                             >
                                 {formatRelativeTime(incident.started_at)}
                             </td>
-                            <td
-                                class="px-4 py-3 text-sm text-muted-foreground"
-                            >
+                            <td class="px-4 py-3 text-sm text-muted-foreground">
                                 {incidentDuration(incident)}
                             </td>
-                            <td
-                                class="px-4 py-3 text-sm text-muted-foreground"
-                            >
+                            <td class="px-4 py-3 text-sm text-muted-foreground">
                                 {incident.resolved_at
                                     ? formatDateTime(
                                           incident.resolved_at,
@@ -375,7 +384,6 @@
                 </tbody>
             </table>
         </div>
-
     {/if}
 
     <Pagination

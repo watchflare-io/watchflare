@@ -63,7 +63,7 @@
         selectedManagers: string[];
         selectedStatuses: string[];
         sortColumn: string;
-        sortOrder: 'asc' | 'desc';
+        sortOrder: "asc" | "desc";
         offset: number;
         limit: number;
         visibleColumns: string[];
@@ -84,7 +84,9 @@
     let tableLoading = $state(false);
     let error = $state("");
     let searchTerm = $state(cached?.searchTerm ?? "");
-    let selectedManagers: Set<string> = $state(new Set(cached?.selectedManagers ?? []));
+    let selectedManagers: Set<string> = $state(
+        new Set(cached?.selectedManagers ?? []),
+    );
     let allManagerKeys: string[] = $state(cached?.allManagerKeys ?? []);
     const COLUMNS_STORAGE_KEY = "wf_pkg_columns";
     function loadStoredColumns(): ColumnKey[] {
@@ -92,7 +94,9 @@
             const stored = localStorage.getItem(COLUMNS_STORAGE_KEY);
             if (stored) {
                 const parsed = JSON.parse(stored) as string[];
-                const valid = parsed.filter((k) => ALL_COLUMNS.some((c) => c.key === k));
+                const valid = parsed.filter((k) =>
+                    ALL_COLUMNS.some((c) => c.key === k),
+                );
                 if (valid.length > 0) return valid as ColumnKey[];
             }
         } catch {}
@@ -120,7 +124,9 @@
 
     const col = $derived((key: ColumnKey) => visibleColumns.has(key));
 
-    const currentPage = $derived(limit > 0 ? Math.floor(offset / limit) + 1 : 1);
+    const currentPage = $derived(
+        limit > 0 ? Math.floor(offset / limit) + 1 : 1,
+    );
     const isStatusFiltered = $derived(selectedStatuses.size > 0);
     const statusFilterLabel = $derived(
         selectedStatuses.size === 0
@@ -203,8 +209,14 @@
                     limit,
                     offset,
                     q: searchTerm || undefined,
-                    manager: selectedManagers.size > 0 ? [...selectedManagers] : undefined,
-                    status: selectedStatuses.size > 0 ? [...selectedStatuses] : undefined,
+                    manager:
+                        selectedManagers.size > 0
+                            ? [...selectedManagers]
+                            : undefined,
+                    status:
+                        selectedStatuses.size > 0
+                            ? [...selectedStatuses]
+                            : undefined,
                     sort_by: sortColumn,
                     sort_order: sortOrder,
                 }),
@@ -216,14 +228,20 @@
             totalPages = packagesData.pagination?.pages ?? 1;
             stats = statsData;
 
-            if (allManagerKeys.length === 0 && statsData.by_package_manager?.length > 0) {
+            if (
+                allManagerKeys.length === 0 &&
+                statsData.by_package_manager?.length > 0
+            ) {
                 allManagerKeys = statsData.by_package_manager.map(
                     (pm: { package_manager: string }) => pm.package_manager,
                 );
             }
         } catch (err: unknown) {
             if (!silent)
-                error = err instanceof Error ? err.message : "Failed to load packages";
+                error =
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to load packages";
         } finally {
             loading = false;
             tableLoading = false;
@@ -255,7 +273,9 @@
     }
 
     const hasActiveFilters = $derived(
-        searchTerm !== "" || selectedStatuses.size > 0 || selectedManagers.size > 0,
+        searchTerm !== "" ||
+            selectedStatuses.size > 0 ||
+            selectedManagers.size > 0,
     );
 
     function clearAllFilters() {
@@ -271,7 +291,12 @@
         if (next.has(key)) next.delete(key);
         else next.add(key);
         visibleColumns = next;
-        try { localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify([...next])); } catch {}
+        try {
+            localStorage.setItem(
+                COLUMNS_STORAGE_KEY,
+                JSON.stringify([...next]),
+            );
+        } catch {}
         saveToCache();
     }
 
@@ -403,259 +428,263 @@
 
 <!-- Search & Filters -->
 <div class="mb-4 flex items-center gap-2 flex-wrap">
-        <input
-            type="text"
-            bind:value={searchTerm}
-            oninput={handleSearchInput}
-            onkeydown={(e) => {
-                if (e.key === "Enter") {
-                    if (searchDebounce) clearTimeout(searchDebounce);
-                    offset = 0;
-                    loadData();
-                }
-            }}
-            placeholder="Search packages..."
-            class="flex-1 min-w-0 h-9 rounded-lg border bg-card px-3 text-sm text-foreground placeholder:text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-        />
-        <button
-            type="button"
-            onclick={handleForceCollect}
-            disabled={collecting ||
-                awaitingInventory ||
-                ctx.host?.status !== "online"}
-            title={ctx.host?.status !== "online"
-                ? "Host must be online to collect packages"
-                : "Force package collection now"}
-            class="shrink-0 inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
+    <input
+        type="text"
+        bind:value={searchTerm}
+        oninput={handleSearchInput}
+        onkeydown={(e) => {
+            if (e.key === "Enter") {
+                if (searchDebounce) clearTimeout(searchDebounce);
+                offset = 0;
+                loadData();
+            }
+        }}
+        placeholder="Search packages..."
+        class="flex-1 min-w-0 h-9 rounded-lg border bg-card px-3 text-sm text-foreground placeholder:text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+    />
+    <button
+        type="button"
+        onclick={handleForceCollect}
+        disabled={collecting ||
+            awaitingInventory ||
+            ctx.host?.status !== "online"}
+        title={ctx.host?.status !== "online"
+            ? "Host must be online to collect packages"
+            : "Force package collection now"}
+        class="shrink-0 inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
                 bg-card text-muted-foreground hover:bg-muted hover:text-foreground
                 disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+        <RefreshCw
+            class="h-3.5 w-3.5 {collecting || awaitingInventory
+                ? 'animate-spin'
+                : ''}"
+        />
+        <span class="hidden sm:inline">Collect Now</span>
+    </button>
+
+    {#if hasActiveFilters}
+        <button
+            type="button"
+            onclick={clearAllFilters}
+            class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+            title="Clear all filters"
         >
-            <RefreshCw
-                class="h-3.5 w-3.5 {collecting || awaitingInventory
-                    ? 'animate-spin'
-                    : ''}"
-            />
-            <span class="hidden sm:inline">Collect Now</span>
+            <X class="h-3.5 w-3.5 shrink-0" />
+            <span class="hidden sm:inline">Clear filters</span>
         </button>
+    {/if}
 
-        {#if hasActiveFilters}
-            <button
-                type="button"
-                onclick={clearAllFilters}
-                class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-                title="Clear all filters"
-            >
-                <X class="h-3.5 w-3.5 shrink-0" />
-                <span class="hidden sm:inline">Clear filters</span>
-            </button>
-        {/if}
-
-        <!-- Status filter -->
-        <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-                {#snippet child({ props })}
-                    <button
-                        type="button"
-                        {...props}
-                        class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
+    <!-- Status filter -->
+    <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+                <button
+                    type="button"
+                    {...props}
+                    class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
                         {isStatusFiltered
-                            ? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
-                            : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
-                    >
-                        <Tag class="h-3.5 w-3.5 shrink-0" />
-                        <span class="hidden sm:inline">{statusFilterLabel}</span>
-                        {#if isStatusFiltered}
-                            <span
-                                class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-xs font-medium text-primary"
-                            >
-                                {selectedStatuses.size}
-                            </span>
-                        {/if}
-                        <ChevronDown
-                            class="hidden sm:inline-block h-3 w-3 opacity-40"
-                        />
-                    </button>
-                {/snippet}
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content align="start">
-                {#each [{ value: "outdated" as StatusFilter, label: "Outdated" }, { value: "security" as StatusFilter, label: "Security update" }, { value: "up_to_date" as StatusFilter, label: "Up to date" }, { value: "not_checked" as StatusFilter, label: "Not checked" }] as status}
-                    <DropdownMenu.Item
-                        closeOnSelect={false}
-                        onclick={() => toggleStatusFilter(status.value)}
-                    >
-                        <div
-                            class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
-                            {selectedStatuses.has(status.value)
-                                ? 'border-primary bg-primary'
-                                : 'border-muted-foreground/40'}"
-                        >
-                            {#if selectedStatuses.has(status.value)}
-                                <svg
-                                    class="h-3 w-3 text-primary-foreground"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="3"
-                                        d="M5 13l4 4L19 7"
-                                    />
-                                </svg>
-                            {/if}
-                        </div>
-                        <span class="flex-1">{status.label}</span>
-                    </DropdownMenu.Item>
-                {/each}
-                {#if isStatusFiltered}
-                    <DropdownMenu.Separator />
-                    <DropdownMenu.Item
-                        onclick={() => { selectedStatuses = new Set(); offset = 0; loadData(); }}
-                        class="text-muted-foreground"
-                    >
-                        Clear filter
-                    </DropdownMenu.Item>
-                {/if}
-            </DropdownMenu.Content>
-        </DropdownMenu.Root>
-
-        <!-- Package manager filter -->
-        <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-                {#snippet child({ props })}
-                    <button
-                        type="button"
-                        {...props}
-                        class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
-                        {isFiltered
-                            ? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
-                            : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
-                    >
-                        <Filter class="h-3.5 w-3.5" />
-                        <span class="hidden sm:inline">{filterLabel}</span>
-                        {#if isFiltered}
-                            <span
-                                class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-xs font-medium text-primary"
-                            >
-                                {selectedManagers.size}
-                            </span>
-                        {/if}
-                        <ChevronDown
-                            class="hidden sm:inline-block h-3 w-3 opacity-40"
-                        />
-                    </button>
-                {/snippet}
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content align="start">
-                {#each [...(stats?.by_package_manager || [])].sort((a, b) => b.count - a.count) as pm}
-                    <DropdownMenu.Item
-                        closeOnSelect={false}
-                        onclick={() => toggleManager(pm.package_manager)}
-                    >
-                        <div
-                            class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
-                        {selectedManagers.has(pm.package_manager)
-                                ? 'border-primary bg-primary'
-                                : 'border-muted-foreground/40'}"
-                        >
-                            {#if selectedManagers.has(pm.package_manager)}
-                                <svg
-                                    class="h-3 w-3 text-primary-foreground"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="3"
-                                        d="M5 13l4 4L19 7"
-                                    />
-                                </svg>
-                            {/if}
-                        </div>
-                        <span class="flex-1"
-                            >{getManagerLabel(pm.package_manager)}</span
-                        >
+                        ? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
+                        : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
+                >
+                    <Tag class="h-3.5 w-3.5 shrink-0" />
+                    <span class="hidden sm:inline">{statusFilterLabel}</span>
+                    {#if isStatusFiltered}
                         <span
-                            class="ml-4 tabular-nums text-xs text-muted-foreground"
-                            >{pm.count}</span
+                            class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-xs font-medium text-primary"
                         >
-                    </DropdownMenu.Item>
-                {/each}
-                {#if isFiltered}
-                    <DropdownMenu.Separator />
-                    <DropdownMenu.Item
-                        onclick={clearFilter}
-                        class="text-muted-foreground"
+                            {selectedStatuses.size}
+                        </span>
+                    {/if}
+                    <ChevronDown
+                        class="hidden sm:inline-block h-3 w-3 opacity-40"
+                    />
+                </button>
+            {/snippet}
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="start">
+            {#each [{ value: "outdated" as StatusFilter, label: "Outdated" }, { value: "security" as StatusFilter, label: "Security update" }, { value: "up_to_date" as StatusFilter, label: "Up to date" }, { value: "not_checked" as StatusFilter, label: "Not checked" }] as status}
+                <DropdownMenu.Item
+                    closeOnSelect={false}
+                    onclick={() => toggleStatusFilter(status.value)}
+                >
+                    <div
+                        class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
+                            {selectedStatuses.has(status.value)
+                            ? 'border-primary bg-primary'
+                            : 'border-muted-foreground/40'}"
                     >
-                        Clear filter
-                    </DropdownMenu.Item>
-                {/if}
-            </DropdownMenu.Content>
-        </DropdownMenu.Root>
-
-        <!-- Column visibility (desktop only) -->
-        <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-                {#snippet child({ props })}
-                    <button
-                        type="button"
-                        {...props}
-                        class="hidden md:inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
-                        {extraColumnsCount > 0
-                            ? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
-                            : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
-                    >
-                        <Columns3 class="h-3.5 w-3.5" />
-                        <span class="hidden sm:inline">Columns</span>
-                        {#if extraColumnsCount > 0}
-                            <span
-                                class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-xs font-medium text-primary"
+                        {#if selectedStatuses.has(status.value)}
+                            <svg
+                                class="h-3 w-3 text-primary-foreground"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                             >
-                                +{extraColumnsCount}
-                            </span>
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="3"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
                         {/if}
-                        <ChevronDown
-                            class="hidden sm:inline-block h-3 w-3 opacity-40"
-                        />
-                    </button>
-                {/snippet}
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content align="start">
-                {#each ALL_COLUMNS as column}
-                    <DropdownMenu.Item
-                        closeOnSelect={false}
-                        onclick={() => toggleColumn(column.key)}
-                    >
-                        <div
-                            class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
-                        {visibleColumns.has(column.key)
-                                ? 'border-primary bg-primary'
-                                : 'border-muted-foreground/40'}"
+                    </div>
+                    <span class="flex-1">{status.label}</span>
+                </DropdownMenu.Item>
+            {/each}
+            {#if isStatusFiltered}
+                <DropdownMenu.Separator />
+                <DropdownMenu.Item
+                    onclick={() => {
+                        selectedStatuses = new Set();
+                        offset = 0;
+                        loadData();
+                    }}
+                    class="text-muted-foreground"
+                >
+                    Clear filter
+                </DropdownMenu.Item>
+            {/if}
+        </DropdownMenu.Content>
+    </DropdownMenu.Root>
+
+    <!-- Package manager filter -->
+    <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+                <button
+                    type="button"
+                    {...props}
+                    class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
+                        {isFiltered
+                        ? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
+                        : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
+                >
+                    <Filter class="h-3.5 w-3.5" />
+                    <span class="hidden sm:inline">{filterLabel}</span>
+                    {#if isFiltered}
+                        <span
+                            class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-xs font-medium text-primary"
                         >
-                            {#if visibleColumns.has(column.key)}
-                                <svg
-                                    class="h-3 w-3 text-primary-foreground"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="3"
-                                        d="M5 13l4 4L19 7"
-                                    />
-                                </svg>
-                            {/if}
-                        </div>
-                        <span class="flex-1">{column.label}</span>
-                    </DropdownMenu.Item>
-                {/each}
-            </DropdownMenu.Content>
-        </DropdownMenu.Root>
+                            {selectedManagers.size}
+                        </span>
+                    {/if}
+                    <ChevronDown
+                        class="hidden sm:inline-block h-3 w-3 opacity-40"
+                    />
+                </button>
+            {/snippet}
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="start">
+            {#each [...(stats?.by_package_manager || [])].sort((a, b) => b.count - a.count) as pm}
+                <DropdownMenu.Item
+                    closeOnSelect={false}
+                    onclick={() => toggleManager(pm.package_manager)}
+                >
+                    <div
+                        class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
+                        {selectedManagers.has(pm.package_manager)
+                            ? 'border-primary bg-primary'
+                            : 'border-muted-foreground/40'}"
+                    >
+                        {#if selectedManagers.has(pm.package_manager)}
+                            <svg
+                                class="h-3 w-3 text-primary-foreground"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="3"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
+                        {/if}
+                    </div>
+                    <span class="flex-1"
+                        >{getManagerLabel(pm.package_manager)}</span
+                    >
+                    <span
+                        class="ml-4 tabular-nums text-xs text-muted-foreground"
+                        >{pm.count}</span
+                    >
+                </DropdownMenu.Item>
+            {/each}
+            {#if isFiltered}
+                <DropdownMenu.Separator />
+                <DropdownMenu.Item
+                    onclick={clearFilter}
+                    class="text-muted-foreground"
+                >
+                    Clear filter
+                </DropdownMenu.Item>
+            {/if}
+        </DropdownMenu.Content>
+    </DropdownMenu.Root>
+
+    <!-- Column visibility (desktop only) -->
+    <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+                <button
+                    type="button"
+                    {...props}
+                    class="hidden md:inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
+                        {extraColumnsCount > 0
+                        ? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
+                        : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
+                >
+                    <Columns3 class="h-3.5 w-3.5" />
+                    <span class="hidden sm:inline">Columns</span>
+                    {#if extraColumnsCount > 0}
+                        <span
+                            class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-xs font-medium text-primary"
+                        >
+                            +{extraColumnsCount}
+                        </span>
+                    {/if}
+                    <ChevronDown
+                        class="hidden sm:inline-block h-3 w-3 opacity-40"
+                    />
+                </button>
+            {/snippet}
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="start">
+            {#each ALL_COLUMNS as column}
+                <DropdownMenu.Item
+                    closeOnSelect={false}
+                    onclick={() => toggleColumn(column.key)}
+                >
+                    <div
+                        class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
+                        {visibleColumns.has(column.key)
+                            ? 'border-primary bg-primary'
+                            : 'border-muted-foreground/40'}"
+                    >
+                        {#if visibleColumns.has(column.key)}
+                            <svg
+                                class="h-3 w-3 text-primary-foreground"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="3"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
+                        {/if}
+                    </div>
+                    <span class="flex-1">{column.label}</span>
+                </DropdownMenu.Item>
+            {/each}
+        </DropdownMenu.Content>
+    </DropdownMenu.Root>
 </div>
 {#if collectError}
     <p class="mb-2 text-xs text-destructive">{collectError}</p>
@@ -682,13 +711,19 @@
 {/snippet}
 
 <!-- Packages Table/Cards -->
-<div class="rounded-xl border bg-card overflow-hidden mb-6 {tableLoading ? 'opacity-60 pointer-events-none' : ''}">
+<div
+    class="rounded-xl border bg-card overflow-hidden mb-2 {tableLoading
+        ? 'opacity-60 pointer-events-none'
+        : ''}"
+>
     {#if loading}
         <!-- Mobile: skeleton cards -->
         <div class="md:hidden p-3 flex flex-col gap-2">
             {#each Array(6) as _}
                 <div class="rounded-lg border bg-card animate-pulse">
-                    <div class="rounded-t-lg bg-table-header px-4 py-2.5 border-b border-border flex items-center justify-between gap-2">
+                    <div
+                        class="rounded-t-lg bg-table-header px-4 py-2.5 border-b border-border flex items-center justify-between gap-2"
+                    >
                         <div class="h-4 w-32 rounded bg-muted"></div>
                         <div class="h-5 w-16 rounded-full bg-muted"></div>
                     </div>
@@ -701,7 +736,9 @@
         </div>
         <!-- Desktop: skeleton -->
         <div class="hidden md:block animate-pulse">
-            <div class="bg-table-header sticky top-0 [box-shadow:0_1px_0_var(--border)] px-4 py-2.5 flex gap-6">
+            <div
+                class="bg-table-header sticky top-0 [box-shadow:0_1px_0_var(--border)] px-4 py-2.5 flex gap-6"
+            >
                 <div class="h-4 w-24 rounded bg-muted"></div>
                 <div class="h-4 w-20 rounded bg-muted"></div>
                 <div class="h-4 w-20 rounded bg-muted"></div>
@@ -736,7 +773,11 @@
                                 >{pkg.name}</span
                             >
                         </span>
-                        <PackageStatusBadge hasSecurityUpdate={pkg.has_security_update} availableVersion={pkg.available_version} updateChecked={pkg.update_checked} />
+                        <PackageStatusBadge
+                            hasSecurityUpdate={pkg.has_security_update}
+                            availableVersion={pkg.available_version}
+                            updateChecked={pkg.update_checked}
+                        />
                     </div>
                     <!-- Body: version + latest + manager -->
                     <div class="px-4 py-2.5 flex items-center gap-2 flex-wrap">
@@ -757,7 +798,10 @@
                                 {pkg.available_version}
                             </span>
                         {:else if pkg.update_checked}
-                            <span class="text-xs font-mono text-muted-foreground">{pkg.version || "—"}</span>
+                            <span
+                                class="text-xs font-mono text-muted-foreground"
+                                >{pkg.version || "—"}</span
+                            >
                         {/if}
                         <span
                             class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium {getManagerColor(
@@ -834,7 +878,8 @@
                                 scope="col"
                                 class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
                             >
-                                <button type="button"
+                                <button
+                                    type="button"
                                     onclick={() => handleSort("status")}
                                     class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground {sortColumn ===
                                     'status'
@@ -849,7 +894,8 @@
                                 scope="col"
                                 class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
                             >
-                                <button type="button"
+                                <button
+                                    type="button"
                                     onclick={() => handleSort("manager")}
                                     class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground {sortColumn ===
                                     'manager'
@@ -866,7 +912,8 @@
                                 scope="col"
                                 class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground whitespace-nowrap"
                             >
-                                <button type="button"
+                                <button
+                                    type="button"
                                     onclick={() => handleSort("latest_version")}
                                     class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground {sortColumn ===
                                     'latest_version'
@@ -883,7 +930,8 @@
                                 scope="col"
                                 class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground w-28"
                             >
-                                <button type="button"
+                                <button
+                                    type="button"
                                     onclick={() => handleSort("arch")}
                                     class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground {sortColumn ===
                                     'arch'
@@ -907,7 +955,8 @@
                                 scope="col"
                                 class="px-4 py-2.5 text-right text-sm font-semibold text-muted-foreground w-36"
                             >
-                                <button type="button"
+                                <button
+                                    type="button"
                                     onclick={() => handleSort("first_seen")}
                                     class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground ml-auto {sortColumn ===
                                     'first_seen'
@@ -924,7 +973,8 @@
                                 scope="col"
                                 class="px-4 py-2.5 text-right text-sm font-semibold text-muted-foreground w-36"
                             >
-                                <button type="button"
+                                <button
+                                    type="button"
                                     onclick={() => handleSort("last_seen")}
                                     class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground ml-auto {sortColumn ===
                                     'last_seen'
@@ -962,7 +1012,11 @@
                             {/if}
                             {#if col("status")}
                                 <td class="px-4 py-3 w-px whitespace-nowrap">
-                                    <PackageStatusBadge hasSecurityUpdate={pkg.has_security_update} availableVersion={pkg.available_version} updateChecked={pkg.update_checked} />
+                                    <PackageStatusBadge
+                                        hasSecurityUpdate={pkg.has_security_update}
+                                        availableVersion={pkg.available_version}
+                                        updateChecked={pkg.update_checked}
+                                    />
                                 </td>
                             {/if}
                             {#if col("manager")}
@@ -1001,9 +1055,14 @@
                                             {/if}
                                         </span>
                                     {:else if pkg.update_checked}
-                                        <span class="font-mono text-muted-foreground">{pkg.version || "—"}</span>
+                                        <span
+                                            class="font-mono text-muted-foreground"
+                                            >{pkg.version || "—"}</span
+                                        >
                                     {:else}
-                                        <span class="text-muted-foreground/40">—</span>
+                                        <span class="text-muted-foreground/40"
+                                            >—</span
+                                        >
                                     {/if}
                                 </td>
                             {/if}
