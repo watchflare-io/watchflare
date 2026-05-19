@@ -168,15 +168,12 @@
         <div class="h-4 w-64 rounded bg-muted"></div>
     </div>
     <!-- Skeleton: stat cards -->
-    <div class="grid grid-stats gap-5 mb-5 animate-pulse">
+    <div class="grid grid-cols-2 sm:grid-stats gap-3 mb-5 animate-pulse">
         {#each Array(8) as _}
-            <div class="flex flex-col gap-2 rounded-lg border bg-card p-4">
-                <div class="flex items-center justify-between">
-                    <div class="h-4 w-16 rounded bg-muted"></div>
-                    <div class="h-8 w-8 rounded-md bg-muted"></div>
-                </div>
-                <div class="h-8 w-20 rounded bg-muted"></div>
-                <div class="h-3 w-10 rounded bg-muted mt-auto"></div>
+            <div class="flex flex-col gap-2 rounded-lg border bg-card p-3.5">
+                <div class="h-2.5 w-12 rounded bg-muted"></div>
+                <div class="h-7 w-16 rounded bg-muted"></div>
+                <div class="h-2.5 w-20 rounded bg-muted"></div>
             </div>
         {/each}
     </div>
@@ -223,13 +220,13 @@
     <!-- Dropped Metrics Alerts -->
     <DroppedMetricsAlert alerts={droppedAlerts} />
 
-    <!-- Stat cards: auto-fill grid -->
-    <div class="grid grid-stats gap-5 mb-5">
-        <DashboardStats {stats} {trends} timeRange={selectedTimeRange} hasSufficientTrendData={hasSufficientTrendData} aggregatedMetrics={$aggregatedMetrics} {packagesStats} {activeIncidents} />
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 sm:grid-stats gap-5 mb-5">
+        <DashboardStats {stats} {trends} timeRange={selectedTimeRange} hasSufficientTrendData={hasSufficientTrendData} {packagesStats} {activeIncidents} />
     </div>
 
     <!-- Chart cards -->
-    <div class="grid gap-5 mb-8 2xl:grid-cols-2">
+    <div class="grid gap-5 mb-8 xl:grid-cols-2">
         <DashboardCharts
             aggregatedMetrics={$aggregatedMetrics}
             {stats}

@@ -11,8 +11,6 @@
     import type { Theme } from "$lib/types";
     import CommandPalette from "./CommandPalette.svelte";
 
-    let commandPaletteOpen = $state(false);
-
     function toggleMenu() {
         mobileMenuOpen.update((val) => !val);
     }
@@ -25,10 +23,14 @@
         uiStore.toggleRightSidebar();
     }
 
+    function openSearch() {
+        window.dispatchEvent(new CustomEvent("watchflare:open-search"));
+    }
+
     function handleKeydown(e: KeyboardEvent) {
         if ((e.metaKey || e.ctrlKey) && e.key === "k") {
             e.preventDefault();
-            commandPaletteOpen = true;
+            openSearch();
         }
     }
 
@@ -121,12 +123,11 @@
         <!-- Search button -->
         <button
             type="button"
-            onclick={() => (commandPaletteOpen = true)}
-            class="flex items-center justify-center w-9.5 h-9.5 rounded-lg text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:justify-start sm:w-64 sm:gap-2.5 sm:rounded-lg sm:border sm:border-transparent sm:bg-foreground/[4%] sm:px-3 sm:text-sm sm:hover:border-border"
+            onclick={openSearch}
+            class="flex items-center justify-center w-9.5 h-9.5 rounded-lg text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:justify-start sm:w-auto lg:w-64 sm:gap-2.5 sm:rounded-lg sm:border sm:border-transparent sm:bg-foreground/[4%] sm:px-3 sm:text-sm sm:hover:border-border"
         >
             <Search class="h-4 w-4 shrink-0" />
-            <span class="hidden md:inline">Search hosts...</span>
-            <span class="hidden sm:inline md:hidden">Search...</span>
+            <span class="hidden sm:inline">Search...</span>
             <kbd
                 class="ml-auto hidden sm:inline-flex items-center font-mono text-[11px] leading-relaxed px-1.5 py-0.5 rounded border bg-background text-muted-foreground"
             >
@@ -191,4 +192,4 @@
     </div>
 </header>
 
-<CommandPalette bind:open={commandPaletteOpen} />
+<CommandPalette />
