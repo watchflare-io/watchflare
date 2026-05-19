@@ -125,7 +125,73 @@
 
 /* Dashboard stats grid: auto-fill columns with a 190px minimum */
 @utility grid-stats {
-	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+/* Dashboard KPI cards */
+@utility kpi-card {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border);
+	background: var(--card);
+	padding: 12px 14px;
+}
+
+@utility kpi-label {
+	font-size: 10px;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--muted-foreground);
+}
+
+@utility kpi-value {
+	font-size: 1.5rem;
+	font-weight: 600;
+	line-height: 1.1;
+	tabular-nums: tabular;
+	letter-spacing: -0.01em;
+}
+
+@utility kpi-unit {
+	font-size: 0.9rem;
+	font-weight: 400;
+	color: var(--muted-foreground);
+}
+
+@utility kpi-delta {
+	font-size: 11px;
+	margin-top: 2px;
+}
+
+@utility kpi-trend {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	margin-top: auto;
+	padding-top: 4px;
+}
+
+/* Dashboard stat bar item */
+@utility stat-bar-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 10px 16px;
+	font-size: 0.8125rem;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+/* Dashboard stat bar separator */
+@utility stat-bar-sep {
+	width: 1px;
+	align-self: stretch;
+	background-color: var(--border);
+	flex-shrink: 0;
 }
 
 /* Hide scrollbar while keeping scroll functionality */
