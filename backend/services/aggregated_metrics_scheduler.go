@@ -67,7 +67,9 @@ func (s *AggregatedMetricsScheduler) calculateAndBroadcast() {
 			COALESCE(SUM(latest.memory_used_bytes), 0) as memory_used_bytes,
 			COALESCE(SUM(CASE WHEN latest.environment_type != 'container' THEN latest.disk_total_bytes ELSE 0 END), 0) as disk_total_bytes,
 			COALESCE(SUM(CASE WHEN latest.environment_type != 'container' THEN latest.disk_used_bytes ELSE 0 END), 0) as disk_used_bytes,
-			COALESCE(AVG(latest.load_avg1_min), 0) as load_avg_1min
+			COALESCE(AVG(latest.load_avg1_min), 0) as load_avg_1min,
+			COALESCE(AVG(latest.load_avg5_min), 0) as load_avg_5min,
+			COALESCE(AVG(latest.load_avg15_min), 0) as load_avg_15min
 		FROM (
 			SELECT DISTINCT ON (m.host_id)
 				m.cpu_usage_percent,
@@ -76,6 +78,8 @@ func (s *AggregatedMetricsScheduler) calculateAndBroadcast() {
 				m.disk_total_bytes,
 				m.disk_used_bytes,
 				m.load_avg1_min,
+				m.load_avg5_min,
+				m.load_avg15_min,
 				s.environment_type
 			FROM metrics m
 			JOIN hosts s ON m.host_id = s.id
@@ -85,11 +89,12 @@ func (s *AggregatedMetricsScheduler) calculateAndBroadcast() {
 		) latest
 	`
 
-	var cpuUsagePercent, loadAvg1Min float64
+	var cpuUsagePercent, loadAvg1Min, loadAvg5Min, loadAvg15Min float64
 	var memoryTotalBytes, memoryUsedBytes, diskTotalBytes, diskUsedBytes uint64
 
 	if err := database.DB.Raw(query, lookback).Row().Scan(
-		&cpuUsagePercent, &memoryTotalBytes, &memoryUsedBytes, &diskTotalBytes, &diskUsedBytes, &loadAvg1Min,
+		&cpuUsagePercent, &memoryTotalBytes, &memoryUsedBytes, &diskTotalBytes, &diskUsedBytes,
+		&loadAvg1Min, &loadAvg5Min, &loadAvg15Min,
 	); err != nil {
 		slog.Error("failed to calculate aggregated metrics", "error", err)
 		return
@@ -109,5 +114,7 @@ func (s *AggregatedMetricsScheduler) calculateAndBroadcast() {
 		DiskTotalBytes:       diskTotalBytes,
 		DiskUsedBytes:        diskUsedBytes,
 		LoadAvg1Min:          loadAvg1Min,
+		LoadAvg5Min:          loadAvg5Min,
+		LoadAvg15Min:         loadAvg15Min,
 	})
 }

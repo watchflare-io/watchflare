@@ -32,6 +32,8 @@ type AggregatedPoint struct {
 	DiskTotalBytes       uint64    `json:"disk_total_bytes"`
 	DiskUsedBytes        uint64    `json:"disk_used_bytes"`
 	LoadAvg1Min          float64   `json:"load_avg_1min"`
+	LoadAvg5Min          float64   `json:"load_avg_5min"`
+	LoadAvg15Min         float64   `json:"load_avg_15min"`
 }
 
 // aggregateConfig holds the parameters for a continuous-aggregate time range.
@@ -62,7 +64,7 @@ func buildAggregatedQuery(aggregateTable, bucketInterval string) string {
 			SELECT m.bucket + INTERVAL '%s' as ts, m.host_id, m.cpu_usage_percent,
 				   m.memory_total_bytes, m.memory_used_bytes,
 				   m.disk_total_bytes, m.disk_used_bytes,
-				   m.load_avg1_min
+				   m.load_avg1_min, m.load_avg5_min, m.load_avg15_min
 			FROM %s m
 			WHERE m.bucket > $1 AND m.bucket < $2
 
@@ -74,7 +76,9 @@ func buildAggregatedQuery(aggregateTable, bucketInterval string) string {
 				   AVG(m.memory_used_bytes) as memory_used_bytes,
 				   AVG(m.disk_total_bytes) as disk_total_bytes,
 				   AVG(m.disk_used_bytes) as disk_used_bytes,
-				   AVG(m.load_avg1_min) as load_avg1_min
+				   AVG(m.load_avg1_min) as load_avg1_min,
+				   AVG(m.load_avg5_min) as load_avg5_min,
+				   AVG(m.load_avg15_min) as load_avg15_min
 			FROM metrics m
 			WHERE m.timestamp >= $3 AND m.timestamp < $4
 			GROUP BY time_bucket('%s', m.timestamp), m.host_id
@@ -86,7 +90,9 @@ func buildAggregatedQuery(aggregateTable, bucketInterval string) string {
 			COALESCE(SUM(d.memory_used_bytes), 0)::BIGINT as memory_used_bytes,
 			COALESCE(SUM(CASE WHEN s.environment_type != 'container' THEN d.disk_total_bytes ELSE 0 END), 0)::BIGINT as disk_total_bytes,
 			COALESCE(SUM(CASE WHEN s.environment_type != 'container' THEN d.disk_used_bytes ELSE 0 END), 0)::BIGINT as disk_used_bytes,
-			COALESCE(AVG(d.load_avg1_min), 0) as load_avg_1min
+			COALESCE(AVG(d.load_avg1_min), 0) as load_avg_1min,
+			COALESCE(AVG(d.load_avg5_min), 0) as load_avg_5min,
+			COALESCE(AVG(d.load_avg15_min), 0) as load_avg_15min
 		FROM per_host_data d
 		JOIN hosts s ON d.host_id = s.id
 		WHERE s.status NOT IN ('expired', 'pending')
@@ -153,6 +159,8 @@ func GetAggregatedMetrics(timeRange string) ([]AggregatedPoint, error) {
 					   m.disk_total_bytes,
 					   m.disk_used_bytes,
 					   m.load_avg1_min,
+					   m.load_avg5_min,
+					   m.load_avg15_min,
 					   s.environment_type
 				FROM metrics m
 				JOIN hosts s ON m.host_id = s.id
@@ -170,6 +178,8 @@ func GetAggregatedMetrics(timeRange string) ([]AggregatedPoint, error) {
 					COALESCE(AVG(disk_total_bytes), 0) as disk_total_bytes,
 					COALESCE(AVG(disk_used_bytes), 0) as disk_used_bytes,
 					COALESCE(AVG(load_avg1_min), 0) as load_avg1_min,
+					COALESCE(AVG(load_avg5_min), 0) as load_avg5_min,
+					COALESCE(AVG(load_avg15_min), 0) as load_avg15_min,
 					MAX(environment_type) as environment_type
 				FROM time_buckets
 				GROUP BY bucket, host_id
@@ -181,7 +191,9 @@ func GetAggregatedMetrics(timeRange string) ([]AggregatedPoint, error) {
 				COALESCE(SUM(memory_used_bytes), 0)::BIGINT as memory_used_bytes,
 				COALESCE(SUM(CASE WHEN environment_type != 'container' THEN disk_total_bytes ELSE 0 END), 0)::BIGINT as disk_total_bytes,
 				COALESCE(SUM(CASE WHEN environment_type != 'container' THEN disk_used_bytes ELSE 0 END), 0)::BIGINT as disk_used_bytes,
-				COALESCE(AVG(load_avg1_min), 0) as load_avg_1min
+				COALESCE(AVG(load_avg1_min), 0) as load_avg_1min,
+				COALESCE(AVG(load_avg5_min), 0) as load_avg_5min,
+				COALESCE(AVG(load_avg15_min), 0) as load_avg_15min
 			FROM host_aggregates
 			GROUP BY bucket
 			ORDER BY bucket ASC
@@ -220,6 +232,8 @@ func GetAggregatedMetrics(timeRange string) ([]AggregatedPoint, error) {
 			&point.DiskTotalBytes,
 			&point.DiskUsedBytes,
 			&point.LoadAvg1Min,
+			&point.LoadAvg5Min,
+			&point.LoadAvg15Min,
 		); err != nil {
 			slog.Error("failed to scan aggregated metrics", "error", err)
 			return nil, err
