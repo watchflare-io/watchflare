@@ -26,15 +26,15 @@
 	const series = $derived<uPlot.Series[]>([
 		{
 			label: 'Download (RX)',
-			stroke: 'var(--chart-1)',
-			fill: 'var(--chart-1)',
+			stroke: 'var(--chart-7)',
+			fill: 'var(--chart-7)',
 			width: 2,
 			value: (_u: uPlot, v: number | null) => v != null ? formatRate(v, networkUnit) : '—',
 		},
 		{
 			label: 'Upload (TX)',
-			stroke: 'var(--chart-2)',
-			fill: 'var(--chart-2)',
+			stroke: 'var(--chart-8)',
+			fill: 'var(--chart-8)',
 			width: 2,
 			value: (_u: uPlot, v: number | null) => v != null ? formatRate(v, networkUnit) : '—',
 		}

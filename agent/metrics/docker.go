@@ -8,16 +8,53 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
 
 // dockerAPIVersion is the Docker Engine API version used for requests.
-// v1.40 is the minimum supported by modern Docker engines (Docker 19.03+).
-const dockerAPIVersion = "v1.40"
+// v1.44 is the minimum supported by Docker 23.0+ (released January 2023) and
+// required by newer runtimes like Colima. Podman exposes the same API.
+const dockerAPIVersion = "v1.44"
 
-// ContainerMetric represents metrics for a single Docker container
+// containerSocket pairs a socket path with its runtime name.
+type containerSocket struct {
+	path    string
+	runtime string
+}
+
+// knownContainerSockets returns the list of socket paths to probe, in order.
+// Docker is tried first, then Podman. On macOS, Docker Desktop user-level paths
+// are added as fallbacks since /var/run/docker.sock may be a broken symlink.
+func knownContainerSockets() []containerSocket {
+	sockets := []containerSocket{
+		{"/var/run/docker.sock", "docker"},
+		{"/run/podman/podman.sock", "podman"},
+	}
+
+	if runtime.GOOS == "darwin" {
+		if home, err := os.UserHomeDir(); err == nil {
+			// Colima (default profile): most common alternative to Docker Desktop on macOS
+			sockets = append(sockets,
+				containerSocket{filepath.Join(home, ".colima", "default", "docker.sock"), "docker"},
+			)
+			// Docker Desktop 4.x+ on macOS: socket in user home
+			sockets = append(sockets,
+				containerSocket{filepath.Join(home, ".docker", "desktop", "docker.sock"), "docker"},
+				containerSocket{filepath.Join(home, ".docker", "run", "docker.sock"), "docker"},
+			)
+		}
+	}
+
+	return sockets
+}
+
+// ContainerMetric represents metrics for a single container
 type ContainerMetric struct {
+	Runtime              string // "docker", "podman"
 	ContainerID          string
 	ContainerName        string
 	Image                string
@@ -28,7 +65,8 @@ type ContainerMetric struct {
 	NetworkTxBytesPerSec uint64
 }
 
-// dockerStatsResponse matches the Docker API /containers/{id}/stats response
+// dockerStatsResponse matches the Docker Engine API /containers/{id}/stats response.
+// Podman uses the same schema.
 type dockerStatsResponse struct {
 	CPUStats    dockerCPUStats    `json:"cpu_stats"`
 	PreCPUStats dockerCPUStats    `json:"precpu_stats"`
@@ -63,27 +101,59 @@ type dockerContainer struct {
 	State string   `json:"State"`
 }
 
-// dockerClient is a reusable HTTP client for Docker API calls via Unix socket
-var dockerClient = &http.Client{
-	Transport: &http.Transport{
-		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-			return net.Dial("unix", "/var/run/docker.sock")
+// newSocketClient returns an HTTP client that dials the given Unix socket path.
+func newSocketClient(socketPath string) *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
 		},
-	},
-	Timeout: 10 * time.Second,
+		Timeout: 10 * time.Second,
+	}
 }
 
-// CollectContainerMetrics collects metrics for all running Docker containers
+// CollectContainerMetrics collects metrics from all accessible container runtime sockets.
+// It probes each known socket in order. Only one socket per runtime is used to avoid
+// collecting the same containers twice across fallback paths.
 func CollectContainerMetrics(tracker *DeltaTracker) ([]ContainerMetric, error) {
-	// List running containers
-	resp, err := dockerClient.Get("http://localhost/" + dockerAPIVersion + "/containers/json")
+	var allMetrics []ContainerMetric
+	var lastErr error
+	collected := make(map[string]bool) // runtime name → already collected
+
+	for _, sock := range knownContainerSockets() {
+		if collected[sock.runtime] {
+			continue
+		}
+		slog.Debug("probing container socket", "runtime", sock.runtime, "path", sock.path)
+		client := newSocketClient(sock.path)
+		m, err := collectFromSocket(client, sock.runtime, tracker)
+		if err != nil {
+			slog.Debug("container runtime unavailable", "runtime", sock.runtime, "path", sock.path, "error", err)
+			lastErr = err
+			continue
+		}
+		slog.Debug("collected container metrics", "runtime", sock.runtime, "count", len(m))
+		allMetrics = append(allMetrics, m...)
+		collected[sock.runtime] = true
+	}
+
+	if len(allMetrics) == 0 && lastErr != nil {
+		return nil, lastErr
+	}
+	return allMetrics, nil
+}
+
+// collectFromSocket collects metrics for all running containers on a single socket.
+func collectFromSocket(client *http.Client, runtime string, tracker *DeltaTracker) ([]ContainerMetric, error) {
+	resp, err := client.Get("http://localhost/" + dockerAPIVersion + "/containers/json")
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("docker API returned status %d", resp.StatusCode)
+		return nil, fmt.Errorf("%s API returned status %d", runtime, resp.StatusCode)
 	}
 
 	var containers []dockerContainer
@@ -102,9 +172,9 @@ func CollectContainerMetrics(tracker *DeltaTracker) ([]ContainerMetric, error) {
 			continue
 		}
 
-		stats, err := getContainerStats(dockerClient, c.ID)
+		stats, err := getContainerStats(client, c.ID)
 		if err != nil {
-			slog.Warn("failed to get stats for container", "container_id", truncateID(c.ID), "error", err)
+			slog.Warn("failed to get stats for container", "runtime", runtime, "container_id", truncateID(c.ID), "error", err)
 			continue
 		}
 
@@ -135,6 +205,7 @@ func CollectContainerMetrics(tracker *DeltaTracker) ([]ContainerMetric, error) {
 		}
 
 		result = append(result, ContainerMetric{
+			Runtime:              runtime,
 			ContainerID:          truncateID(c.ID),
 			ContainerName:        name,
 			Image:                c.Image,
@@ -166,7 +237,7 @@ func getContainerStats(client *http.Client, containerID string) (*dockerStatsRes
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("docker API returned status %d for container %s", resp.StatusCode, truncateID(containerID))
+		return nil, fmt.Errorf("API returned status %d for container %s", resp.StatusCode, truncateID(containerID))
 	}
 
 	// Limit response size to prevent excessive memory use from unexpectedly large payloads
@@ -183,7 +254,7 @@ func getContainerStats(client *http.Client, containerID string) (*dockerStatsRes
 	return &stats, nil
 }
 
-// computeCPUPercent calculates CPU usage percentage from Docker stats
+// computeCPUPercent calculates CPU usage percentage from Docker/Podman stats
 func computeCPUPercent(stats *dockerStatsResponse) float64 {
 	// Guard against uint64 underflow (e.g. container restart resets counters)
 	if stats.CPUStats.CPUUsage.TotalUsage < stats.PreCPUStats.CPUUsage.TotalUsage ||

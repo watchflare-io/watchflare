@@ -20,17 +20,19 @@ func collectTemperatures() (cpuTemp float64, readings []SensorReading, err error
 		return 0, nil, err
 	}
 
-	// Valid range: 1–120°C (excludes gopsutil macOS stubs returning ~-9200°C)
+	// Valid range: -50–120°C (excludes gopsutil macOS stubs returning ~-9200°C)
+	var cpuFound bool
 	for _, temp := range temps {
-		if temp.Temperature < 1 || temp.Temperature > 120 {
+		if temp.Temperature < -50 || temp.Temperature > 120 {
 			continue
 		}
 		readings = append(readings, SensorReading{
 			Key:                temp.SensorKey,
 			TemperatureCelsius: temp.Temperature,
 		})
-		if cpuTemp == 0 && isCPUSensor(temp.SensorKey) {
+		if !cpuFound && isCPUSensor(temp.SensorKey) {
 			cpuTemp = temp.Temperature
+			cpuFound = true
 		}
 	}
 	return cpuTemp, readings, nil

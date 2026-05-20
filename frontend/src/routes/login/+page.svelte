@@ -41,10 +41,13 @@
             }
             goto("/");
         } catch (err) {
-            error =
-                err.message === "invalid credentials"
-                    ? "Invalid credentials."
-                    : err.message;
+            if (err.message === "invalid credentials") {
+                error = "Invalid credentials.";
+            } else if (err.status === 503) {
+                error = "Service unavailable.";
+            } else {
+                error = "An unexpected error occurred. Please try again.";
+            }
         } finally {
             loading = false;
         }
@@ -92,6 +95,7 @@
                     <input
                         id="email"
                         type="email"
+                        autocomplete="email"
                         bind:value={email}
                         placeholder="admin@watchflare.io"
                         disabled={loading}
@@ -122,6 +126,7 @@
                     <input
                         id="password"
                         type="password"
+                        autocomplete="current-password"
                         bind:value={password}
                         placeholder="••••••••"
                         disabled={loading}
@@ -144,6 +149,7 @@
                 <!-- Error Message -->
                 {#if error}
                     <div
+                        role="alert"
                         class="mb-4 rounded-lg border border-destructive bg-destructive/10 p-3"
                     >
                         <p class="text-sm text-destructive">{error}</p>

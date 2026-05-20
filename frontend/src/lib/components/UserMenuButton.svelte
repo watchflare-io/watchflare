@@ -1,9 +1,7 @@
 <script lang="ts">
     import { authActions } from "$lib/stores";
-    import { userStore, themeStore } from "$lib/stores/user";
-
-    import type { Theme } from "$lib/types";
-    import { Settings, LogOut, Sun, Moon, Monitor, Check } from "lucide-svelte";
+    import { userStore } from "$lib/stores/user";
+    import { Settings, LogOut } from "lucide-svelte";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
 
     const {
@@ -21,19 +19,8 @@
     const initials = $derived(
         displayName ? displayName.substring(0, 2).toUpperCase() : "??",
     );
-    const currentTheme = $derived($themeStore);
-
-    const themeOptions: { value: Theme; label: string; icon: typeof Sun }[] = [
-        { value: "light", label: "Light", icon: Sun },
-        { value: "dark", label: "Dark", icon: Moon },
-        { value: "system", label: "System", icon: Monitor },
-    ];
 
     let open = $state(false);
-
-    async function handleThemeChange(theme: Theme) {
-        await userStore.updateTheme(theme);
-    }
 
     function handleLogout() {
         onAction?.();
@@ -45,8 +32,9 @@
     <DropdownMenu.Trigger>
         {#snippet child({ props })}
             <button
+                type="button"
                 {...props}
-                class="flex w-full items-center rounded-lg text-sm font-medium text-surface-foreground transition-[padding,background-color,color] duration-300 ease-in-out hover:bg-surface-accent {collapsed
+                class="flex w-full items-center rounded-lg text-sm font-medium text-surface-foreground transition-[padding,background-color,color] duration-300 ease-in-out hover:bg-surface-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {collapsed
                     ? 'p-1.75'
                     : 'p-3.25'}"
                 title={displayName || "User menu"}
@@ -77,22 +65,6 @@
             <Settings class="h-4 w-4" />
             Account
         </a>
-
-        <DropdownMenu.Separator />
-
-        <div class="px-3 py-1.5 text-xs font-medium text-muted-foreground">
-            Theme
-        </div>
-        {#each themeOptions as option}
-            {@const Icon = option.icon}
-            <DropdownMenu.Item onclick={() => handleThemeChange(option.value)}>
-                <Icon class="h-4 w-4" />
-                <span class="flex-1">{option.label}</span>
-                {#if currentTheme === option.value}
-                    <Check class="h-4 w-4 text-primary" />
-                {/if}
-            </DropdownMenu.Item>
-        {/each}
 
         <DropdownMenu.Separator />
 

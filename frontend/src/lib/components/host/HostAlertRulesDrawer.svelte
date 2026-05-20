@@ -254,8 +254,9 @@
             {/if}
         </div>
         <button
+            type="button"
             onclick={onClose}
-            class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Close"
         >
             <X class="h-4 w-4" />
@@ -263,7 +264,7 @@
     </div>
 
     <!-- Content -->
-    <div class="flex-1 overflow-y-auto px-6 pb-4">
+    <div class="flex-1 overflow-y-auto p-6">
         {#if !loaded}
             <div class="flex items-center justify-center py-16">
                 <p class="text-sm text-muted-foreground">Loading…</p>
@@ -289,6 +290,7 @@
                             <div class="flex items-center gap-2 shrink-0">
                                 {#if isReallyDifferent(rule)}
                                     <button
+                                        type="button"
                                         onclick={() => handleReset(rule.metric_type)}
                                         disabled={resettingRule === rule.metric_type}
                                         title="Reset to global default"

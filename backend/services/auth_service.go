@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log/slog"
 	"strings"
 	"time"
 	"watchflare/backend/config"
@@ -49,6 +50,9 @@ func Register(email, password, username string) (*models.User, string, error) {
 	return user, token, nil
 }
 
+// ErrServiceUnavailable is returned when the database is unreachable during login.
+var ErrServiceUnavailable = errors.New("service unavailable")
+
 // Login authenticates a user and returns a JWT token.
 func Login(email, password string) (string, error) {
 	var user models.User
@@ -56,7 +60,8 @@ func Login(email, password string) (string, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return "", errors.New("invalid credentials")
 		}
-		return "", err
+		slog.Error("database error during login", "error", err)
+		return "", ErrServiceUnavailable
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {

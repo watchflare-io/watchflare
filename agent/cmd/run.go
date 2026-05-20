@@ -81,11 +81,11 @@ func Run() {
 
 	// Detect environment and create metrics config
 	env := sysinfo.DetectEnvironment()
-	metricsConfig := sysinfo.GetMetricsConfig(env, *cfg.DockerMetrics)
+	metricsConfig := sysinfo.GetMetricsConfig(env, *cfg.ContainerMetrics)
 	metricsConfig.ContainerRuntime = env.ContainerRuntime
 	slog.Info("environment detected", "type", env.String())
-	if *cfg.DockerMetrics {
-		slog.Info("Docker container metrics enabled")
+	if *cfg.ContainerMetrics {
+		slog.Info("container metrics enabled")
 	}
 
 	// Initialize metrics collector (important for macOS CPU metrics)
@@ -182,7 +182,8 @@ func runHeartbeat(ctx context.Context, grpcClient *client.Client, cfg *config.Co
 	for {
 		select {
 		case <-ticker.C:
-			cmds, err := grpcClient.Heartbeat(cfg.AgentID, cfg.AgentKey, AgentVersion)
+			ipv4, ipv6 := sysinfo.GetIPAddresses()
+			cmds, err := grpcClient.SendHeartbeat(cfg.AgentID, cfg.AgentKey, ipv4, ipv6, AgentVersion)
 			if err != nil {
 				slog.Warn("heartbeat failed", "error", errors.FormatError(err, "Heartbeat"))
 			} else {

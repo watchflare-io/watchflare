@@ -99,11 +99,11 @@ type SystemMetrics struct {
 // Package-level delta tracker for rate-based metrics (disk I/O, network)
 var deltaTracker = NewDeltaTracker()
 
-// dockerErrorLogged suppresses repeated Docker error logs after the first failure.
-// Protected by dockerErrorMu.
+// containerErrorLogged suppresses repeated container runtime error logs after the first failure.
+// Protected by containerErrorMu.
 var (
-	dockerErrorLogged bool
-	dockerErrorMu     sync.Mutex
+	containerErrorLogged bool
+	containerErrorMu     sync.Mutex
 )
 
 // Collect gathers system metrics based on environment configuration
@@ -145,6 +145,9 @@ func Collect(config *sysinfo.MetricsConfig) (*SystemMetrics, error) {
 			metrics.MemoryAvailableBytes = memStats.Available
 			if memStats.Total >= memStats.Available {
 				metrics.MemoryUsedBytes = memStats.Total - memStats.Available
+			} else {
+				slog.Debug("memory available exceeds total, reporting used as 0",
+					"total", memStats.Total, "available", memStats.Available)
 			}
 			metrics.MemoryBuffersBytes = memStats.Buffers
 			metrics.MemoryCachedBytes = memStats.Cached
@@ -220,22 +223,23 @@ func Collect(config *sysinfo.MetricsConfig) (*SystemMetrics, error) {
 		}
 	}
 
-	// Docker container metrics
-	if config.CollectDockerCPU || config.CollectDockerMemory || config.CollectDockerNetwork {
+	// Container runtime metrics (Docker, Podman, etc.)
+	if config.CollectRuntimeCPU || config.CollectRuntimeMemory || config.CollectRuntimeNetwork {
 		containerMetrics, containerErr := CollectContainerMetrics(deltaTracker)
 		func() {
-			dockerErrorMu.Lock()
-			defer dockerErrorMu.Unlock()
+			containerErrorMu.Lock()
+			defer containerErrorMu.Unlock()
 			if containerErr != nil {
-				if !dockerErrorLogged {
+				if !containerErrorLogged {
 					slog.Warn("failed to collect container metrics", "error", containerErr)
-					dockerErrorLogged = true
+					containerErrorLogged = true
 				}
 			} else if containerMetrics != nil {
-				if dockerErrorLogged {
+				if containerErrorLogged {
 					slog.Info("container metrics collection recovered after previous error")
-					dockerErrorLogged = false
+					containerErrorLogged = false
 				}
+				slog.Debug("container metrics collected", "count", len(containerMetrics))
 				metrics.ContainerMetrics = containerMetrics
 			}
 		}()

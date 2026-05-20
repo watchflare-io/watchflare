@@ -52,33 +52,49 @@ func (s *AggregatedMetricsScheduler) Stop() {
 }
 
 func (s *AggregatedMetricsScheduler) calculateAndBroadcast() {
-	// Compute the bucket that just completed.
-	// Example: if now is 18:34:05 and interval is 30s,
-	// bucket = 18:34:00, window = (18:33:30, 18:34:00].
 	now := time.Now()
 	bucketTime := now.Truncate(s.interval)
-	endTime := bucketTime
-	startTime := bucketTime.Add(-s.interval)
+
+	// Look back 3× the interval to tolerate agent timing drift.
+	// DISTINCT ON ensures we only take the latest metric per host,
+	// so there is no double-counting even with a wider window.
+	lookback := now.Add(-3 * s.interval)
 
 	query := `
 		SELECT
-			COALESCE(AVG(m.cpu_usage_percent), 0) as cpu_usage_percent,
-			COALESCE(SUM(m.memory_total_bytes), 0) as memory_total_bytes,
-			COALESCE(SUM(m.memory_used_bytes), 0) as memory_used_bytes,
-			COALESCE(SUM(CASE WHEN s.environment_type != 'container' THEN m.disk_total_bytes ELSE 0 END), 0) as disk_total_bytes,
-			COALESCE(SUM(CASE WHEN s.environment_type != 'container' THEN m.disk_used_bytes ELSE 0 END), 0) as disk_used_bytes
-		FROM metrics m
-		JOIN hosts s ON m.host_id = s.id
-		WHERE s.status = 'online'
-		  AND m.timestamp > $1
-		  AND m.timestamp <= $2
+			COALESCE(AVG(latest.cpu_usage_percent), 0) as cpu_usage_percent,
+			COALESCE(SUM(latest.memory_total_bytes), 0) as memory_total_bytes,
+			COALESCE(SUM(latest.memory_used_bytes), 0) as memory_used_bytes,
+			COALESCE(SUM(CASE WHEN latest.environment_type != 'container' THEN latest.disk_total_bytes ELSE 0 END), 0) as disk_total_bytes,
+			COALESCE(SUM(CASE WHEN latest.environment_type != 'container' THEN latest.disk_used_bytes ELSE 0 END), 0) as disk_used_bytes,
+			COALESCE(AVG(latest.load_avg1_min), 0) as load_avg_1min,
+			COALESCE(AVG(latest.load_avg5_min), 0) as load_avg_5min,
+			COALESCE(AVG(latest.load_avg15_min), 0) as load_avg_15min
+		FROM (
+			SELECT DISTINCT ON (m.host_id)
+				m.cpu_usage_percent,
+				m.memory_total_bytes,
+				m.memory_used_bytes,
+				m.disk_total_bytes,
+				m.disk_used_bytes,
+				m.load_avg1_min,
+				m.load_avg5_min,
+				m.load_avg15_min,
+				s.environment_type
+			FROM metrics m
+			JOIN hosts s ON m.host_id = s.id
+			WHERE s.status = 'online'
+			  AND m.timestamp > $1
+			ORDER BY m.host_id, m.timestamp DESC
+		) latest
 	`
 
-	var cpuUsagePercent float64
+	var cpuUsagePercent, loadAvg1Min, loadAvg5Min, loadAvg15Min float64
 	var memoryTotalBytes, memoryUsedBytes, diskTotalBytes, diskUsedBytes uint64
 
-	if err := database.DB.Raw(query, startTime, endTime).Row().Scan(
+	if err := database.DB.Raw(query, lookback).Row().Scan(
 		&cpuUsagePercent, &memoryTotalBytes, &memoryUsedBytes, &diskTotalBytes, &diskUsedBytes,
+		&loadAvg1Min, &loadAvg5Min, &loadAvg15Min,
 	); err != nil {
 		slog.Error("failed to calculate aggregated metrics", "error", err)
 		return
@@ -97,5 +113,8 @@ func (s *AggregatedMetricsScheduler) calculateAndBroadcast() {
 		MemoryAvailableBytes: memoryTotalBytes - memoryUsedBytes,
 		DiskTotalBytes:       diskTotalBytes,
 		DiskUsedBytes:        diskUsedBytes,
+		LoadAvg1Min:          loadAvg1Min,
+		LoadAvg5Min:          loadAvg5Min,
+		LoadAvg15Min:         loadAvg15Min,
 	})
 }

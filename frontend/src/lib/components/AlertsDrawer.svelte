@@ -69,6 +69,7 @@
                 </span>
             {/if}
             <button
+                type="button"
                 onclick={handleRefresh}
                 disabled={refreshing}
                 class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40"
@@ -77,6 +78,7 @@
                 <RefreshCw class="h-3.5 w-3.5 {refreshing ? 'animate-spin' : ''}" />
             </button>
             <button
+                type="button"
                 onclick={onClose}
                 class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 aria-label="Close alerts"

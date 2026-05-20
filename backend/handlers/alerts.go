@@ -182,6 +182,73 @@ func GetActiveIncidents(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"incidents": items})
 }
 
+// GlobalIncidentItem is the response shape for GET /settings/alerts/incidents.
+type GlobalIncidentItem struct {
+	ID             string     `json:"id"`
+	HostID         string     `json:"host_id"`
+	HostName       string     `json:"host_name"`
+	MetricType     string     `json:"metric_type"`
+	StartedAt      time.Time  `json:"started_at"`
+	ResolvedAt     *time.Time `json:"resolved_at"`
+	ThresholdValue float64    `json:"threshold_value"`
+	CurrentValue   float64    `json:"current_value"`
+}
+
+// GetAllIncidents returns all alert incidents across all hosts (paginated).
+// Query params: status=all|active|resolved (default: all), limit (default: 20, max: 100), offset (default: 0).
+func GetAllIncidents(c *gin.Context) {
+	limitStr := c.DefaultQuery("limit", "20")
+	offsetStr := c.DefaultQuery("offset", "0")
+	statusFilter := c.DefaultQuery("status", "all")
+
+	limit, _ := strconv.Atoi(limitStr)
+	offset, _ := strconv.Atoi(offsetStr)
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	query := database.DB.Table("alert_incidents").
+		Joins("JOIN hosts ON hosts.id = alert_incidents.host_id")
+	switch statusFilter {
+	case "active":
+		query = query.Where("alert_incidents.resolved_at IS NULL")
+	case "resolved":
+		query = query.Where("alert_incidents.resolved_at IS NOT NULL")
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		slog.Error("failed to count incidents", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get incidents"})
+		return
+	}
+
+	var items []GlobalIncidentItem
+	err := query.
+		Select("alert_incidents.id, alert_incidents.host_id, hosts.display_name AS host_name, alert_incidents.metric_type, alert_incidents.started_at, alert_incidents.resolved_at, alert_incidents.threshold_value, alert_incidents.current_value").
+		Order("alert_incidents.started_at DESC").
+		Limit(limit).Offset(offset).
+		Scan(&items).Error
+	if err != nil {
+		slog.Error("failed to get incidents", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get incidents"})
+		return
+	}
+	if items == nil {
+		items = []GlobalIncidentItem{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"incidents":   items,
+		"total_count": total,
+		"limit":       limit,
+		"offset":      offset,
+	})
+}
+
 // HostIncidentItem is the response shape for GET /hosts/:id/incidents.
 type HostIncidentItem struct {
 	ID             string     `json:"id"`

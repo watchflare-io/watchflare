@@ -1,0 +1,191 @@
+/* ============================================================
+   DESIGN TOKENS — Watchflare
+   ============================================================ */
+
+/* --- Typography --- */
+:root {
+	--font-sans: "InterVariable", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	--font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+}
+
+/* --- Shadows --- */
+:root {
+	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+	--shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+	--shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10), 0 2px 6px rgba(0, 0, 0, 0.06);
+	--shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.14), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================================
+   LIGHT THEME (default)
+   ============================================================ */
+
+:root {
+	--radius: 0.5rem;
+
+	/* Base */
+	--background: oklch(0.99 0 0);         /* Light gray */
+	--foreground: oklch(0.2 0.01 120);     /* Near-black with green hint */
+
+	/* Card */
+	--card: oklch(1 0 0);                  /* Pure white on cream bg */
+	--card-foreground: oklch(0.2 0.01 120);
+
+	/* Popover */
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.2 0.01 120);
+
+	/* Primary — Military Green */
+	--primary: oklch(0.35 0.08 145);
+	--primary-foreground: oklch(1 0 0);
+
+	/* Secondary */
+	--secondary: oklch(0.96 0.005 145);
+	--secondary-foreground: oklch(0.2 0.01 120);
+
+	/* Muted */
+	--muted: oklch(0.95 0.003 145);
+	--muted-foreground: oklch(0.5 0.01 145);
+
+	/* Accent */
+	--accent: oklch(0.94 0.02 145);
+	--accent-foreground: oklch(0.2 0.01 120);
+
+	/* Destructive */
+	--destructive: oklch(0.55 0.22 27);
+	--destructive-foreground: oklch(1 0 0);
+
+	/* Borders & Input */
+	--border: oklch(0.9 0.005 145);
+	--input: oklch(0.9 0.005 145);
+	--ring: oklch(0.35 0.08 145);
+
+	/* Status */
+	--success: oklch(0.5 0.12 145);
+	--warning: oklch(0.65 0.15 60);
+	--danger: oklch(0.55 0.22 27);
+
+	/* Surface (sidebar, header, elevated elements) */
+	--surface: oklch(1 0 0);
+	--surface-foreground: oklch(0.2 0.01 120);
+	--surface-primary: oklch(0.35 0.08 145);
+	--surface-primary-foreground: oklch(1 0 0);
+	--surface-accent: oklch(0.96 0.005 145);
+	--surface-accent-foreground: oklch(0.2 0.01 120);
+
+	/* Table */
+	--table-header: oklch(0.979 0.001 145);
+	--table-header-active: oklch(0.945 0.005 145);
+
+	/* Chart — dynamic lightness for programmatically generated series */
+	--chart-dyn-l: 0.56;
+
+	/* Chart Colors — 20 vivid, well-spaced hues */
+	--chart-1:  oklch(0.42 0.22 252);  /* Blue            — CPU */
+	--chart-2:  oklch(0.74 0.22 90);   /* Yellow          — Memory */
+	--chart-3:  oklch(0.52 0.22 210);  /* Cornflower blue — Disk */
+	--chart-4:  oklch(0.48 0.24 306);  /* Purple          — Load Avg 1min */
+	--chart-5:  oklch(0.53 0.22 16);   /* Red */
+	--chart-6:  oklch(0.56 0.22 182);  /* Teal            — Load Avg 15min */
+	--chart-7:  oklch(0.53 0.26 262);  /* Cobalt          — Network RX */
+	--chart-8:  oklch(0.55 0.26 332);  /* Pink            — Network TX */
+	--chart-9:  oklch(0.56 0.24 106);  /* Lime            — DiskIO Read */
+	--chart-10: oklch(0.52 0.22 232);  /* Sky blue        — DiskIO Write */
+	--chart-11: oklch(0.6  0.24 32);   /* Orange */
+	--chart-12: oklch(0.62 0.22 66);   /* Amber */
+	--chart-13: oklch(0.53 0.28 318);  /* Magenta */
+	--chart-14: oklch(0.56 0.2  216);  /* Periwinkle */
+	--chart-15: oklch(0.58 0.22 142);  /* Sage green */
+	--chart-16: oklch(0.56 0.26 20);   /* Vivid red */
+	--chart-17: oklch(0.6  0.26 280);  /* Indigo          — Swap */
+	--chart-18: oklch(0.6  0.24 120);  /* Spring green */
+	--chart-19: oklch(0.62 0.24 78);   /* Gold            — Load Avg 5min */
+	--chart-20: oklch(0.58 0.22 196);  /* Cyan */
+}
+
+/* ============================================================
+   DARK THEME
+   Hierarchy (L axis, chroma 0.012, hue 145):
+   0.20 bg → 0.24 card → 0.27 popover/hover → 0.33 border
+   ============================================================ */
+
+.dark {
+	/* Base */
+	--background: oklch(0.20 0.012 145);
+	--foreground: oklch(0.92 0.01  145);
+
+	/* Card */
+	--card: oklch(0.24 0.012 145);
+	--card-foreground: oklch(0.92 0.01 145);
+
+	/* Popover */
+	--popover: oklch(0.27 0.012 145);
+	--popover-foreground: oklch(0.92 0.01 145);
+
+	/* Primary — visible green on dark bg */
+	--primary: oklch(0.60 0.15 145);
+	--primary-foreground: oklch(0.98 0.005 145);
+
+	/* Secondary */
+	--secondary: oklch(0.27 0.012 145);
+	--secondary-foreground: oklch(0.92 0.01 145);
+
+	/* Muted */
+	--muted: oklch(0.24 0.012 145);
+	--muted-foreground: oklch(0.63 0.01 145);
+
+	/* Accent */
+	--accent: oklch(0.27 0.012 145);
+	--accent-foreground: oklch(0.92 0.01 145);
+
+	/* Destructive */
+	--destructive: oklch(0.65 0.22 27);
+	--destructive-foreground: oklch(0.98 0.005 145);
+
+	/* Borders & Input */
+	--border: oklch(0.33 0.012 145);
+	--input: oklch(0.33 0.012 145);
+	--ring: oklch(0.60 0.15 145);
+
+	/* Status */
+	--success: oklch(0.65 0.14 145);
+	--warning: oklch(0.75 0.15 60);
+	--danger: oklch(0.65 0.22 27);
+
+	/* Surface (sidebar, header, elevated elements) */
+	--surface: oklch(0.22 0.012 145);
+	--surface-foreground: oklch(0.92 0.01 145);
+	--surface-primary: oklch(0.60 0.15 145);
+	--surface-primary-foreground: oklch(0.98 0.005 145);
+	--surface-accent: oklch(0.27 0.012 145);
+	--surface-accent-foreground: oklch(0.92 0.01 145);
+
+	/* Table */
+	--table-header: oklch(0.22 0.012 145);
+	--table-header-active: oklch(0.28 0.012 145);
+
+	/* Chart — dynamic lightness */
+	--chart-dyn-l: 0.74;
+
+	/* Chart Colors — lighter variants for dark bg */
+	--chart-1:  oklch(0.65 0.24 252);  /* Blue            — CPU */
+	--chart-2:  oklch(0.88 0.22 90);   /* Yellow          — Memory */
+	--chart-3:  oklch(0.76 0.22 210);  /* Cornflower blue — Disk */
+	--chart-4:  oklch(0.66 0.26 306);  /* Purple          — Load Avg 1min */
+	--chart-5:  oklch(0.70 0.24 16);   /* Red */
+	--chart-6:  oklch(0.78 0.22 182);  /* Teal            — Load Avg 15min */
+	--chart-7:  oklch(0.74 0.26 262);  /* Cobalt          — Network RX */
+	--chart-8:  oklch(0.78 0.26 332);  /* Pink            — Network TX */
+	--chart-9:  oklch(0.80 0.22 106);  /* Lime            — DiskIO Read */
+	--chart-10: oklch(0.76 0.24 232);  /* Sky blue        — DiskIO Write */
+	--chart-11: oklch(0.80 0.22 32);   /* Orange */
+	--chart-12: oklch(0.84 0.22 66);   /* Amber */
+	--chart-13: oklch(0.70 0.28 318);  /* Magenta */
+	--chart-14: oklch(0.82 0.20 216);  /* Periwinkle */
+	--chart-15: oklch(0.82 0.22 142);  /* Sage green */
+	--chart-16: oklch(0.82 0.26 20);   /* Vivid red-orange */
+	--chart-17: oklch(0.70 0.28 280);  /* Indigo          — Swap */
+	--chart-18: oklch(0.86 0.24 120);  /* Spring green */
+	--chart-19: oklch(0.86 0.24 78);   /* Gold            — Load Avg 5min */
+	--chart-20: oklch(0.84 0.22 196);  /* Cyan */
+}

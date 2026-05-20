@@ -22,10 +22,8 @@ func Install() {
 		fmt.Println()
 		fmt.Println("  brew tap watchflare-io/watchflare")
 		fmt.Println("  brew install watchflare-agent")
-		fmt.Println("  brew services start watchflare-agent")
-		fmt.Println()
-		fmt.Println("After installation, register the agent:")
 		fmt.Println("  watchflare-agent register --token=YOUR_TOKEN --host=YOUR_HOST")
+		fmt.Println("  brew services start watchflare-agent")
 		return
 	}
 
@@ -40,7 +38,7 @@ func Install() {
 	fmt.Println("  → Running as root")
 
 	// Parse command line arguments (supports both --flag=value and --flag value)
-	token, host, port := parseRegisterArgs(os.Args[2:])
+	token, host, port, containers := parseRegisterArgs(os.Args[2:])
 
 	svcMgr, err := install.GetServiceManager()
 	if err != nil {
@@ -63,6 +61,12 @@ func Install() {
 	if err := install.CreateUser(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
+	}
+	if containers {
+		if err := install.AddToDockerGroup(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
+			fmt.Println("  → Container metrics will not work until the docker group is set up")
+		}
 	}
 
 	fmt.Println("\n[3/7] Creating directories...")
@@ -112,7 +116,7 @@ func Install() {
 			port = "50051"
 		}
 
-		reactivated, err := runRegistration(token, host, port)
+		reactivated, err := runRegistration(token, host, port, containers)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: registration failed: %v\n", err)
 			os.Exit(1)

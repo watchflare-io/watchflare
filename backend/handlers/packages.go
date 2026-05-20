@@ -294,6 +294,7 @@ type globalPackage struct {
 	PackageManager    string `json:"package_manager"`
 	HostCount         int64  `json:"host_count"`
 	AvailableVersion  string `json:"available_version"`
+	CurrentVersion    string `json:"current_version"`
 	HasSecurityUpdate bool   `json:"has_security_update"`
 	UpdateChecked     bool   `json:"update_checked"`
 }
@@ -397,13 +398,23 @@ func ListAllPackages(c *gin.Context) {
 		return
 	}
 
-	// Hosts with at least one outdated or security package — unfiltered
+	// Hosts with at least one outdated package — unfiltered
 	var outdatedHostsCount int64
 	if err := database.DB.Model(&models.Package{}).
 		Distinct("host_id").
 		Where("available_version != '' OR has_security_update = true").
 		Count(&outdatedHostsCount).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to count outdated hosts"})
+		return
+	}
+
+	// Hosts with at least one security update — unfiltered
+	var securityHostsCount int64
+	if err := database.DB.Model(&models.Package{}).
+		Distinct("host_id").
+		Where("has_security_update = true").
+		Count(&securityHostsCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to count security hosts"})
 		return
 	}
 
@@ -442,6 +453,7 @@ func ListAllPackages(c *gin.Context) {
 			package_manager,
 			COUNT(DISTINCT host_id) AS host_count,
 			MAX(available_version) AS available_version,
+			MAX(CASE WHEN update_checked AND available_version = '' THEN version END) AS current_version,
 			BOOL_OR(has_security_update) AS has_security_update,
 			BOOL_AND(update_checked) AS update_checked
 		FROM packages
@@ -466,6 +478,7 @@ func ListAllPackages(c *gin.Context) {
 		"outdated_count":       stats.OutdatedCount,
 		"security_count":       stats.SecurityCount,
 		"outdated_hosts_count": outdatedHostsCount,
+		"security_hosts_count": securityHostsCount,
 		"available_managers":   availableManagers,
 	})
 }

@@ -207,6 +207,7 @@ func setupRouter() *gin.Engine {
 		settingsGroup.GET("/alerts", handlers.GetAlertRules)
 		settingsGroup.PUT("/alerts", handlers.UpdateAlertRules)
 		settingsGroup.GET("/alerts/active", handlers.GetActiveIncidents)
+		settingsGroup.GET("/alerts/incidents", handlers.GetAllIncidents)
 	}
 
 	// Agent info routes (protected)

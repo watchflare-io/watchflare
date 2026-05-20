@@ -175,7 +175,7 @@
         ssePageCallbacks.forEach((cb) => cb(event));
         if (event.type === "host_update") {
             const update = event.data as HostUpdateEvent;
-            if (host && update.id === host.id) {
+            if (host) {
                 host = {
                     ...host,
                     status: update.status,
@@ -190,14 +190,12 @@
             }
         }
         if (event.type === "metrics_update") {
-            const metric = event.data as MetricsUpdateEvent;
-            if (host && metric.host_id === host.id) {
-                latestMetric = metric;
+            if (host) {
+                latestMetric = event.data as MetricsUpdateEvent;
             }
         }
         if (event.type === "package_inventory_update") {
-            const update = event.data as { host_id: string };
-            if (host && update.host_id === host.id) {
+            if (host) {
                 packageInventorySignal++;
             }
         }
@@ -489,6 +487,7 @@
                 </p>
                 <div class="flex items-center gap-2 shrink-0">
                     <button
+                        type="button"
                         onclick={() => {
                             handleCopy(regeneratedToken);
                             copiedToken = true;
@@ -506,6 +505,7 @@
                               : "Copy Token"}
                     </button>
                     <button
+                        type="button"
                         onclick={() => {
                             regeneratedToken = "";
                         }}
@@ -650,6 +650,7 @@
     </div>
     <div class="flex gap-3 justify-end">
         <button
+            type="button"
             onclick={() => {
                 showRename = false;
                 newHostName = "";
@@ -659,6 +660,7 @@
             Cancel
         </button>
         <button
+            type="button"
             onclick={handleRename}
             disabled={newHostName.length < 2}
             class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
@@ -688,12 +690,14 @@
     </div>
     <div class="flex gap-3 justify-end">
         <button
+            type="button"
             onclick={closeChangeIPModal}
             class="rounded-lg border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
         >
             Cancel
         </button>
         <button
+            type="button"
             onclick={handleChangeIP}
             disabled={!newIP.trim()}
             class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"

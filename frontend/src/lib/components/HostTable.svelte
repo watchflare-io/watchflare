@@ -216,7 +216,7 @@
         </svg>
     {:else}
         <svg
-            class="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity"
+            class="h-3 w-3 opacity-40 group-hover:opacity-100 transition-opacity"
             viewBox="0 0 12 12"
             fill="currentColor"
         >
@@ -338,6 +338,7 @@
                                     <DropdownMenu.Trigger>
                                         {#snippet child({ props })}
                                             <button
+                                                type="button"
                                                 {...props}
                                                 class="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-table-header-active hover:text-foreground"
                                                 title="Host actions"
@@ -530,11 +531,11 @@
             </colgroup>
             <thead>
                 <tr
-                    class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)]"
+                    class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)] whitespace-nowrap"
                 >
                     <th
                         scope="col"
-                        class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground"
+                        class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                     >
                         <button
                             type="button"
@@ -549,7 +550,7 @@
                     </th>
                     <th
                         scope="col"
-                        class="px-4 py-2 text-center text-sm font-semibold text-muted-foreground"
+                        class="px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground"
                     >
                         <button
                             type="button"
@@ -564,7 +565,7 @@
                     </th>
                     <th
                         scope="col"
-                        class="px-4 py-2 text-center text-sm font-semibold text-muted-foreground"
+                        class="px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground"
                     >
                         <button
                             type="button"
@@ -579,7 +580,7 @@
                     </th>
                     <th
                         scope="col"
-                        class="px-4 py-2 text-center text-sm font-semibold text-muted-foreground"
+                        class="px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground"
                     >
                         <button
                             type="button"
@@ -594,7 +595,7 @@
                     </th>
                     <th
                         scope="col"
-                        class="px-4 py-2 text-center text-sm font-semibold text-muted-foreground"
+                        class="px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground"
                     >
                         <button
                             type="button"
@@ -609,7 +610,7 @@
                     </th>
                     <th
                         scope="col"
-                        class="px-4 py-2 text-center text-sm font-semibold text-muted-foreground"
+                        class="px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground"
                     >
                         <button
                             type="button"
@@ -624,7 +625,7 @@
                     </th>
                     <th
                         scope="col"
-                        class="px-4 py-2 text-center text-sm font-semibold text-muted-foreground"
+                        class="px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground"
                     >
                         <button
                             type="button"
@@ -639,19 +640,19 @@
                     </th>
                     <th
                         scope="col"
-                        class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground whitespace-nowrap"
+                        class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground whitespace-nowrap"
                     >
                         Agent
                     </th>
                     <th
                         scope="col"
-                        class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground whitespace-nowrap"
+                        class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground whitespace-nowrap"
                     >
                         Packages
                     </th>
                     <th
                         scope="col"
-                        class="px-4 py-2 text-center text-sm font-semibold text-muted-foreground"
+                        class="px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground"
                     >
                     </th>
                 </tr>
@@ -865,6 +866,7 @@
                                 <DropdownMenu.Trigger>
                                     {#snippet child({ props })}
                                         <button
+                                            type="button"
                                             {...props}
                                             class="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-table-header-active hover:text-foreground"
                                             title="Host actions"

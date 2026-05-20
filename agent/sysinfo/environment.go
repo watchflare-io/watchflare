@@ -25,13 +25,13 @@ const (
 
 // Environment holds information about the runtime environment
 type Environment struct {
-	Type              EnvironmentType
-	IsPhysical        bool
-	IsVM              bool
-	IsContainer       bool
-	HasDockerRunning  bool
-	ContainerRuntime  string // "docker", "lxc", "podman", etc.
-	Hypervisor        string // "kvm", "vmware", "virtualbox", "hyperv", "xen", etc.
+	Type                 EnvironmentType
+	IsPhysical           bool
+	IsVM                 bool
+	IsContainer          bool
+	HasContainerRuntime  bool
+	ContainerRuntime     string // "docker", "lxc", "podman", etc.
+	Hypervisor           string // "kvm", "vmware", "virtualbox", "hyperv", "xen", etc.
 }
 
 // DetectEnvironment detects the type of environment the agent is running in
@@ -52,8 +52,8 @@ func DetectEnvironment() *Environment {
 		}
 	}
 
-	// 3. Check if Docker is running (for VM detection)
-	env.HasDockerRunning = isDockerRunning()
+	// 3. Check if a container runtime is available on this host
+	env.HasContainerRuntime = hasContainerRuntime()
 
 	// 4. Determine if physical
 	env.IsPhysical = !env.IsContainer && !env.IsVM
@@ -71,14 +71,14 @@ func determineType(env *Environment) EnvironmentType {
 	}
 
 	if env.IsVM {
-		if env.HasDockerRunning {
+		if env.HasContainerRuntime {
 			return EnvVMWithContainers
 		}
 		return EnvVM
 	}
 
 	// Physical host
-	if env.HasDockerRunning {
+	if env.HasContainerRuntime {
 		return EnvPhysicalWithContainers
 	}
 	return EnvPhysical
@@ -225,15 +225,16 @@ func detectHypervisor() string {
 	return "unknown"
 }
 
-// isDockerRunning checks if Docker daemon is running on the system
-func isDockerRunning() bool {
-	// Check if docker.sock exists
-	if _, err := os.Stat("/var/run/docker.sock"); err == nil {
-		return true
+// hasContainerRuntime checks if any supported container runtime socket is accessible.
+// Currently checks Docker and rootful Podman.
+func hasContainerRuntime() bool {
+	for _, path := range []string{
+		"/var/run/docker.sock",
+		"/run/podman/podman.sock",
+	} {
+		if _, err := os.Stat(path); err == nil {
+			return true
+		}
 	}
-
-	// Check if docker command exists and works
-	// (We could execute `docker ps` but that's expensive)
-	// For now, just check the socket
 	return false
 }

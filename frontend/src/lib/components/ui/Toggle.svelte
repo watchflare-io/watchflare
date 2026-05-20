@@ -30,5 +30,5 @@
     }}
     class="relative inline-flex shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {trackSize} {checked ? 'bg-primary' : 'bg-muted border border-border'} {className}"
 >
-    <span class="inline-block transform rounded-full bg-white shadow-sm transition-transform {thumbSize} {checked ? thumbOn : thumbOff}"></span>
+    <span class="inline-block transform rounded-full bg-primary-foreground shadow-sm transition-transform {thumbSize} {checked ? thumbOn : thumbOff}"></span>
 </button>

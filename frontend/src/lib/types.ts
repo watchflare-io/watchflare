@@ -404,6 +404,7 @@ export interface GlobalPackage {
   package_manager: string;
   host_count: number;
   available_version: string;
+  current_version: string;
   has_security_update: boolean;
   update_checked: boolean;
 }
@@ -415,6 +416,7 @@ export interface ListGlobalPackagesResponse {
   outdated_count: number; // global unfiltered
   security_count: number; // global unfiltered
   outdated_hosts_count: number; // global unfiltered — hosts with ≥1 outdated/security package
+  security_hosts_count: number; // global unfiltered — hosts with ≥1 security package
   available_managers: string[]; // global unfiltered, for the manager filter dropdown
 }
 
@@ -537,6 +539,24 @@ export interface ActiveIncident {
 
 export interface GetActiveIncidentsResponse {
   incidents: ActiveIncident[];
+}
+
+export interface GlobalIncident {
+  id: string;
+  host_id: string;
+  host_name: string;
+  metric_type: AlertMetricType;
+  started_at: string;
+  resolved_at: string | null;
+  threshold_value: number;
+  current_value: number;
+}
+
+export interface GetAllIncidentsResponse {
+  incidents: GlobalIncident[];
+  total_count: number;
+  limit: number;
+  offset: number;
 }
 
 export interface HostIncident {

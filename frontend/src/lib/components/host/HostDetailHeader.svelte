@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
-        getStatusClass,
         formatUptime,
         isAgentOutdated,
         formatBytes,
     } from "$lib/utils";
+    import HostStatusBadge from "$lib/components/HostStatusBadge.svelte";
     import {
         Pause,
         Play,
@@ -102,36 +102,25 @@
             >
                 {host.display_name}
             </h1>
-            <span
-                class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium {getStatusClass(
-                    host.status,
-                )}"
-            >
-                <span
-                    class="h-1.5 w-1.5 rounded-full {host.status === 'online'
-                        ? 'bg-success'
-                        : host.status === 'offline'
-                          ? 'bg-danger'
-                          : 'bg-muted-foreground'}"
-                ></span>
-                {host.status}
-            </span>
+            <HostStatusBadge status={host.status} />
         </div>
         <div class="flex items-center gap-1 ml-3">
             {#if agentOutdated && host.status === 'online' && onUpdateAgent}
                 <button
+                    type="button"
                     onclick={onUpdateAgent}
                     title="Update agent to v{latestAgentVersion}"
-                    class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 dark:text-amber-400 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 transition-colors"
+                    class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
                 >
                     <Download class="h-3.5 w-3.5" />
                     Update
                 </button>
             {/if}
             <button
+                type="button"
                 onclick={onAlertRules}
                 class="rounded-lg p-1.5 transition-colors hover:bg-muted {hasActiveAlertRules ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}"
-                title={hasActiveAlertRules ? 'Alert rules (monitoring active)' : 'Alert rules'}
+                aria-label={hasActiveAlertRules ? 'Alert rules (monitoring active)' : 'Alert rules'}
             >
                 <Bell class="h-5 w-5 {hasActiveAlertRules ? 'fill-current' : ''}" />
             </button>
@@ -139,9 +128,10 @@
                 <DropdownMenu.Trigger>
                     {#snippet child({ props })}
                         <button
+                            type="button"
                             {...props}
                             class="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                            title="Host actions"
+                            aria-label="Host actions"
                         >
                             <EllipsisVertical class="h-5 w-5" />
                         </button>

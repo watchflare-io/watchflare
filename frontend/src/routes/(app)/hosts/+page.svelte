@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { page } from "$app/stores";
     import * as api from "$lib/api.js";
     import { handleSSEReactivation, logger } from "$lib/utils";
     import { HOSTS_PER_PAGE, SEARCH_DEBOUNCE_MS } from "$lib/constants";
@@ -48,12 +47,6 @@
     let showRename = $state(false);
     let selectedHost: Host | null = $state(null);
     let newHostName = $state("");
-
-    $effect(() => {
-        if (($page.state as { openAddHost?: boolean }).openAddHost) {
-            showAddHost = true;
-        }
-    });
 
     let totalPages = $derived(Math.max(1, Math.ceil(total / perPage)));
 
@@ -260,6 +253,7 @@
         </p>
     </div>
     <button
+        type="button"
         onclick={() => (showAddHost = true)}
         class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
     >
@@ -294,7 +288,7 @@
         {/each}
     </div>
 {:else if error}
-    <div class="rounded-lg border border-destructive bg-destructive/10 p-4">
+    <div role="alert" class="rounded-lg border border-destructive bg-destructive/10 p-4">
         <p class="text-sm text-destructive">{error}</p>
     </div>
 {:else if hosts.length === 0 && currentPage === 1 && !searchQuery && !statusFilter}
@@ -321,6 +315,7 @@
             Add your first host to start monitoring
         </p>
         <button
+            type="button"
             onclick={() => (showAddHost = true)}
             class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
@@ -409,12 +404,14 @@
     </div>
     <div class="flex gap-3 justify-end">
         <button
+            type="button"
             onclick={closeRenameModal}
             class="rounded-lg border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
         >
             Cancel
         </button>
         <button
+            type="button"
             onclick={handleRenameSubmit}
             disabled={newHostName.length < 2}
             class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"

@@ -76,13 +76,13 @@ func Collect() (*SystemInfo, error) {
 	}
 
 	// IP addresses (not provided by gopsutil host package)
-	info.IPv4Address, info.IPv6Address = getIPAddresses()
+	info.IPv4Address, info.IPv6Address = GetIPAddresses()
 
 	return info, nil
 }
 
-// getIPAddresses returns the primary non-loopback IPv4 and IPv6 addresses.
-func getIPAddresses() (string, string) {
+// GetIPAddresses returns the primary non-loopback IPv4 and IPv6 addresses.
+func GetIPAddresses() (string, string) {
 	var ipv4, ipv6 string
 
 	addrs, err := net.InterfaceAddrs()

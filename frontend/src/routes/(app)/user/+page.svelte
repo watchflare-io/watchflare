@@ -150,7 +150,7 @@
             </label>
             <form
                 onsubmit={(e) => { e.preventDefault(); handleChangeUsername(); }}
-                class="flex gap-2"
+                class="flex flex-col sm:flex-row gap-2"
             >
                 <input
                     id="username"
@@ -165,7 +165,7 @@
                 <button
                     type="submit"
                     disabled={usernameLoading || !usernameDirty}
-                    class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="self-start rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {usernameLoading ? "Saving..." : "Save"}
                 </button>
@@ -185,7 +185,7 @@
             </label>
             <form
                 onsubmit={(e) => { e.preventDefault(); handleChangeEmail(); }}
-                class="flex gap-2"
+                class="flex flex-col sm:flex-row gap-2"
             >
                 <input
                     id="email"
@@ -199,7 +199,7 @@
                 <button
                     type="submit"
                     disabled={emailLoading || !emailDirty}
-                    class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="self-start rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {emailLoading ? "Saving..." : "Save"}
                 </button>
@@ -244,7 +244,7 @@
                             ? "currentPassword-error"
                             : undefined}
                         class="w-full rounded-lg border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 {fieldErrors.currentPassword
-                            ? 'border-destructive'
+                            ? 'border-destructive focus-visible:ring-destructive'
                             : ''}"
                     />
                     <button
@@ -286,7 +286,7 @@
                             ? "newPassword-error"
                             : undefined}
                         class="w-full rounded-lg border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 {fieldErrors.newPassword
-                            ? 'border-destructive'
+                            ? 'border-destructive focus-visible:ring-destructive'
                             : ''}"
                     />
                     <button
@@ -328,7 +328,7 @@
                             ? "confirmPassword-error"
                             : undefined}
                         class="w-full rounded-lg border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 {fieldErrors.confirmPassword
-                            ? 'border-destructive'
+                            ? 'border-destructive focus-visible:ring-destructive'
                             : ''}"
                     />
                     <button

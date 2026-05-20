@@ -7,6 +7,7 @@
 </script>
 
 <button
+    type="button"
     onclick={cycleAuthTheme}
     class="fixed top-4 right-4 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
     aria-label="Toggle theme"

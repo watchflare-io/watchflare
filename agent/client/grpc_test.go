@@ -322,31 +322,7 @@ func TestRegister_FieldsMapping(t *testing.T) {
 	}
 }
 
-// --- Heartbeat / SendHeartbeat ---
-
-func TestHeartbeat_DelegatesToSendHeartbeat(t *testing.T) {
-	var receivedIPv4, receivedIPv6 string
-
-	mock := &mockAgentServer{
-		heartbeatFn: func(req *pb.HeartbeatRequest) (*pb.HeartbeatResponse, error) {
-			receivedIPv4 = req.IpAddressV4
-			receivedIPv6 = req.IpAddressV6
-			return &pb.HeartbeatResponse{Success: true}, nil
-		},
-	}
-
-	c := startMockServer(t, mock)
-
-	if _, err := c.Heartbeat("agent-1", "key-1", ""); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if receivedIPv4 != "" {
-		t.Errorf("Heartbeat should send empty IPv4, got %q", receivedIPv4)
-	}
-	if receivedIPv6 != "" {
-		t.Errorf("Heartbeat should send empty IPv6, got %q", receivedIPv6)
-	}
-}
+// --- SendHeartbeat ---
 
 func TestSendHeartbeat_SendsAgentVersion(t *testing.T) {
 	var receivedVersion string

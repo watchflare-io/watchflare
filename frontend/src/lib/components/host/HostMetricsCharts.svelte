@@ -78,7 +78,7 @@
 		<TimeRangeSelector bind:value={timeRange} class="w-full sm:w-auto" />
 	</div>
 
-	<div class="grid gap-4 xl:grid-cols-2">
+	<div class="grid gap-4 2xl:grid-cols-2">
 		<div class="rounded-lg border bg-card p-4">
 			<div class="mb-3 flex items-center justify-between">
 				<h3 class="text-sm font-medium">CPU Usage</h3>
@@ -175,7 +175,7 @@
 
 {#if hasContainerData}
 	<div class="mb-6">
-		<div class="grid gap-4 xl:grid-cols-2">
+		<div class="grid gap-4 2xl:grid-cols-2">
 			<div class="rounded-lg border bg-card p-4">
 				<div class="mb-3">
 					<h3 class="text-sm font-medium">Container CPU</h3>
@@ -188,7 +188,7 @@
 				</div>
 				<ContainerMemoryChart pivotedData={containerPivots.memory} {containerNames} {timeRange} />
 			</div>
-			<div class="rounded-lg border bg-card p-4 xl:col-span-2">
+			<div class="rounded-lg border bg-card p-4 2xl:col-span-2">
 				<div class="mb-3">
 					<h3 class="text-sm font-medium">Container Network</h3>
 				</div>

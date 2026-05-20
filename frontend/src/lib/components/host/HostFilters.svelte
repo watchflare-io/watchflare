@@ -27,13 +27,13 @@
     );
 </script>
 
-<div class="mb-4 flex gap-3">
+<div class="mb-4 flex items-center gap-2 flex-wrap">
     <input
         type="text"
         placeholder="Search hosts..."
         value={searchQuery}
         oninput={onSearchInput}
-        class="w-full md:w-56 rounded-lg border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        class="flex-1 min-w-48 h-9 rounded-lg border bg-card px-3 text-sm text-foreground placeholder:text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
     />
     <Select.Root
         type="single"

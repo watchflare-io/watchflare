@@ -26,15 +26,15 @@
 	const series = $derived<uPlot.Series[]>([
 		{
 			label: 'Read',
-			stroke: 'var(--chart-1)',
-			fill: 'var(--chart-1)',
+			stroke: 'var(--chart-9)',
+			fill: 'var(--chart-9)',
 			width: 2,
 			value: (_u: uPlot, v: number | null) => v != null ? formatRate(v, diskUnit) : '—',
 		},
 		{
 			label: 'Write',
-			stroke: 'var(--chart-2)',
-			fill: 'var(--chart-2)',
+			stroke: 'var(--chart-10)',
+			fill: 'var(--chart-10)',
 			width: 2,
 			value: (_u: uPlot, v: number | null) => v != null ? formatRate(v, diskUnit) : '—',
 		}

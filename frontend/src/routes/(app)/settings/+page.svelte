@@ -115,13 +115,6 @@
     <title>Settings - Watchflare</title>
 </svelte:head>
 
-<div class="mb-6">
-    <h1 class="text-xl sm:text-2xl font-semibold text-foreground">General</h1>
-    <p class="text-sm text-muted-foreground mt-1">
-        Application preferences and configuration
-    </p>
-</div>
-
 {#if !cookieSecure}
     <div
         role="alert"
@@ -161,6 +154,7 @@
             {#each themeOptions as option}
                 {@const Icon = option.icon}
                 <button
+                    type="button"
                     onclick={() => userStore.updateTheme(option.value)}
                     class="flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors {selectedTheme ===
                     option.value
@@ -215,6 +209,7 @@
         <div class="flex gap-2">
             {#each [{ value: "24h", label: "24-hour" }, { value: "12h", label: "12-hour (AM/PM)" }] as opt}
                 <button
+                    type="button"
                     onclick={() => {
                         selectedTimeFormat = opt.value as TimeFormat;
                     }}
@@ -240,6 +235,7 @@
         <div class="flex gap-2">
             {#each [{ value: "celsius", label: "°C — Celsius" }, { value: "fahrenheit", label: "°F — Fahrenheit" }] as opt}
                 <button
+                    type="button"
                     onclick={() => {
                         selectedTempUnit = opt.value as TemperatureUnit;
                     }}
@@ -265,6 +261,7 @@
         <div class="flex gap-2">
             {#each [{ value: "bytes", label: "Bytes/s (MB/s)" }, { value: "bits", label: "Bits/s (Mbps)" }] as opt}
                 <button
+                    type="button"
                     onclick={() => {
                         selectedNetworkUnit = opt.value as NetworkUnit;
                     }}
@@ -290,6 +287,7 @@
         <div class="flex gap-2">
             {#each [{ value: "bytes", label: "Bytes/s (MB/s)" }, { value: "bits", label: "Bits/s (Mbps)" }] as opt}
                 <button
+                    type="button"
                     onclick={() => {
                         selectedDiskUnit = opt.value as DiskUnit;
                     }}
@@ -361,6 +359,7 @@
     {/if}
 
     <button
+        type="button"
         onclick={handleSave}
         disabled={saving}
         class="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"

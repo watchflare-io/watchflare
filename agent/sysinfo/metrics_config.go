@@ -11,23 +11,23 @@ type MetricsConfig struct {
 	CollectLoadAvg     bool
 	CollectTemperature bool
 
-	// Container-specific
+	// Container-specific (when the agent itself runs inside a container)
 	CollectContainerCPU    bool
 	CollectContainerMemory bool
 
-	// Docker-specific (for VMs running Docker)
-	CollectDockerCPU     bool
-	CollectDockerMemory  bool
-	CollectDockerNetwork bool
+	// Container runtime metrics (opt-in: for hosts running Docker, Podman, etc.)
+	CollectRuntimeCPU     bool
+	CollectRuntimeMemory  bool
+	CollectRuntimeNetwork bool
 
 	// ContainerRuntime is the runtime the agent is running inside ("docker", "kubernetes", etc.)
 	// Empty for physical/VM hosts. Detected once at startup and included in every HostInfo update.
 	ContainerRuntime string
 }
 
-// GetMetricsConfig returns the appropriate metrics configuration based on environment
-// dockerMetrics controls whether Docker container metrics are collected (opt-in)
-func GetMetricsConfig(env *Environment, dockerMetrics bool) *MetricsConfig {
+// GetMetricsConfig returns the appropriate metrics configuration based on environment.
+// containerMetrics controls whether container runtime metrics are collected (opt-in).
+func GetMetricsConfig(env *Environment, containerMetrics bool) *MetricsConfig {
 	config := &MetricsConfig{}
 
 	switch env.Type {
@@ -43,7 +43,7 @@ func GetMetricsConfig(env *Environment, dockerMetrics bool) *MetricsConfig {
 		config.CollectTemperature = true
 
 	case EnvPhysicalWithContainers:
-		// Physical host running Docker: collect everything
+		// Physical host running a container runtime: collect everything
 		config.CollectCPU = true
 		config.CollectMemory = true
 		config.CollectDisk = true
@@ -52,13 +52,6 @@ func GetMetricsConfig(env *Environment, dockerMetrics bool) *MetricsConfig {
 		config.CollectSwap = true
 		config.CollectLoadAvg = true
 		config.CollectTemperature = true
-
-		// Docker metrics only if opt-in
-		if dockerMetrics {
-			config.CollectDockerCPU = true
-			config.CollectDockerMemory = true
-			config.CollectDockerNetwork = true
-		}
 
 	case EnvVM:
 		// VM without containers: collect most things except temperature
@@ -72,7 +65,7 @@ func GetMetricsConfig(env *Environment, dockerMetrics bool) *MetricsConfig {
 		config.CollectTemperature = false // Can't read physical sensors
 
 	case EnvVMWithContainers:
-		// VM running Docker: collect VM metrics
+		// VM running a container runtime: collect VM metrics
 		config.CollectCPU = true
 		config.CollectMemory = true
 		config.CollectDisk = true
@@ -81,13 +74,6 @@ func GetMetricsConfig(env *Environment, dockerMetrics bool) *MetricsConfig {
 		config.CollectLoadAvg = true
 		config.CollectSwap = true
 		config.CollectTemperature = false
-
-		// Docker metrics only if opt-in
-		if dockerMetrics {
-			config.CollectDockerCPU = true
-			config.CollectDockerMemory = true
-			config.CollectDockerNetwork = true
-		}
 
 	case EnvContainer:
 		// Container: collect limited metrics
@@ -106,6 +92,15 @@ func GetMetricsConfig(env *Environment, dockerMetrics bool) *MetricsConfig {
 		config.CollectContainerMemory = true
 	}
 
+	// Container runtime metrics (Docker, Podman, etc.) are opt-in via config flag.
+	// Applied regardless of environment detection — the collector itself checks socket
+	// availability at collection time. Not applicable when the agent runs inside a container.
+	if containerMetrics && env.Type != EnvContainer {
+		config.CollectRuntimeCPU = true
+		config.CollectRuntimeMemory = true
+		config.CollectRuntimeNetwork = true
+	}
+
 	return config
 }
 
@@ -115,11 +110,11 @@ func (e *Environment) String() string {
 	case EnvPhysical:
 		return "Physical Host"
 	case EnvPhysicalWithContainers:
-		return "Physical Host with Docker"
+		return "Physical Host with Containers"
 	case EnvVM:
 		return "Virtual Machine (" + e.Hypervisor + ")"
 	case EnvVMWithContainers:
-		return "Virtual Machine with Docker (" + e.Hypervisor + ")"
+		return "Virtual Machine with Containers (" + e.Hypervisor + ")"
 	case EnvContainer:
 		return "Container (" + e.ContainerRuntime + ")"
 	default:

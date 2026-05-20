@@ -21,7 +21,6 @@ build/
 
 # Go binaries
 watchflare-agent*
-!watchflare-agent.service
 watchflare-backend*
 watchflare-app*
 *_linux
@@ -41,7 +40,7 @@ backend/data/
 *.crt
 *.key
 
-# Documentation (kept locally, published on watchflare.io/docs)
+# Documentation (kept locally, published on docs.watchflare.io)
 docs/private/
 
 # IDE

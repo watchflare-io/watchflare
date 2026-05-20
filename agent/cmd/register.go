@@ -10,6 +10,7 @@ import (
 
 	"watchflare-agent/client"
 	"watchflare-agent/config"
+	"watchflare-agent/install"
 	"watchflare-agent/sysinfo"
 	"watchflare-agent/uuid"
 )
@@ -22,10 +23,10 @@ func Register() {
 	fmt.Println("Watchflare Agent Registration")
 	fmt.Println("==============================")
 
-	token, host, port := parseRegisterArgs(os.Args[2:])
+	token, host, port, containers := parseRegisterArgs(os.Args[2:])
 
 	if token == "" {
-		fmt.Fprintln(os.Stderr, "error: --token is required\nUsage: watchflare-agent register --token=TOKEN [--host=HOST] [--port=PORT]")
+		fmt.Fprintln(os.Stderr, "error: --token is required\nUsage: watchflare-agent register --token=TOKEN [--host=HOST] [--port=PORT] [--containers]")
 		os.Exit(1)
 	}
 	if host == "" {
@@ -35,7 +36,7 @@ func Register() {
 		port = "50051"
 	}
 
-	reactivated, err := runRegistration(token, host, port)
+	reactivated, err := runRegistration(token, host, port, containers)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
@@ -50,6 +51,21 @@ func Register() {
 		fmt.Println("   If you intended to create a NEW agent, uninstall with data cleanup first")
 	}
 
+	if containers {
+		if runtime.GOOS == "linux" && os.Geteuid() != 0 {
+			fmt.Println()
+			fmt.Println("⚠ Container metrics enabled in config, but docker group setup requires root.")
+			fmt.Println("  Run the following to complete setup:")
+			fmt.Println("  sudo usermod -aG docker watchflare")
+			fmt.Println("  sudo systemctl restart watchflare-agent")
+		} else {
+			if err := install.AddToDockerGroup(); err != nil {
+				fmt.Fprintf(os.Stderr, "\nWarning: %v\n", err)
+				fmt.Println("  Run manually: sudo usermod -aG docker watchflare")
+			}
+		}
+	}
+
 	if isInstalledViaBrew() {
 		fmt.Println("\nYou can now start the agent with: brew services start watchflare-agent")
 	} else if runtime.GOOS == "linux" {
@@ -61,7 +77,7 @@ func Register() {
 
 // runRegistration performs agent registration with the backend.
 // Called by Register() (standalone command) and Install() (inline during installation).
-func runRegistration(token, host, port string) (bool, error) {
+func runRegistration(token, host, port string, containers bool) (bool, error) {
 	if err := config.EnsureDirectories(); err != nil {
 		return false, fmt.Errorf("failed to create directories: %w", err)
 	}
@@ -143,6 +159,10 @@ func runRegistration(token, host, port string) (bool, error) {
 		ServerName: regResp.ServerName,
 		LogFile:    config.GetLogFile(),
 	}
+	if containers {
+		enabled := true
+		cfg.ContainerMetrics = &enabled
+	}
 	cfg.SetDefaults()
 
 	slog.Info("saving configuration")
@@ -164,9 +184,9 @@ func runRegistration(token, host, port string) (bool, error) {
 	return regResp.Reactivated, nil
 }
 
-// parseRegisterArgs parses --token, --host, --port from a slice of arguments.
+// parseRegisterArgs parses --token, --host, --port, --containers from a slice of arguments.
 // Supports both --flag=value and --flag value forms.
-func parseRegisterArgs(args []string) (token, host, port string) {
+func parseRegisterArgs(args []string) (token, host, port string, containers bool) {
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		switch {
@@ -185,6 +205,8 @@ func parseRegisterArgs(args []string) (token, host, port string) {
 		case arg == "--port" && i+1 < len(args):
 			i++
 			port = args[i]
+		case arg == "--containers":
+			containers = true
 		}
 	}
 	return

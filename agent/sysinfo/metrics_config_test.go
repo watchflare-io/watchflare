@@ -11,8 +11,8 @@ func TestGetMetricsConfig_Physical(t *testing.T) {
 		!cfg.CollectNetwork || !cfg.CollectSwap || !cfg.CollectLoadAvg || !cfg.CollectTemperature {
 		t.Error("physical: all base metrics must be enabled")
 	}
-	if cfg.CollectDockerCPU || cfg.CollectDockerMemory || cfg.CollectDockerNetwork {
-		t.Error("physical without docker: docker metrics must be disabled")
+	if cfg.CollectRuntimeCPU || cfg.CollectRuntimeMemory || cfg.CollectRuntimeNetwork {
+		t.Error("physical: container runtime metrics must be disabled")
 	}
 }
 
@@ -22,16 +22,16 @@ func TestGetMetricsConfig_PhysicalWithContainers_DockerOptIn(t *testing.T) {
 	if !cfg.CollectTemperature {
 		t.Error("physical with containers: temperature must be enabled")
 	}
-	if !cfg.CollectDockerCPU || !cfg.CollectDockerMemory || !cfg.CollectDockerNetwork {
-		t.Error("physical with containers + dockerMetrics=true: docker metrics must be enabled")
+	if !cfg.CollectRuntimeCPU || !cfg.CollectRuntimeMemory || !cfg.CollectRuntimeNetwork {
+		t.Error("physical with containers + containerMetrics=true: runtime metrics must be enabled")
 	}
 }
 
 func TestGetMetricsConfig_PhysicalWithContainers_DockerOptOut(t *testing.T) {
 	cfg := GetMetricsConfig(&Environment{Type: EnvPhysicalWithContainers}, false)
 
-	if cfg.CollectDockerCPU || cfg.CollectDockerMemory || cfg.CollectDockerNetwork {
-		t.Error("physical with containers + dockerMetrics=false: docker metrics must be disabled")
+	if cfg.CollectRuntimeCPU || cfg.CollectRuntimeMemory || cfg.CollectRuntimeNetwork {
+		t.Error("physical with containers + containerMetrics=false: runtime metrics must be disabled")
 	}
 }
 
@@ -58,8 +58,8 @@ func TestGetMetricsConfig_VMWithContainers_DockerOptIn(t *testing.T) {
 	if !cfg.CollectSwap {
 		t.Error("VM with containers: swap must be enabled")
 	}
-	if !cfg.CollectDockerCPU || !cfg.CollectDockerMemory || !cfg.CollectDockerNetwork {
-		t.Error("VM with containers + dockerMetrics=true: docker metrics must be enabled")
+	if !cfg.CollectRuntimeCPU || !cfg.CollectRuntimeMemory || !cfg.CollectRuntimeNetwork {
+		t.Error("VM with containers + containerMetrics=true: runtime metrics must be enabled")
 	}
 }
 

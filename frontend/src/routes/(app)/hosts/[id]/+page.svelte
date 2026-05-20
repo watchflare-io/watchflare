@@ -65,18 +65,16 @@
     function handleSSEMessage(event: SSEEvent) {
         if (event.type === "metrics_update") {
             const metric = event.data;
-            if (metric.host_id === hostId) {
-                metrics = pruneMetricsByTime([...metrics, metric], timeRange);
-                ctx.setLatestMetric(metric);
-                const now = Date.now();
-                if (now - lastCacheUpdate >= 5000) {
-                    lastCacheUpdate = now;
-                    ctx.setOverviewCache({
-                        metrics,
-                        containerMetrics,
-                        timeRange,
-                    });
-                }
+            metrics = pruneMetricsByTime([...metrics, metric], timeRange);
+            ctx.setLatestMetric(metric);
+            const now = Date.now();
+            if (now - lastCacheUpdate >= 5000) {
+                lastCacheUpdate = now;
+                ctx.setOverviewCache({
+                    metrics,
+                    containerMetrics,
+                    timeRange,
+                });
             }
         }
         if (event.type === "container_metrics_update") {
@@ -84,23 +82,21 @@
                 host_id: string;
                 metrics: ContainerMetric[];
             };
-            if (update.host_id === hostId) {
-                const cutoff = Date.now() / 1000 - rangeSeconds(timeRange) - 60;
-                containerMetrics = [
-                    ...containerMetrics,
-                    ...update.metrics,
-                ].filter(
-                    (m) => new Date(m.timestamp).getTime() / 1000 >= cutoff,
-                );
-                const now = Date.now();
-                if (now - lastCacheUpdate >= 5000) {
-                    lastCacheUpdate = now;
-                    ctx.setOverviewCache({
-                        metrics,
-                        containerMetrics,
-                        timeRange,
-                    });
-                }
+            const cutoff = Date.now() / 1000 - rangeSeconds(timeRange) - 60;
+            containerMetrics = [
+                ...containerMetrics,
+                ...update.metrics,
+            ].filter(
+                (m) => new Date(m.timestamp).getTime() / 1000 >= cutoff,
+            );
+            const now = Date.now();
+            if (now - lastCacheUpdate >= 5000) {
+                lastCacheUpdate = now;
+                ctx.setOverviewCache({
+                    metrics,
+                    containerMetrics,
+                    timeRange,
+                });
             }
         }
     }
@@ -141,7 +137,7 @@
             <div class="h-9 w-full sm:w-48 rounded-lg bg-muted"></div>
         </div>
         <!-- Charts grid 1 -->
-        <div class="grid gap-4 xl:grid-cols-2 mb-4">
+        <div class="grid gap-4 2xl:grid-cols-2 mb-4">
             {#each Array(2) as _}
                 <div class="rounded-lg border bg-card p-4">
                     <div class="mb-3 flex items-center justify-between">
@@ -153,7 +149,7 @@
             {/each}
         </div>
         <!-- Charts grid 2 -->
-        <div class="grid gap-4 xl:grid-cols-2">
+        <div class="grid gap-4 2xl:grid-cols-2">
             {#each Array(2) as _}
                 <div class="rounded-lg border bg-card p-4">
                     <div class="mb-3 flex items-center justify-between">
@@ -166,7 +162,7 @@
         </div>
     </div>
 {:else if metricsError}
-    <div class="flex items-center justify-center py-20">
+    <div role="alert" class="flex items-center justify-center py-20">
         <p class="text-sm text-destructive">{metricsError}</p>
     </div>
 {:else}

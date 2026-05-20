@@ -137,12 +137,10 @@ interface SSEManagerConfig {
 	maxRetryDelay?: number;
 	/** Maximum number of retry attempts (default: Infinity) */
 	maxRetries?: number;
-	/** Buffer delay in ms to batch events (default: 100) */
-	bufferDelay?: number;
 }
 
 /**
- * Advanced SSE Manager with reconnection and buffering.
+ * SSE Manager with automatic reconnection and exponential backoff.
  * Pass a url to connect to a specific SSE endpoint (e.g. per-host stream).
  * Defaults to the global host events stream.
  */
@@ -153,13 +151,10 @@ export class SSEManager {
 	private retryCount = 0;
 	private retryDelay: number;
 	private retryTimer: ReturnType<typeof setTimeout> | null = null;
-	private eventBuffer: SSEEvent[] = [];
-	private bufferTimer: ReturnType<typeof setTimeout> | null = null;
 	private shouldReconnect = true;
 
 	private config: Required<SSEManagerConfig>;
 	private onMessageCallback?: (event: SSEEvent) => void;
-	private onBatchCallback?: (events: SSEEvent[]) => void;
 	private onStateChangeCallback?: (state: ConnectionState) => void;
 	private onErrorCallback?: (error: Event | Error) => void;
 
@@ -169,7 +164,6 @@ export class SSEManager {
 			initialRetryDelay: config.initialRetryDelay ?? 1000,
 			maxRetryDelay: config.maxRetryDelay ?? 30000,
 			maxRetries: config.maxRetries ?? Infinity,
-			bufferDelay: config.bufferDelay ?? 100
 		};
 		this.retryDelay = this.config.initialRetryDelay;
 	}
@@ -211,13 +205,6 @@ export class SSEManager {
 	 */
 	onMessage(callback: (event: SSEEvent) => void): void {
 		this.onMessageCallback = callback;
-	}
-
-	/**
-	 * Register batch callback (receives buffered events)
-	 */
-	onBatch(callback: (events: SSEEvent[]) => void): void {
-		this.onBatchCallback = callback;
 	}
 
 	/**
@@ -293,46 +280,10 @@ export class SSEManager {
 	}
 
 	/**
-	 * Buffer event and flush after delay
+	 * Emit event to the registered message callback
 	 */
 	private bufferEvent(event: SSEEvent): void {
-		this.eventBuffer.push(event);
-
-		// Emit immediately if no buffer callback
-		if (!this.onBatchCallback && this.onMessageCallback) {
-			this.onMessageCallback(event);
-			return;
-		}
-
-		// Clear existing timer
-		if (this.bufferTimer) {
-			clearTimeout(this.bufferTimer);
-		}
-
-		// Set new timer to flush buffer
-		this.bufferTimer = setTimeout(() => {
-			this.flushBuffer();
-		}, this.config.bufferDelay);
-	}
-
-	/**
-	 * Flush buffered events
-	 */
-	private flushBuffer(): void {
-		if (this.eventBuffer.length === 0) return;
-
-		const events = [...this.eventBuffer];
-		this.eventBuffer = [];
-
-		// Call batch callback if registered
-		if (this.onBatchCallback) {
-			this.onBatchCallback(events);
-		}
-
-		// Also call individual message callbacks
-		if (this.onMessageCallback) {
-			events.forEach(event => this.onMessageCallback!(event));
-		}
+		this.onMessageCallback?.(event);
 	}
 
 	/**
@@ -398,14 +349,6 @@ export class SSEManager {
 	 * Cleanup resources
 	 */
 	private cleanup(): void {
-		// Discard buffered events on error (stale data from broken connection)
-		this.eventBuffer = [];
-
-		if (this.bufferTimer) {
-			clearTimeout(this.bufferTimer);
-			this.bufferTimer = null;
-		}
-
 		if (this.retryTimer) {
 			clearTimeout(this.retryTimer);
 			this.retryTimer = null;

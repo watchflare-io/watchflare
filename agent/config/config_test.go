@@ -58,8 +58,8 @@ func TestSetDefaults_AppliesAllDefaults(t *testing.T) {
 	if cfg.WALMaxSizeMB != DefaultWALMaxSizeMB {
 		t.Errorf("WALMaxSizeMB: got %d, want %d", cfg.WALMaxSizeMB, DefaultWALMaxSizeMB)
 	}
-	if cfg.DockerMetrics == nil || *cfg.DockerMetrics {
-		t.Error("DockerMetrics: want false")
+	if cfg.ContainerMetrics == nil || *cfg.ContainerMetrics {
+		t.Error("ContainerMetrics: want false")
 	}
 }
 
@@ -71,7 +71,7 @@ func TestSetDefaults_DoesNotOverrideExisting(t *testing.T) {
 		MetricsInterval:   60,
 		WALEnabled:        &enabled,
 		WALMaxSizeMB:      20,
-		DockerMetrics:     &dockerEnabled,
+		ContainerMetrics:     &dockerEnabled,
 	}
 	cfg.SetDefaults()
 
@@ -87,8 +87,8 @@ func TestSetDefaults_DoesNotOverrideExisting(t *testing.T) {
 	if cfg.WALMaxSizeMB != 20 {
 		t.Errorf("WALMaxSizeMB: got %d, want 20 (should not be overridden)", cfg.WALMaxSizeMB)
 	}
-	if !*cfg.DockerMetrics {
-		t.Error("DockerMetrics: should not be overridden")
+	if !*cfg.ContainerMetrics {
+		t.Error("ContainerMetrics: should not be overridden")
 	}
 }
 

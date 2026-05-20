@@ -36,10 +36,9 @@ function createSSEStore() {
 
 		// Create manager with configuration
 		manager = new SSEManager(`${API_BASE_URL}/hosts/events`, {
-			initialRetryDelay: 1000,      // Start with 1s
-			maxRetryDelay: 30000,          // Cap at 30s
-			maxRetries: Infinity,          // Retry indefinitely
-			bufferDelay: 100               // Buffer events for 100ms
+			initialRetryDelay: 1000,  // Start with 1s
+			maxRetryDelay: 30000,     // Cap at 30s
+			maxRetries: Infinity,     // Retry indefinitely
 		});
 
 		// Register state change callback

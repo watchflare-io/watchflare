@@ -7,6 +7,7 @@
     import { PACKAGES_PER_PAGE, SEARCH_DEBOUNCE_MS } from "$lib/constants";
     import type { GlobalPackage, GlobalPackageStatus } from "$lib/types";
     import Pagination from "$lib/components/Pagination.svelte";
+    import PackageStatusBadge from "$lib/components/PackageStatusBadge.svelte";
     import { getManagerLabel, getManagerColor } from "$lib/utils";
     import {
         Filter,
@@ -235,6 +236,7 @@
 <!-- Error -->
 {#if error}
     <div
+        role="alert"
         class="mb-6 rounded-lg border border-destructive bg-destructive/10 p-4"
     >
         <p class="text-sm text-destructive">{error}</p>
@@ -287,7 +289,7 @@
             <div
                 class="flex items-center justify-center rounded-md h-8 w-8 shrink-0
                 {outdatedCount > 0
-                    ? 'bg-amber-500/10 text-amber-500'
+                    ? 'bg-warning/10 text-warning'
                     : 'bg-muted text-muted-foreground'}"
             >
                 <ArrowUp class="h-4 w-4" />
@@ -298,7 +300,7 @@
                 </p>
                 <p
                     class="text-sm font-semibold {outdatedCount > 0
-                        ? 'text-amber-500'
+                        ? 'text-warning'
                         : 'text-foreground'}"
                 >
                     {outdatedCount.toLocaleString()}
@@ -346,7 +348,7 @@
             <div
                 class="flex items-center justify-center rounded-md h-8 w-8 shrink-0
                 {outdatedHostsCount > 0
-                    ? 'bg-amber-500/10 text-amber-500'
+                    ? 'bg-warning/10 text-warning'
                     : 'bg-muted text-muted-foreground'}"
             >
                 <Server class="h-4 w-4" />
@@ -357,7 +359,7 @@
                 </p>
                 <p
                     class="text-sm font-semibold {outdatedHostsCount > 0
-                        ? 'text-amber-500'
+                        ? 'text-warning'
                         : 'text-foreground'}"
                 >
                     {outdatedHostsCount.toLocaleString()}
@@ -368,67 +370,137 @@
 </div>
 
 <!-- Search & Filters -->
-<div class="mb-4 flex flex-col gap-2">
-    <!-- Row 1: search -->
-    <div class="flex items-center gap-2">
-        <input
-            type="text"
-            bind:value={searchTerm}
-            oninput={handleSearchInput}
-            onkeydown={(e) => {
-                if (e.key === "Enter") {
-                    if (searchDebounce) clearTimeout(searchDebounce);
-                    updateURL();
-                    loadData();
-                }
-            }}
-            placeholder="Search packages..."
-            class="flex-1 min-w-0 h-9 rounded-lg border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-        />
-    </div>
-
-    <!-- Row 2: status + manager filters (left) + clear (right) -->
-    <div class="flex items-center gap-2">
-        <!-- Status filter -->
-        <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-                {#snippet child({ props })}
-                    <button
-                        {...props}
-                        class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
+<div class="mb-4 flex items-center gap-2 flex-wrap">
+    <input
+        type="text"
+        bind:value={searchTerm}
+        oninput={handleSearchInput}
+        onkeydown={(e) => {
+            if (e.key === "Enter") {
+                if (searchDebounce) clearTimeout(searchDebounce);
+                updateURL();
+                loadData();
+            }
+        }}
+        placeholder="Search packages..."
+        class="flex-1 min-w-48 h-9 rounded-lg border bg-card px-3 text-sm text-foreground placeholder:text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+    />
+    <!-- Status filter -->
+    <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+                <button
+                    type="button"
+                    {...props}
+                    class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
                         {isStatusFiltered
-                            ? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
-                            : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
-                    >
-                        <Tag class="h-3.5 w-3.5 shrink-0" />
-                        <span class="hidden sm:inline">{statusFilterLabel}</span
+                        ? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
+                        : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
+                >
+                    <Tag class="h-3.5 w-3.5 shrink-0" />
+                    <span class="hidden sm:inline">{statusFilterLabel}</span>
+                    {#if isStatusFiltered}
+                        <span
+                            class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-xs font-medium text-primary"
                         >
-                        {#if isStatusFiltered}
-                            <span
-                                class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-xs font-medium text-primary"
+                            {selectedStatuses.size}
+                        </span>
+                    {/if}
+                    <ChevronDown
+                        class="hidden sm:inline-block h-3 w-3 opacity-40"
+                    />
+                </button>
+            {/snippet}
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="start">
+            {#each [{ value: "security" as StatusFilter, label: "Security update" }, { value: "outdated" as StatusFilter, label: "Outdated" }, { value: "up_to_date" as StatusFilter, label: "Up to date" }, { value: "not_checked" as StatusFilter, label: "Not checked" }] as status}
+                <DropdownMenu.Item
+                    closeOnSelect={false}
+                    onclick={() => toggleStatus(status.value)}
+                >
+                    <div
+                        class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
+                            {selectedStatuses.has(status.value)
+                            ? 'border-primary bg-primary'
+                            : 'border-muted-foreground/40'}"
+                    >
+                        {#if selectedStatuses.has(status.value)}
+                            <svg
+                                class="h-3 w-3 text-primary-foreground"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                             >
-                                {selectedStatuses.size}
-                            </span>
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="3"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
                         {/if}
-                        <ChevronDown
-                            class="hidden sm:inline-block h-3 w-3 opacity-40"
-                        />
-                    </button>
-                {/snippet}
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content align="start">
-                {#each [{ value: "security" as StatusFilter, label: "Security update" }, { value: "outdated" as StatusFilter, label: "Outdated" }, { value: "up_to_date" as StatusFilter, label: "Up to date" }, { value: "not_checked" as StatusFilter, label: "Not checked" }] as status}
+                    </div>
+                    <span class="flex-1">{status.label}</span>
+                </DropdownMenu.Item>
+            {/each}
+            {#if isStatusFiltered}
+                <DropdownMenu.Separator />
+                <DropdownMenu.Item
+                    onclick={() => {
+                        selectedStatuses = new Set();
+                        offset = 0;
+                        updateURL();
+                        loadData();
+                    }}
+                    class="text-muted-foreground"
+                >
+                    Clear filter
+                </DropdownMenu.Item>
+            {/if}
+        </DropdownMenu.Content>
+    </DropdownMenu.Root>
+
+    <!-- Manager filter -->
+    <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+                <button
+                    type="button"
+                    {...props}
+                    class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
+                        {isManagerFiltered
+                        ? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
+                        : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
+                >
+                    <Filter class="h-3.5 w-3.5 shrink-0" />
+                    <span class="hidden sm:inline">{managerFilterLabel}</span>
+                    {#if isManagerFiltered}
+                        <span
+                            class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-xs font-medium text-primary"
+                        >
+                            {selectedManagers.size}
+                        </span>
+                    {/if}
+                    <ChevronDown
+                        class="hidden sm:inline-block h-3 w-3 opacity-40"
+                    />
+                </button>
+            {/snippet}
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="start">
+            <div class="max-h-48 overflow-y-auto">
+                {#each availableManagers as manager}
                     <DropdownMenu.Item
                         closeOnSelect={false}
-                        onclick={() => toggleStatus(status.value)}
+                        onclick={() => toggleManager(manager)}
                     >
                         <div
                             class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
-                            {selectedStatuses.has(status.value)
+                                {selectedManagers.has(manager)
                                 ? 'border-primary bg-primary'
                                 : 'border-muted-foreground/40'}"
                         >
-                            {#if selectedStatuses.has(status.value)}
+                            {#if selectedManagers.has(manager)}
                                 <svg
                                     class="h-3 w-3 text-primary-foreground"
                                     fill="none"
@@ -444,124 +516,45 @@
                                 </svg>
                             {/if}
                         </div>
-                        <span class="flex-1">{status.label}</span>
+                        <span class="flex-1">{getManagerLabel(manager)}</span>
                     </DropdownMenu.Item>
                 {/each}
-                {#if isStatusFiltered}
-                    <DropdownMenu.Separator />
-                    <DropdownMenu.Item
-                        onclick={() => {
-                            selectedStatuses = new Set();
-                            offset = 0;
-                            updateURL();
-                            loadData();
-                        }}
-                        class="text-muted-foreground"
-                    >
-                        Clear filter
+                {#if availableManagers.length === 0}
+                    <DropdownMenu.Item disabled>
+                        <span class="text-muted-foreground text-xs"
+                            >No packages yet</span
+                        >
                     </DropdownMenu.Item>
                 {/if}
-            </DropdownMenu.Content>
-        </DropdownMenu.Root>
+            </div>
+            {#if isManagerFiltered}
+                <DropdownMenu.Separator />
+                <DropdownMenu.Item
+                    onclick={() => {
+                        selectedManagers = new Set();
+                        offset = 0;
+                        updateURL();
+                        loadData();
+                    }}
+                    class="text-muted-foreground"
+                >
+                    Clear filter
+                </DropdownMenu.Item>
+            {/if}
+        </DropdownMenu.Content>
+    </DropdownMenu.Root>
 
-        <!-- Manager filter -->
-        <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-                {#snippet child({ props })}
-                    <button
-                        {...props}
-                        class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap
-                        {isManagerFiltered
-                            ? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
-                            : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
-                    >
-                        <Filter class="h-3.5 w-3.5 shrink-0" />
-                        <span class="hidden sm:inline"
-                            >{managerFilterLabel}</span
-                        >
-                        {#if isManagerFiltered}
-                            <span
-                                class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-xs font-medium text-primary"
-                            >
-                                {selectedManagers.size}
-                            </span>
-                        {/if}
-                        <ChevronDown
-                            class="hidden sm:inline-block h-3 w-3 opacity-40"
-                        />
-                    </button>
-                {/snippet}
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content align="start">
-                <div class="max-h-48 overflow-y-auto">
-                    {#each availableManagers as manager}
-                        <DropdownMenu.Item
-                            closeOnSelect={false}
-                            onclick={() => toggleManager(manager)}
-                        >
-                            <div
-                                class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
-                                {selectedManagers.has(manager)
-                                    ? 'border-primary bg-primary'
-                                    : 'border-muted-foreground/40'}"
-                            >
-                                {#if selectedManagers.has(manager)}
-                                    <svg
-                                        class="h-3 w-3 text-primary-foreground"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="3"
-                                            d="M5 13l4 4L19 7"
-                                        />
-                                    </svg>
-                                {/if}
-                            </div>
-                            <span class="flex-1"
-                                >{getManagerLabel(manager)}</span
-                            >
-                        </DropdownMenu.Item>
-                    {/each}
-                    {#if availableManagers.length === 0}
-                        <DropdownMenu.Item disabled>
-                            <span class="text-muted-foreground text-xs"
-                                >No packages yet</span
-                            >
-                        </DropdownMenu.Item>
-                    {/if}
-                </div>
-                {#if isManagerFiltered}
-                    <DropdownMenu.Separator />
-                    <DropdownMenu.Item
-                        onclick={() => {
-                            selectedManagers = new Set();
-                            offset = 0;
-                            updateURL();
-                            loadData();
-                        }}
-                        class="text-muted-foreground"
-                    >
-                        Clear filter
-                    </DropdownMenu.Item>
-                {/if}
-            </DropdownMenu.Content>
-        </DropdownMenu.Root>
-
-        {#if hasActiveFilters}
-            <button
-                onclick={clearAllFilters}
-                class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-                title="Clear all filters"
-            >
-                <X class="h-3.5 w-3.5 shrink-0" />
-                <span class="hidden sm:inline">Clear filters</span>
-            </button>
-        {/if}
-    </div>
+    {#if hasActiveFilters}
+        <button
+            type="button"
+            onclick={clearAllFilters}
+            class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label="Clear all filters"
+        >
+            <X class="h-3.5 w-3.5 shrink-0" />
+            <span class="hidden sm:inline">Clear filters</span>
+        </button>
+    {/if}
 </div>
 
 {#snippet sortIcon(column: string)}
@@ -575,7 +568,7 @@
         </svg>
     {:else}
         <svg
-            class="h-3 w-3 shrink-0 opacity-0 group-hover:opacity-50 transition-opacity"
+            class="h-3 w-3 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity"
             viewBox="0 0 12 12"
             fill="currentColor"
         >
@@ -585,7 +578,7 @@
 {/snippet}
 
 <!-- Packages Table/Cards -->
-<div class="rounded-xl border bg-card overflow-hidden mb-6">
+<div class="rounded-xl border bg-card overflow-hidden mb-2">
     {#if initialLoading}
         <div class="flex items-center justify-center py-20">
             <p class="text-muted-foreground">Loading packages...</p>
@@ -612,27 +605,11 @@
                                 >{pkg.name}</span
                             >
                         </span>
-                        {#if pkg.has_security_update}
-                            <span
-                                class="shrink-0 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border-destructive/20"
-                                >Security Update</span
-                            >
-                        {:else if pkg.available_version}
-                            <span
-                                class="shrink-0 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                >Outdated</span
-                            >
-                        {:else if pkg.update_checked}
-                            <span
-                                class="shrink-0 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-success/10 text-success border-success/20"
-                                >Up to date</span
-                            >
-                        {:else}
-                            <span
-                                class="shrink-0 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-border"
-                                >Not checked</span
-                            >
-                        {/if}
+                        <PackageStatusBadge
+                            hasSecurityUpdate={pkg.has_security_update}
+                            availableVersion={pkg.available_version}
+                            updateChecked={pkg.update_checked}
+                        />
                     </div>
                     <!-- Body: host count + manager + latest version -->
                     <div class="px-4 py-3 flex items-center gap-2 flex-wrap">
@@ -650,7 +627,9 @@
                         >
                         <span class="w-full text-xs text-muted-foreground">
                             Latest: <span class="font-mono"
-                                >{pkg.available_version || "—"}</span
+                                >{pkg.available_version ||
+                                    pkg.current_version ||
+                                    "—"}</span
                             >
                         </span>
                     </div>
@@ -682,11 +661,11 @@
             <table class="w-full min-w-120">
                 <thead>
                     <tr
-                        class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)]"
+                        class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)] whitespace-nowrap"
                     >
                         <th
                             scope="col"
-                            class="px-4 py-2 text-left text-sm font-semibold text-muted-foreground"
+                            class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
                         >
                             <button
                                 type="button"
@@ -700,7 +679,7 @@
                         </th>
                         <th
                             scope="col"
-                            class="px-2 py-2 text-center text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
+                            class="px-2 py-2.5 text-center text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
                         >
                             <button
                                 type="button"
@@ -714,7 +693,7 @@
                         </th>
                         <th
                             scope="col"
-                            class="px-2 py-2 text-left text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
+                            class="px-2 py-2.5 text-left text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
                         >
                             <button
                                 type="button"
@@ -728,7 +707,7 @@
                         </th>
                         <th
                             scope="col"
-                            class="px-2 py-2 text-left text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
+                            class="px-2 py-2.5 text-left text-sm font-semibold text-muted-foreground w-px whitespace-nowrap"
                         >
                             <button
                                 type="button"
@@ -742,7 +721,7 @@
                         </th>
                         <th
                             scope="col"
-                            class="px-2 py-2 text-left text-sm font-semibold text-muted-foreground whitespace-nowrap"
+                            class="px-2 py-2.5 text-left text-sm font-semibold text-muted-foreground whitespace-nowrap"
                         >
                             <button
                                 type="button"
@@ -782,27 +761,11 @@
                                 {pkg.host_count}
                             </td>
                             <td class="px-2 py-3 w-px whitespace-nowrap">
-                                {#if pkg.has_security_update}
-                                    <span
-                                        class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border-destructive/20"
-                                        >Security Update</span
-                                    >
-                                {:else if pkg.available_version}
-                                    <span
-                                        class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                        >Outdated</span
-                                    >
-                                {:else if pkg.update_checked}
-                                    <span
-                                        class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-success/10 text-success border-success/20"
-                                        >Up to date</span
-                                    >
-                                {:else}
-                                    <span
-                                        class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-border"
-                                        >Not checked</span
-                                    >
-                                {/if}
+                                <PackageStatusBadge
+                                    hasSecurityUpdate={pkg.has_security_update}
+                                    availableVersion={pkg.available_version}
+                                    updateChecked={pkg.update_checked}
+                                />
                             </td>
                             <td class="px-2 py-3 w-px whitespace-nowrap">
                                 <span
@@ -821,7 +784,7 @@
                                     <span
                                         class="inline-flex items-center gap-1 font-medium {pkg.has_security_update
                                             ? 'text-destructive'
-                                            : 'text-amber-500'}"
+                                            : 'text-warning'}"
                                     >
                                         {#if pkg.has_security_update}
                                             <ShieldAlert
@@ -834,6 +797,10 @@
                                         {/if}
                                         {pkg.available_version}
                                     </span>
+                                {:else if pkg.current_version}
+                                    <span class="text-muted-foreground"
+                                        >{pkg.current_version}</span
+                                    >
                                 {:else}
                                     <span class="text-muted-foreground">—</span>
                                 {/if}

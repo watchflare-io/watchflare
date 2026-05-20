@@ -83,6 +83,7 @@
                     <input
                         id="email"
                         type="email"
+                        autocomplete="email"
                         bind:value={email}
                         placeholder="admin@watchflare.io"
                         disabled={loading}
@@ -113,6 +114,7 @@
                     <input
                         id="username"
                         type="text"
+                        autocomplete="username"
                         bind:value={username}
                         placeholder="johndoe"
                         maxlength={50}
@@ -135,6 +137,7 @@
                     <input
                         id="password"
                         type="password"
+                        autocomplete="new-password"
                         bind:value={password}
                         placeholder="••••••••"
                         disabled={loading}
@@ -168,6 +171,7 @@
                     <input
                         id="confirmPassword"
                         type="password"
+                        autocomplete="new-password"
                         bind:value={confirmPassword}
                         placeholder="••••••••"
                         disabled={loading}
@@ -190,6 +194,7 @@
                 <!-- Error Message -->
                 {#if error}
                     <div
+                        role="alert"
                         class="mb-4 rounded-lg border border-destructive bg-destructive/10 p-3"
                     >
                         <p class="text-sm text-destructive">{error}</p>

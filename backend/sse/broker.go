@@ -118,6 +118,9 @@ type AggregatedMetricsUpdate struct {
 	MemoryAvailableBytes uint64  `json:"memory_available_bytes"`
 	DiskTotalBytes       uint64  `json:"disk_total_bytes"`
 	DiskUsedBytes        uint64  `json:"disk_used_bytes"`
+	LoadAvg1Min          float64 `json:"load_avg_1min"`
+	LoadAvg5Min          float64 `json:"load_avg_5min"`
+	LoadAvg15Min         float64 `json:"load_avg_15min"`
 }
 
 // ContainerMetricMinified represents a minified container metric for SSE
@@ -233,14 +236,21 @@ func (b *Broker) Broadcast(event Event) {
 	defer b.mu.RUnlock()
 
 	for _, client := range b.clients {
-		// Per-host clients: apply filtering rules.
 		if client.HostID != "" {
+			// Per-host clients: apply filtering rules.
 			// Aggregated metrics are not meaningful on a single-host detail page.
 			if event.Type == EventTypeAggregatedMetricsUpdate {
 				continue
 			}
 			// Skip events that belong to a different host.
 			if event.HostID != "" && event.HostID != client.HostID {
+				continue
+			}
+		} else {
+			// Global clients (dashboard): skip per-host raw metrics — only aggregated
+			// metrics are consumed there. Per-host metrics_update and container_metrics_update
+			// are handled exclusively on the per-host SSE stream.
+			if event.Type == EventTypeMetricsUpdate || event.Type == EventTypeContainerMetricsUpdate {
 				continue
 			}
 		}

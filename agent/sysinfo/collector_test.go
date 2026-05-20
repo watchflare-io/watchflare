@@ -6,7 +6,7 @@ import (
 )
 
 func TestGetIPAddresses_ReturnsValidAddresses(t *testing.T) {
-	ipv4, ipv6 := getIPAddresses()
+	ipv4, ipv6 := GetIPAddresses()
 
 	if ipv4 != "" {
 		if net.ParseIP(ipv4) == nil {
@@ -25,7 +25,7 @@ func TestGetIPAddresses_ReturnsValidAddresses(t *testing.T) {
 }
 
 func TestGetIPAddresses_NoLoopback(t *testing.T) {
-	ipv4, ipv6 := getIPAddresses()
+	ipv4, ipv6 := GetIPAddresses()
 
 	if ipv4 != "" {
 		ip := net.ParseIP(ipv4)

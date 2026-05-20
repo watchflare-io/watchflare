@@ -105,7 +105,11 @@ func Login(c *gin.Context) {
 
 	token, err := services.Login(req.Email, req.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		if errors.Is(err, services.ErrServiceUnavailable) {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "service unavailable, please try again later"})
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		}
 		return
 	}
 

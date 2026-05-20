@@ -1,3 +1,12 @@
+// Generate a theme-aware chart color for dynamic series (N containers, N sensors, etc.)
+// Uses --chart-dyn-l CSS variable so it adapts to light/dark mode via UPlotChart's resolveColor().
+// baseHue offsets the starting hue so different chart types (CPU/Memory/Network) occupy
+// distinct color zones, preventing identical-looking charts for the same set of containers.
+export function dynamicChartColor(i: number, total: number, baseHue = 0): string {
+	const hue = (((i * 360) / Math.max(total, 1)) + baseHue) % 360;
+	return `oklch(var(--chart-dyn-l) 0.24 ${hue.toFixed(1)})`;
+}
+
 // Format date tooltip partagé
 export function formatTooltipDate(date: Date, timeFormat: '12h' | '24h' = '24h'): string {
 	return date.toLocaleString('en-US', {
