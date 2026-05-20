@@ -497,9 +497,9 @@ export const ALERT_METRIC_LABELS: Record<AlertMetricType, string> = {
   cpu_usage: "CPU usage",
   memory_usage: "Memory usage",
   disk_usage: "Disk usage",
-  load_avg: "Load average (1m)",
-  load_avg_5: "Load average (5m)",
-  load_avg_15: "Load average (15m)",
+  load_avg: "Load avg (1m)",
+  load_avg_5: "Load avg (5m)",
+  load_avg_15: "Load avg (15m)",
   temperature: "CPU temperature",
 };
 

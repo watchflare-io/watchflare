@@ -46,11 +46,11 @@
             case "disk_usage":
                 return `Disk: ${current_value.toFixed(1)}% (threshold: ${threshold_value.toFixed(0)}%)`;
             case "load_avg":
-                return `Load (1m): ${current_value.toFixed(2)} (threshold: ${threshold_value.toFixed(2)})`;
+                return `Load avg (1m): ${current_value.toFixed(2)} (threshold: ${threshold_value.toFixed(2)})`;
             case "load_avg_5":
-                return `Load (5m): ${current_value.toFixed(2)} (threshold: ${threshold_value.toFixed(2)})`;
+                return `Load avg (5m): ${current_value.toFixed(2)} (threshold: ${threshold_value.toFixed(2)})`;
             case "load_avg_15":
-                return `Load (15m): ${current_value.toFixed(2)} (threshold: ${threshold_value.toFixed(2)})`;
+                return `Load avg (15m): ${current_value.toFixed(2)} (threshold: ${threshold_value.toFixed(2)})`;
             case "temperature":
                 return `Temperature: ${current_value.toFixed(1)}°C (threshold: ${threshold_value.toFixed(0)}°C)`;
         }

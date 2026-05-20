@@ -399,7 +399,7 @@
                             {#each [{ label: "CPU", value: metrics.cpu }, { label: "Mem", value: metrics.memory }, { label: "Disk", value: metrics.disk }] as { label, value }}
                                 <div class="flex items-center gap-2">
                                     <span
-                                        class="w-12 text-muted-foreground shrink-0"
+                                        class="w-16 text-muted-foreground shrink-0"
                                         >{label}</span
                                     >
                                     <div
@@ -423,8 +423,8 @@
                             {/each}
                             <div class="flex items-center gap-2">
                                 <span
-                                    class="w-12 text-muted-foreground shrink-0"
-                                    >Load</span
+                                    class="w-16 text-muted-foreground shrink-0"
+                                    >Load Avg</span
                                 >
                                 <span class="text-foreground"
                                     >{metrics.load1.toFixed(2)}
@@ -434,7 +434,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <span
-                                    class="w-12 text-muted-foreground shrink-0"
+                                    class="w-16 text-muted-foreground shrink-0"
                                     >Net</span
                                 >
                                 <span class="text-foreground"
@@ -446,7 +446,7 @@
                             {#if metrics.temp > 0}
                                 <div class="flex items-center gap-2">
                                     <span
-                                        class="w-12 text-muted-foreground shrink-0"
+                                        class="w-16 text-muted-foreground shrink-0"
                                         >Temp</span
                                     >
                                     <span class="text-foreground"
@@ -457,7 +457,7 @@
                             {#if host.agent_version}
                                 <div class="flex items-center gap-2">
                                     <span
-                                        class="w-12 text-muted-foreground shrink-0"
+                                        class="w-16 text-muted-foreground shrink-0"
                                         >Agent</span
                                     >
                                     <span
@@ -476,7 +476,7 @@
                             {#if (host.outdated_count ?? 0) > 0 || (host.security_count ?? 0) > 0}
                                 <div class="flex items-center gap-2">
                                     <span
-                                        class="w-12 text-muted-foreground shrink-0"
+                                        class="w-16 text-muted-foreground shrink-0"
                                         >Pkgs</span
                                     >
                                     <span class="flex items-center gap-1">
@@ -605,7 +605,7 @@
                                 ? 'bg-table-header-active text-foreground'
                                 : ''}"
                         >
-                            Load {@render sortIcon("load")}
+                            Load Avg {@render sortIcon("load")}
                         </button>
                     </th>
                     <th
