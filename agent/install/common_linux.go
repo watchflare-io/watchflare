@@ -5,7 +5,6 @@ package install
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"os/user"
 )
