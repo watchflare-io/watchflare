@@ -45,7 +45,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
-  trigger-landing-rebuild:
+  trigger-rebuilds:
     needs: goreleaser
     runs-on: ubuntu-latest
     steps:
@@ -57,6 +57,18 @@ jobs:
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: 'web',
+              event_type: 'watchflare-release',
+              client_payload: { tag: context.ref },
+            });
+
+      - name: Dispatch docs rebuild
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.LANDING_REPO_PAT }}
+          script: |
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: 'docs',
               event_type: 'watchflare-release',
               client_payload: { tag: context.ref },
             });
