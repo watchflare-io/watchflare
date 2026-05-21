@@ -50,13 +50,14 @@ interface MinifiedMetrics {
  * Minified container metrics format from backend SSE
  */
 interface MinifiedContainerMetric {
-	i: string;   // container_id
-	n: string;   // container_name
-	c: number;   // cpu_percent
-	mu: number;  // memory_used_bytes
-	ml: number;  // memory_limit_bytes
-	nr: number;  // network_rx_bytes_per_sec
-	nt: number;  // network_tx_bytes_per_sec
+	i: string;    // container_id
+	n: string;    // container_name
+	c: number;    // cpu_percent
+	mu: number;   // memory_used_bytes
+	ml: number;   // memory_limit_bytes
+	nr: number;   // network_rx_bytes_per_sec
+	nt: number;   // network_tx_bytes_per_sec
+	r?: string;   // runtime ("docker", "podman")
 }
 
 interface MinifiedContainerMetricsUpdate {
@@ -84,6 +85,7 @@ function decodeMinifiedContainerMetrics(minified: MinifiedContainerMetricsUpdate
 			memory_limit_bytes: cm.ml,
 			network_rx_bytes_per_sec: cm.nr ?? 0,
 			network_tx_bytes_per_sec: cm.nt ?? 0,
+			runtime: cm.r ?? '',
 		}))
 	};
 }

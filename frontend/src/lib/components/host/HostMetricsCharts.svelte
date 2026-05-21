@@ -13,6 +13,7 @@
 	import ContainerCPUChart from '$lib/components/ContainerCPUChart.svelte';
 	import ContainerMemoryChart from '$lib/components/ContainerMemoryChart.svelte';
 	import ContainerNetworkChart from '$lib/components/ContainerNetworkChart.svelte';
+	import ContainersTable from '$lib/components/host/ContainersTable.svelte';
 	import TimeRangeSelector from '$lib/components/TimeRangeSelector.svelte';
 	import type { Metric, ContainerMetric, TimeRange } from '$lib/types';
 
@@ -194,6 +195,9 @@
 				</div>
 				<ContainerNetworkChart pivotedData={containerPivots.network} seriesKeys={containerPivots.networkKeys} {timeRange} />
 			</div>
+		</div>
+		<div class="mt-4">
+			<ContainersTable {containerMetrics} />
 		</div>
 	</div>
 {/if}

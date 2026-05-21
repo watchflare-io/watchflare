@@ -177,6 +177,7 @@ export interface ContainerMetric {
   memory_limit_bytes: number;
   network_rx_bytes_per_sec: number;
   network_tx_bytes_per_sec: number;
+  runtime?: string;
 }
 
 export interface MetricsQueryParams {

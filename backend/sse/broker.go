@@ -125,13 +125,14 @@ type AggregatedMetricsUpdate struct {
 
 // ContainerMetricMinified represents a minified container metric for SSE
 type ContainerMetricMinified struct {
-	ID   string  `json:"i"`  // container_id (short hash)
-	Name string  `json:"n"`  // container_name
-	CPU  float64 `json:"c"`  // cpu_percent
-	MU   uint64  `json:"mu"` // memory_used_bytes
-	ML   uint64  `json:"ml"` // memory_limit_bytes
-	NR   uint64  `json:"nr"` // network_rx_bytes_per_sec
-	NT   uint64  `json:"nt"` // network_tx_bytes_per_sec
+	ID      string  `json:"i"`  // container_id (short hash)
+	Name    string  `json:"n"`  // container_name
+	CPU     float64 `json:"c"`  // cpu_percent
+	MU      uint64  `json:"mu"` // memory_used_bytes
+	ML      uint64  `json:"ml"` // memory_limit_bytes
+	NR      uint64  `json:"nr"` // network_rx_bytes_per_sec
+	NT      uint64  `json:"nt"` // network_tx_bytes_per_sec
+	Runtime string  `json:"r"`  // container runtime ("docker", "podman")
 }
 
 // ContainerMetricsUpdate represents container metrics for SSE broadcast

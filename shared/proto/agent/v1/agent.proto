@@ -149,6 +149,7 @@ message ContainerMetric {
   uint64 memory_limit_bytes = 6;
   uint64 network_rx_bytes_per_sec = 7;
   uint64 network_tx_bytes_per_sec = 8;
+  string container_runtime = 9; // "docker", "podman", etc.
 }
 
 // HostInfo contains slowly-changing host properties sent with every metrics cycle.

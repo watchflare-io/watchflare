@@ -491,16 +491,18 @@ func (s *AgentServer) SendMetrics(ctx context.Context, req *pb.SendMetricsReques
 				MemoryLimitBytes:     cm.MemoryLimitBytes,
 				NetworkRxBytesPerSec: cm.NetworkRxBytesPerSec,
 				NetworkTxBytesPerSec: cm.NetworkTxBytesPerSec,
+				Runtime:              cm.ContainerRuntime,
 			})
 
 			sseContainerMetrics = append(sseContainerMetrics, sse.ContainerMetricMinified{
-				ID:   cm.ContainerId,
-				Name: cm.ContainerName,
-				CPU:  cm.CpuPercent,
-				MU:   cm.MemoryUsedBytes,
-				ML:   cm.MemoryLimitBytes,
-				NR:   cm.NetworkRxBytesPerSec,
-				NT:   cm.NetworkTxBytesPerSec,
+				ID:      cm.ContainerId,
+				Name:    cm.ContainerName,
+				CPU:     cm.CpuPercent,
+				MU:      cm.MemoryUsedBytes,
+				ML:      cm.MemoryLimitBytes,
+				NR:      cm.NetworkRxBytesPerSec,
+				NT:      cm.NetworkTxBytesPerSec,
+				Runtime: cm.ContainerRuntime,
 			})
 		}
 

@@ -20,6 +20,7 @@ type ContainerMetric struct {
 	MemoryLimitBytes     uint64    `json:"memory_limit_bytes"`
 	NetworkRxBytesPerSec uint64    `json:"network_rx_bytes_per_sec"`
 	NetworkTxBytesPerSec uint64    `json:"network_tx_bytes_per_sec"`
+	Runtime              string    `json:"runtime"`
 }
 
 // BeforeCreate hook to generate UUID
