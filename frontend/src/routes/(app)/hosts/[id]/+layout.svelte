@@ -5,6 +5,7 @@
     import * as api from "$lib/api.js";
     import { API_BASE_URL } from "$lib/api.js";
     import { SSEManager } from "$lib/sse/manager.js";
+    import { pageSseState } from "$lib/stores/pageSse.js";
     import { handleSSEReactivation, formatOfflineDuration } from "$lib/utils";
     import type {
         Host,
@@ -151,7 +152,9 @@
 
     onMount(() => {
         hostSseManager = new SSEManager(`${API_BASE_URL}/hosts/${hostId}/events`);
+        hostSseManager.onStateChange(state => pageSseState.set(state));
         hostSseManager.onMessage(handleSSEMessage);
+        pageSseState.set(hostSseManager.getState());
         hostSseManager.connect();
         loadHost();
         nowTimer = setInterval(() => { now = Date.now(); }, 30_000);
@@ -165,6 +168,7 @@
     onDestroy(() => {
         hostSseManager?.disconnect();
         hostSseManager = null;
+        pageSseState.set(null);
         if (nowTimer) clearInterval(nowTimer);
         if (updateAgentMessageTimeout) clearTimeout(updateAgentMessageTimeout);
         if (copyErrorTimeout) clearTimeout(copyErrorTimeout);

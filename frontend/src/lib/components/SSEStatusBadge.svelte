@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { sseConnectionState, sseIsReconnecting } from '$lib/stores/sse';
+	import { sseConnectionState } from '$lib/stores/sse';
+	import { pageSseState } from '$lib/stores/pageSse';
 
 	const { textClass = '' }: { textClass?: string } = $props();
 
-	const connectionState = $derived($sseConnectionState);
-	const isReconnecting = $derived($sseIsReconnecting);
+	const connectionState = $derived($pageSseState ?? $sseConnectionState);
+	const isReconnecting = $derived(connectionState === 'reconnecting');
 
 	function getStateColor(state: string): string {
 		switch (state) {
