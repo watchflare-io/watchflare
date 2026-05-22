@@ -847,7 +847,7 @@
                                 <button
                                     type="button"
                                     onclick={() => handleSort("name")}
-                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground {sortColumn ===
+                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary {sortColumn ===
                                     'name'
                                         ? 'bg-table-header-active text-foreground'
                                         : ''}"
@@ -863,7 +863,7 @@
                                 <button
                                     type="button"
                                     onclick={() => handleSort("version")}
-                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground {sortColumn ===
+                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary {sortColumn ===
                                     'version'
                                         ? 'bg-table-header-active text-foreground'
                                         : ''}"
@@ -881,7 +881,7 @@
                                 <button
                                     type="button"
                                     onclick={() => handleSort("status")}
-                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground {sortColumn ===
+                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary {sortColumn ===
                                     'status'
                                         ? 'bg-table-header-active text-foreground'
                                         : ''}"
@@ -897,7 +897,7 @@
                                 <button
                                     type="button"
                                     onclick={() => handleSort("manager")}
-                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground {sortColumn ===
+                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary {sortColumn ===
                                     'manager'
                                         ? 'bg-table-header-active text-foreground'
                                         : ''}"
@@ -915,7 +915,7 @@
                                 <button
                                     type="button"
                                     onclick={() => handleSort("latest_version")}
-                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground {sortColumn ===
+                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary {sortColumn ===
                                     'latest_version'
                                         ? 'bg-table-header-active text-foreground'
                                         : ''}"
@@ -933,7 +933,7 @@
                                 <button
                                     type="button"
                                     onclick={() => handleSort("arch")}
-                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground {sortColumn ===
+                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary {sortColumn ===
                                     'arch'
                                         ? 'bg-table-header-active text-foreground'
                                         : ''}"
@@ -958,7 +958,7 @@
                                 <button
                                     type="button"
                                     onclick={() => handleSort("first_seen")}
-                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground ml-auto {sortColumn ===
+                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary ml-auto {sortColumn ===
                                     'first_seen'
                                         ? 'bg-table-header-active text-foreground'
                                         : ''}"
@@ -976,7 +976,7 @@
                                 <button
                                     type="button"
                                     onclick={() => handleSort("last_seen")}
-                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground ml-auto {sortColumn ===
+                                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary ml-auto {sortColumn ===
                                     'last_seen'
                                         ? 'bg-table-header-active text-foreground'
                                         : ''}"

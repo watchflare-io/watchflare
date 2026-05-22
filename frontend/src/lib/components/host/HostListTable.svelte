@@ -54,53 +54,41 @@
 
 <table class="w-full min-w-160">
     <thead>
-        <tr class="border-b bg-table-header">
-            <th
-                scope="col"
-                class="w-2/5 px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
-                onclick={() => onSort("name")}
-            >
-                <span
-                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground"
+        <tr class="border-b bg-table-header whitespace-nowrap">
+            <th scope="col" class="w-2/5 px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground">
+                <button
+                    type="button"
+                    onclick={() => onSort("name")}
+                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary {sortColumn === 'name' ? 'bg-table-header-active text-foreground' : ''}"
                 >
                     Name
                     {@render sortIcon("name")}
-                </span>
+                </button>
             </th>
-            <th
-                scope="col"
-                class="w-1/5 px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
-                onclick={() => onSort("status")}
-            >
-                <span
-                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground"
+            <th scope="col" class="w-1/5 px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground">
+                <button
+                    type="button"
+                    onclick={() => onSort("status")}
+                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary {sortColumn === 'status' ? 'bg-table-header-active text-foreground' : ''}"
                 >
                     Status
                     {@render sortIcon("status")}
-                </span>
+                </button>
             </th>
-            <th
-                scope="col"
-                class="w-1/4 px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
-                onclick={() => onSort("ip")}
-            >
-                <span
-                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 cursor-pointer select-none transition-colors hover:bg-table-header-active hover:text-foreground"
+            <th scope="col" class="w-1/4 px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground">
+                <button
+                    type="button"
+                    onclick={() => onSort("ip")}
+                    class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary {sortColumn === 'ip' ? 'bg-table-header-active text-foreground' : ''}"
                 >
                     IP Address
                     {@render sortIcon("ip")}
-                </span>
+                </button>
             </th>
-            <th
-                scope="col"
-                class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground table-cell"
-            >
+            <th scope="col" class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground">
                 Agent
             </th>
-            <th
-                scope="col"
-                class="px-4 py-2.5 text-right text-sm font-semibold text-muted-foreground"
-            >
+            <th scope="col" class="px-4 py-2.5 text-right text-sm font-semibold text-muted-foreground">
                 Actions
             </th>
         </tr>

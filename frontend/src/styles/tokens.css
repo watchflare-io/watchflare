@@ -36,7 +36,7 @@
 	--popover-foreground: oklch(0.2 0.01 120);
 
 	/* Primary — Military Green */
-	--primary: oklch(0.35 0.08 145);
+	--primary: oklch(0.35 0.09 145);
 	--primary-foreground: oklch(1 0 0);
 
 	/* Secondary */
@@ -58,7 +58,7 @@
 	/* Borders & Input */
 	--border: oklch(0.9 0.005 145);
 	--input: oklch(0.9 0.005 145);
-	--ring: oklch(0.35 0.08 145);
+	--ring: oklch(0.35 0.09 145);
 
 	/* Status */
 	--success: oklch(0.5 0.12 145);
@@ -68,7 +68,7 @@
 	/* Surface (sidebar, header, elevated elements) */
 	--surface: oklch(1 0 0);
 	--surface-foreground: oklch(0.2 0.01 120);
-	--surface-primary: oklch(0.35 0.08 145);
+	--surface-primary: oklch(0.35 0.09 145);
 	--surface-primary-foreground: oklch(1 0 0);
 	--surface-accent: oklch(0.96 0.005 145);
 	--surface-accent-foreground: oklch(0.2 0.01 120);
@@ -123,7 +123,7 @@
 	--popover-foreground: oklch(0.92 0.01 145);
 
 	/* Primary — visible green on dark bg */
-	--primary: oklch(0.60 0.15 145);
+	--primary: oklch(0.62 0.14 145);
 	--primary-foreground: oklch(0.98 0.005 145);
 
 	/* Secondary */
@@ -145,7 +145,7 @@
 	/* Borders & Input */
 	--border: oklch(0.33 0.012 145);
 	--input: oklch(0.33 0.012 145);
-	--ring: oklch(0.60 0.15 145);
+	--ring: oklch(0.62 0.14 145);
 
 	/* Status */
 	--success: oklch(0.65 0.14 145);
@@ -155,7 +155,7 @@
 	/* Surface (sidebar, header, elevated elements) */
 	--surface: oklch(0.22 0.012 145);
 	--surface-foreground: oklch(0.92 0.01 145);
-	--surface-primary: oklch(0.60 0.15 145);
+	--surface-primary: oklch(0.62 0.14 145);
 	--surface-primary-foreground: oklch(0.98 0.005 145);
 	--surface-accent: oklch(0.27 0.012 145);
 	--surface-accent-foreground: oklch(0.92 0.01 145);
