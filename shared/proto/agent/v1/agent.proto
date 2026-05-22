@@ -150,6 +150,9 @@ message ContainerMetric {
   uint64 network_rx_bytes_per_sec = 7;
   uint64 network_tx_bytes_per_sec = 8;
   string container_runtime = 9; // "docker", "podman", etc.
+  string status = 10;           // e.g. "Up 2 hours", "Restarting (1) 23 seconds ago"
+  string health = 11;           // "healthy", "unhealthy", "starting", "" (no healthcheck)
+  string ports = 12;            // e.g. "8080:80/tcp, 443:443/tcp"
 }
 
 // HostInfo contains slowly-changing host properties sent with every metrics cycle.

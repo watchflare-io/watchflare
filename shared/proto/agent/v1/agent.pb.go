@@ -832,6 +832,9 @@ type ContainerMetric struct {
 	NetworkRxBytesPerSec uint64                 `protobuf:"varint,7,opt,name=network_rx_bytes_per_sec,json=networkRxBytesPerSec,proto3" json:"network_rx_bytes_per_sec,omitempty"`
 	NetworkTxBytesPerSec uint64                 `protobuf:"varint,8,opt,name=network_tx_bytes_per_sec,json=networkTxBytesPerSec,proto3" json:"network_tx_bytes_per_sec,omitempty"`
 	ContainerRuntime     string                 `protobuf:"bytes,9,opt,name=container_runtime,json=containerRuntime,proto3" json:"container_runtime,omitempty"` // "docker", "podman", etc.
+	Status               string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`                                            // e.g. "Up 2 hours", "Restarting (1) 23 seconds ago"
+	Health               string                 `protobuf:"bytes,11,opt,name=health,proto3" json:"health,omitempty"`                                            // "healthy", "unhealthy", "starting", "" (no healthcheck)
+	Ports                string                 `protobuf:"bytes,12,opt,name=ports,proto3" json:"ports,omitempty"`                                              // e.g. "8080:80/tcp, 443:443/tcp"
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -925,6 +928,27 @@ func (x *ContainerMetric) GetNetworkTxBytesPerSec() uint64 {
 func (x *ContainerMetric) GetContainerRuntime() string {
 	if x != nil {
 		return x.ContainerRuntime
+	}
+	return ""
+}
+
+func (x *ContainerMetric) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *ContainerMetric) GetHealth() string {
+	if x != nil {
+		return x.Health
+	}
+	return ""
+}
+
+func (x *ContainerMetric) GetPorts() string {
+	if x != nil {
+		return x.Ports
 	}
 	return ""
 }
@@ -1792,7 +1816,7 @@ const file_agent_v1_agent_proto_rawDesc = "" +
 	"\x11cpu_steal_percent\x18\x18 \x01(\x01R\x0fcpuStealPercent\"R\n" +
 	"\rSensorReading\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12/\n" +
-	"\x13temperature_celsius\x18\x02 \x01(\x01R\x12temperatureCelsius\"\x89\x03\n" +
+	"\x13temperature_celsius\x18\x02 \x01(\x01R\x12temperatureCelsius\"\xcf\x03\n" +
 	"\x0fContainerMetric\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12%\n" +
 	"\x0econtainer_name\x18\x02 \x01(\tR\rcontainerName\x12\x14\n" +
@@ -1803,7 +1827,11 @@ const file_agent_v1_agent_proto_rawDesc = "" +
 	"\x12memory_limit_bytes\x18\x06 \x01(\x04R\x10memoryLimitBytes\x126\n" +
 	"\x18network_rx_bytes_per_sec\x18\a \x01(\x04R\x14networkRxBytesPerSec\x126\n" +
 	"\x18network_tx_bytes_per_sec\x18\b \x01(\x04R\x14networkTxBytesPerSec\x12+\n" +
-	"\x11container_runtime\x18\t \x01(\tR\x10containerRuntime\"\xc3\x02\n" +
+	"\x11container_runtime\x18\t \x01(\tR\x10containerRuntime\x12\x16\n" +
+	"\x06status\x18\n" +
+	" \x01(\tR\x06status\x12\x16\n" +
+	"\x06health\x18\v \x01(\tR\x06health\x12\x14\n" +
+	"\x05ports\x18\f \x01(\tR\x05ports\"\xc3\x02\n" +
 	"\bHostInfo\x12)\n" +
 	"\x10platform_version\x18\x01 \x01(\tR\x0fplatformVersion\x12%\n" +
 	"\x0ekernel_version\x18\x02 \x01(\tR\rkernelVersion\x12\x1f\n" +

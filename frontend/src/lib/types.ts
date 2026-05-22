@@ -178,6 +178,9 @@ export interface ContainerMetric {
   network_rx_bytes_per_sec: number;
   network_tx_bytes_per_sec: number;
   runtime?: string;
+  status?: string;
+  health?: string;
+  ports?: string;
 }
 
 export interface MetricsQueryParams {

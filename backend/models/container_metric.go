@@ -21,6 +21,9 @@ type ContainerMetric struct {
 	NetworkRxBytesPerSec uint64    `json:"network_rx_bytes_per_sec"`
 	NetworkTxBytesPerSec uint64    `json:"network_tx_bytes_per_sec"`
 	Runtime              string    `json:"runtime"`
+	Status               string    `json:"status"`
+	Health               string    `json:"health"`
+	Ports                string    `json:"ports"`
 }
 
 // BeforeCreate hook to generate UUID

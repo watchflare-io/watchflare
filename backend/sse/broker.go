@@ -133,6 +133,9 @@ type ContainerMetricMinified struct {
 	NR      uint64  `json:"nr"` // network_rx_bytes_per_sec
 	NT      uint64  `json:"nt"` // network_tx_bytes_per_sec
 	Runtime string  `json:"r"`  // container runtime ("docker", "podman")
+	Status  string  `json:"st"` // e.g. "Up 2 hours"
+	Health  string  `json:"hl"` // "healthy", "unhealthy", "starting", ""
+	Ports   string  `json:"po"` // e.g. "8080:80/tcp, 443:443/tcp"
 }
 
 // ContainerMetricsUpdate represents container metrics for SSE broadcast

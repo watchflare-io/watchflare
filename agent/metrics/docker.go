@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"time"
 )
@@ -63,6 +64,9 @@ type ContainerMetric struct {
 	MemoryLimitBytes     uint64
 	NetworkRxBytesPerSec uint64
 	NetworkTxBytesPerSec uint64
+	Status               string // e.g. "Up 2 hours"
+	Health               string // "healthy", "unhealthy", "starting", "" (no healthcheck)
+	Ports                string // e.g. "8080:80/tcp, 443:443/tcp"
 }
 
 // dockerStatsResponse matches the Docker Engine API /containers/{id}/stats response.
@@ -94,11 +98,20 @@ type dockerMemoryStats struct {
 	} `json:"stats"`
 }
 
+type dockerPort struct {
+	IP          string `json:"IP"`
+	PrivatePort uint16 `json:"PrivatePort"`
+	PublicPort  uint16 `json:"PublicPort"`
+	Type        string `json:"Type"`
+}
+
 type dockerContainer struct {
-	ID    string   `json:"Id"`
-	Names []string `json:"Names"`
-	Image string   `json:"Image"`
-	State string   `json:"State"`
+	ID     string       `json:"Id"`
+	Names  []string     `json:"Names"`
+	Image  string       `json:"Image"`
+	State  string       `json:"State"`
+	Status string       `json:"Status"`
+	Ports  []dockerPort `json:"Ports"`
 }
 
 // newSocketClient returns an HTTP client that dials the given Unix socket path.
@@ -204,6 +217,9 @@ func collectFromSocket(client *http.Client, runtime string, tracker *DeltaTracke
 			name = strings.TrimPrefix(c.Names[0], "/")
 		}
 
+		// Parse status string: extract health from parenthesised suffix
+		status, health := parseContainerStatus(c.Status)
+
 		result = append(result, ContainerMetric{
 			Runtime:              runtime,
 			ContainerID:          truncateID(c.ID),
@@ -214,10 +230,56 @@ func collectFromSocket(client *http.Client, runtime string, tracker *DeltaTracke
 			MemoryLimitBytes:     stats.MemoryStats.Limit,
 			NetworkRxBytesPerSec: rxRate,
 			NetworkTxBytesPerSec: txRate,
+			Status:               status,
+			Health:               health,
+			Ports:                formatPorts(c.Ports),
 		})
 	}
 
 	return result, nil
+}
+
+// parseContainerStatus splits a Docker status string into a clean status and a
+// health value. Docker appends the health state in parentheses when a
+// HEALTHCHECK is configured, e.g. "Up 2 hours (healthy)".
+// Returns health="" when no healthcheck is defined.
+func parseContainerStatus(raw string) (status, health string) {
+	healthSuffixes := []struct {
+		suffix string
+		health string
+	}{
+		{" (healthy)", "healthy"},
+		{" (unhealthy)", "unhealthy"},
+		{" (health: starting)", "starting"},
+	}
+	for _, hs := range healthSuffixes {
+		if strings.HasSuffix(raw, hs.suffix) {
+			return strings.TrimSuffix(raw, hs.suffix), hs.health
+		}
+	}
+	return raw, ""
+}
+
+// formatPorts formats a container's port mappings as a comma-separated string,
+// e.g. "8080:80/tcp, 443:443/tcp". Duplicate mappings (IPv4/IPv6 pairs) are
+// deduplicated, and the result is sorted for stable output.
+func formatPorts(ports []dockerPort) string {
+	seen := make(map[string]bool)
+	var result []string
+	for _, p := range ports {
+		var mapping string
+		if p.PublicPort > 0 {
+			mapping = fmt.Sprintf("%d:%d/%s", p.PublicPort, p.PrivatePort, p.Type)
+		} else {
+			mapping = fmt.Sprintf("%d/%s", p.PrivatePort, p.Type)
+		}
+		if !seen[mapping] {
+			seen[mapping] = true
+			result = append(result, mapping)
+		}
+	}
+	sort.Strings(result)
+	return strings.Join(result, ", ")
 }
 
 // truncateID safely truncates a container ID to 12 characters

@@ -58,6 +58,9 @@ interface MinifiedContainerMetric {
 	nr: number;   // network_rx_bytes_per_sec
 	nt: number;   // network_tx_bytes_per_sec
 	r?: string;   // runtime ("docker", "podman")
+	st?: string;  // status ("Up 2 hours")
+	hl?: string;  // health ("healthy", "unhealthy", "starting", "")
+	po?: string;  // ports ("8080:80/tcp, 443:443/tcp")
 }
 
 interface MinifiedContainerMetricsUpdate {
@@ -86,6 +89,9 @@ function decodeMinifiedContainerMetrics(minified: MinifiedContainerMetricsUpdate
 			network_rx_bytes_per_sec: cm.nr ?? 0,
 			network_tx_bytes_per_sec: cm.nt ?? 0,
 			runtime: cm.r ?? '',
+			status: cm.st ?? '',
+			health: cm.hl ?? '',
+			ports: cm.po ?? '',
 		}))
 	};
 }

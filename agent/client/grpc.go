@@ -321,6 +321,9 @@ func (c *Client) SendMetrics(agentID, agentKey, agentVersion string, m *metrics.
 			NetworkRxBytesPerSec: cm.NetworkRxBytesPerSec,
 			NetworkTxBytesPerSec: cm.NetworkTxBytesPerSec,
 			ContainerRuntime:     cm.Runtime,
+			Status:               cm.Status,
+			Health:               cm.Health,
+			Ports:                cm.Ports,
 		})
 	}
 
