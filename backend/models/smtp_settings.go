@@ -15,6 +15,7 @@ type SmtpSettings struct {
 	TLSMode           string    `gorm:"type:varchar(10);not null;default:'starttls'"`
 	AuthType          string    `gorm:"type:varchar(10);not null;default:'plain'"`
 	HeloName          string    `gorm:"type:varchar(255);not null;default:''"`
+	NotificationEmail string    `gorm:"type:varchar(255);not null;default:''"`
 	Enabled           bool      `gorm:"not null;default:false"`
 	UpdatedAt         time.Time
 }

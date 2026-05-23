@@ -101,8 +101,8 @@ func (w *AlertWorker) evaluate() {
 		}
 	}
 
-	// Load first user as notification recipient
-	recipient, err := firstUserEmail()
+	// Resolve notification recipient: smtp_settings.notification_email if set, otherwise first user
+	recipient, err := notificationRecipient()
 	if err != nil {
 		slog.Error("alert worker: failed to get notification recipient", "error", err)
 		return
@@ -496,11 +496,23 @@ func buildResolutionEmailContent(hostName, metricType string, startedAt, resolve
 	return
 }
 
-// firstUserEmail returns the email of the first registered user.
-func firstUserEmail() (string, error) {
+// notificationRecipient returns the configured notification email from smtp_settings
+// if set, otherwise falls back to the first registered user's email.
+func notificationRecipient() (string, error) {
+	var s models.SmtpSettings
+	err := database.DB.First(&s).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", fmt.Errorf("failed to load smtp settings: %w", err)
+	}
+	if err == nil && s.NotificationEmail != "" {
+		return s.NotificationEmail, nil
+	}
 	var user models.User
 	if err := database.DB.Order("created_at ASC").First(&user).Error; err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get fallback notification user: %w", err)
+	}
+	if user.Email == "" {
+		return "", errors.New("first user has no email address")
 	}
 	return user.Email, nil
 }

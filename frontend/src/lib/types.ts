@@ -453,6 +453,7 @@ export interface SmtpSettings {
   tls_mode: SmtpTLSMode;
   auth_type: SmtpAuthType;
   helo_name: string;
+  notification_email: string;
   enabled: boolean;
 }
 
@@ -466,6 +467,7 @@ export interface UpdateSMTPSettingsRequest {
   tls_mode: SmtpTLSMode;
   auth_type: SmtpAuthType;
   helo_name: string;
+  notification_email: string;
   enabled: boolean;
 }
 

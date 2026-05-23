@@ -14,16 +14,17 @@ const defaultSMTPPort = 587
 
 // UpdateSMTPSettingsRequest is the body for PUT /settings/smtp.
 type UpdateSMTPSettingsRequest struct {
-	Host        string `json:"host"`
-	Port        int    `json:"port"`
-	Username    string `json:"username"`
-	Password    string `json:"password"` // empty = keep existing password
-	FromAddress string `json:"from_address"`
-	FromName    string `json:"from_name"`
-	TLSMode     string `json:"tls_mode"`
-	AuthType    string `json:"auth_type"`
-	HeloName    string `json:"helo_name"`
-	Enabled     bool   `json:"enabled"`
+	Host              string `json:"host"`
+	Port              int    `json:"port"`
+	Username          string `json:"username"`
+	Password          string `json:"password"` // empty = keep existing password
+	FromAddress       string `json:"from_address"`
+	FromName          string `json:"from_name"`
+	TLSMode           string `json:"tls_mode"`
+	AuthType          string `json:"auth_type"`
+	HeloName          string `json:"helo_name"`
+	NotificationEmail string `json:"notification_email"`
+	Enabled           bool   `json:"enabled"`
 }
 
 // TestSMTPRequest is the body for POST /settings/smtp/test.
@@ -76,6 +77,16 @@ func UpdateSMTPSettings(c *gin.Context) {
 		return
 	}
 
+	// Validate notification email if provided (optional field) and normalize to bare address
+	if req.NotificationEmail != "" {
+		addr, err := mail.ParseAddress(req.NotificationEmail)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "notification email is not a valid email address"})
+			return
+		}
+		req.NotificationEmail = addr.Address
+	}
+
 	// Require fields when enabling
 	if req.Enabled && req.FromName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "sender name is required when SMTP is enabled"})
@@ -85,7 +96,7 @@ func UpdateSMTPSettings(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "sender email is required when SMTP is enabled"})
 		return
 	}
-	if req.Enabled && req.FromAddress != "" {
+	if req.Enabled {
 		if _, err := mail.ParseAddress(req.FromAddress); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "sender email is not a valid email address"})
 			return
@@ -97,16 +108,17 @@ func UpdateSMTPSettings(c *gin.Context) {
 	}
 
 	if err := services.UpdateSMTPSettings(services.SMTPSettingsInput{
-		Host:        req.Host,
-		Port:        req.Port,
-		Username:    req.Username,
-		Password:    req.Password,
-		FromAddress: req.FromAddress,
-		FromName:    req.FromName,
-		TLSMode:     req.TLSMode,
-		AuthType:    req.AuthType,
-		HeloName:    req.HeloName,
-		Enabled:     req.Enabled,
+		Host:              req.Host,
+		Port:              req.Port,
+		Username:          req.Username,
+		Password:          req.Password,
+		FromAddress:       req.FromAddress,
+		FromName:          req.FromName,
+		TLSMode:           req.TLSMode,
+		AuthType:          req.AuthType,
+		HeloName:          req.HeloName,
+		NotificationEmail: req.NotificationEmail,
+		Enabled:           req.Enabled,
 	}); err != nil {
 		slog.Error("failed to save SMTP settings", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save SMTP settings"})

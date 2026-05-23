@@ -31,6 +31,7 @@
     let smtpFromAddress = $state("");
     let smtpFromName = $state("");
     let smtpHeloName = $state("");
+    let smtpNotificationEmail = $state("");
 
     let smtpSaving = $state(false);
     let smtpSaveSuccess = $state(false);
@@ -160,6 +161,7 @@
             smtpFromAddress = s.from_address;
             smtpFromName = s.from_name;
             smtpHeloName = s.helo_name;
+            smtpNotificationEmail = s.notification_email ?? "";
         } catch {
             loadError = true;
         }
@@ -274,8 +276,12 @@
             if (!smtpHost) fieldErrors.host = "Cannot be blank";
             if (!smtpPort || isNaN(smtpPort) || smtpPort < 1 || smtpPort > 65535)
                 fieldErrors.port = "Must be between 1 and 65535";
-            if (Object.keys(fieldErrors).length > 0) return;
         }
+
+        if (smtpNotificationEmail.trim() && !EMAIL_RE.test(smtpNotificationEmail.trim()))
+            fieldErrors.notificationEmail = "Invalid email format";
+
+        if (Object.keys(fieldErrors).length > 0) return;
 
         smtpSaving = true;
         try {
@@ -289,6 +295,7 @@
                 tls_mode: smtpTLSMode,
                 auth_type: smtpAuthType,
                 helo_name: smtpHeloName,
+                notification_email: smtpNotificationEmail.trim(),
                 enabled: smtpEnabled,
             });
             if (smtpPassword) {
@@ -495,6 +502,24 @@
                 class="w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
         </div>
+    </div>
+
+    <!-- Notification recipient -->
+    <div class="mb-6">
+        <label for="smtp-notification-email" class="block text-sm font-medium text-foreground mb-1">
+            Notification Recipient <span class="text-xs font-normal text-muted-foreground">(optional)</span>
+        </label>
+        <p class="text-xs text-muted-foreground mb-2">Address that receives alert emails. Defaults to your login email if blank.</p>
+        <input
+            id="smtp-notification-email"
+            type="email"
+            placeholder="alerts@example.com"
+            bind:value={smtpNotificationEmail}
+            class="w-full sm:w-80 rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 {fieldErrors.notificationEmail ? 'border-destructive focus-visible:ring-destructive' : 'focus-visible:ring-primary'}"
+        />
+        {#if fieldErrors.notificationEmail}
+            <p class="mt-1 text-xs text-destructive">{fieldErrors.notificationEmail}</p>
+        {/if}
     </div>
 
     <!-- TLS / port mismatch warning -->
