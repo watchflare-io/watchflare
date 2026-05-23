@@ -1,99 +1,102 @@
 # Watchflare
 
-Self-hosted infrastructure monitoring with real-time dashboards. Lightweight agents report metrics over gRPC/TLS to a central Hub, distributed as a single binary with an embedded web UI.
+Self-hosted host monitoring. Real-time metrics, package inventory, and alerts — one binary to deploy.
 
-![Dashboard](docs/screenshots/dashboard.png)
-*↑ screenshot coming soon*
+[![Release](https://img.shields.io/github/v/release/watchflare-io/watchflare?label=release)](https://github.com/watchflare-io/watchflare/releases)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+[![Go](https://img.shields.io/badge/go-1.26+-00ADD8?logo=go&logoColor=white)](https://go.dev)
+[![Docker Image](https://img.shields.io/badge/docker-ghcr.io-2496ED?logo=docker&logoColor=white)](https://github.com/watchflare-io/watchflare/pkgs/container/watchflare)
+
+Watchflare collects system metrics in real time, maintains a full package inventory across your fleet, and alerts you when things go wrong — without sending your infrastructure data anywhere.
+
+```
+  your-server-1          your-server-2          your-server-3
+  [ Agent ]              [ Agent ]              [ Agent ]
+      |                      |                      |
+      └──────────────────────┴──────────────────────┘
+                             |
+                         gRPC / TLS 1.3
+                             |
+                          [ Hub ]
+                    dashboard + TimescaleDB
+```
+
+---
 
 ## Why Watchflare?
 
-- **Zero-dependency deployment** — one Go binary embeds the entire frontend. No Nginx, no Node, no reverse proxy required.
-- **Automatic TLS** — the Hub generates its own PKI on first run. Agents pin the CA on registration. No certificate management.
-- **Resilient by design** — agents buffer metrics locally (WAL) when the Hub is unreachable and replay on reconnect. No gaps.
-- **Package inventory** — tracks installed packages across 28 package managers (apt, brew, pip, npm, cargo, …) with daily delta detection and security/outdated flagging.
+- **Zero-dependency deployment** — one Go binary embeds the entire web UI. No Nginx, no Node, no reverse proxy needed.
+- **Automatic TLS** — the Hub generates its own PKI on first run. Agents pin the CA at registration. No certificate management.
+- **Resilient agents** — a write-ahead log buffers metrics locally when the Hub is unreachable and replays on reconnect. No gaps.
+- **Package inventory** — tracks installed packages across ~30 package managers with daily delta sync, outdated detection, and security flagging.
 - **Privacy-first** — your infrastructure data never leaves your servers. AGPL-3.0 licensed.
 
-## Features
+## What it monitors
 
-- **Real-time monitoring** — CPU, memory, disk, network, load average, temperature via SSE streaming
-- **Docker/Podman container metrics** — per-container CPU, memory, network tracking
-- **Lightweight agents** — single binary, ~10 MB, runs as a system service (Linux + macOS)
-- **Secure by default** — TLS 1.3 (auto-generated PKI), HMAC-signed RPCs, JWT authentication
-- **Package inventory** — 28 package managers, daily delta sync, security advisory flagging
-- **Write-ahead log** — agents buffer metrics locally when the Hub is unreachable
-- **Alert rules** — configurable thresholds with SMTP notifications
-- **Incident history** — per-host and global incident timeline
-- **TimescaleDB** — automatic partitioning, compression, continuous aggregates, 30-day retention
+| Category | Metrics |
+|----------|---------|
+| **CPU** | Usage %, iowait, steal (VMs), temperature (physical hosts) |
+| **Memory** | Used, available, buffers, cached, swap |
+| **Disk** | Total, used, read/write throughput |
+| **Network** | Inbound/outbound bandwidth |
+| **System** | Uptime, load average (1/5/15 min), process count |
+| **Containers** | Per-container CPU, memory, network (Docker/Podman) |
+| **Packages** | Installed packages, versions, outdated detection (~30 package managers) |
 
-## Screenshots
+---
 
-| Dashboard | Host detail | Packages |
-|-----------|-------------|----------|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Host detail](docs/screenshots/host-detail.png) | ![Packages](docs/screenshots/packages.png) |
+## Quick start
 
-*Screenshots coming soon*
-
-## Quick Start
-
-### Requirements
-
-- Docker + Docker Compose (recommended)
-- Or: Linux/macOS host with PostgreSQL + TimescaleDB
-- **Hub:** ~50 MB RAM, any modern CPU
-- **Agent:** ~10 MB RAM, Linux (x86\_64/arm64) or macOS (x86\_64/arm64)
-
-### Docker Compose (recommended)
+**Requirements:** Docker and Docker Compose v2+.
 
 ```bash
-git clone https://github.com/watchflare-io/watchflare.git
-cd watchflare
-
-# Configure environment
-cp .env.example .env
-# Edit .env: set POSTGRES_PASSWORD and JWT_SECRET
-
-# Start
-docker compose up -d
-
-# Open http://localhost:8080 and create your admin account
+mkdir watchflare && cd watchflare
 ```
 
-### Pre-built binaries
+Download [`docker-compose.yml`](docker-compose.yml) from this repo, then generate the three required secrets:
 
-Download the latest release from [GitHub Releases](https://github.com/watchflare-io/watchflare/releases):
+```bash
+printf "POSTGRES_PASSWORD=%s\nJWT_SECRET=%s\nSMTP_ENCRYPTION_KEY=%s\n" \
+  "$(openssl rand -hex 32)" \
+  "$(openssl rand -hex 32)" \
+  "$(openssl rand -hex 32)" > .env
+```
 
-| Binary | Platform |
-|--------|----------|
-| `watchflare-app` | Hub (Linux x86\_64 / arm64, macOS) |
-| `watchflare-agent` | Agent (Linux x86\_64 / arm64, macOS) |
+Start the stack:
 
-### Install an agent
+```bash
+docker compose up -d
+```
 
-After creating a host in the dashboard, copy the registration token and run:
+Open `http://your-host:8080`. On first load you are redirected to create your admin account.
 
+> **Full guide** → [docs.watchflare.io/get-started/quickstart](https://docs.watchflare.io/get-started/quickstart/)
+
+## Install an agent
+
+In the dashboard, create a host and copy the registration token. Then run on the target machine:
+
+**Linux:**
 ```bash
 curl -sSL https://get.watchflare.io | sudo bash -s -- \
-  --token=wf_reg_xxx --host=your-hub-address --port=50051
+  --token wf_reg_YOUR_TOKEN \
+  --host YOUR_HUB_IP \
+  --port 50051
 ```
 
-### Development
-
+**macOS (via Homebrew):**
 ```bash
-# Start database
-docker compose up -d
-
-# Hub (terminal 1)
-cd backend
-cp .env.example .env
-go run .
-
-# Frontend (terminal 2)
-cd frontend
-npm install
-npm run dev
+curl -sSL https://get.watchflare.io/brew | bash -s -- \
+  --token wf_reg_YOUR_TOKEN \
+  --host YOUR_HUB_IP \
+  --port 50051
 ```
 
-## Tech Stack
+The installer registers the agent, writes the config, and starts the service. The host goes online in the dashboard within 5 seconds.
+
+---
+
+## Tech stack
 
 | Component | Technology |
 |-----------|------------|
@@ -103,10 +106,40 @@ npm run dev
 | Agent | Go, gopsutil |
 | Security | TLS 1.3, HMAC-SHA256, JWT, bcrypt |
 
+---
+
 ## Documentation
 
-Full documentation at [docs.watchflare.io](https://docs.watchflare.io) — coming soon.
+Full documentation at **[docs.watchflare.io](https://docs.watchflare.io)**
+
+- [Architecture overview](https://docs.watchflare.io/get-started/architecture/)
+- [Hub configuration reference](https://docs.watchflare.io/reference/hub-env/)
+- [Agent install — Linux](https://docs.watchflare.io/agent/install/linux/)
+- [Agent install — macOS](https://docs.watchflare.io/agent/install/macos/)
+- [Alerts & notifications](https://docs.watchflare.io/monitoring/alerts-notifications/)
+- [Package inventory](https://docs.watchflare.io/monitoring/packages/)
+
+---
+
+## Development
+
+```bash
+# 1. Start database
+docker compose up -d
+
+# 2. Hub (terminal 1)
+cd backend && go run .
+
+# 3. Frontend (terminal 2)
+cd frontend && npm install && npm run dev   # http://localhost:5173
+```
+
+Copy `.env.example` to `.env` and set `JWT_SECRET` (≥ 32 chars). Default dev credentials: `admin@watchflare.io` / `watchflare_p4ss`.
+
+See [CLAUDE.md](.claude/CLAUDE.md) for architecture notes, build commands, and contribution guidelines.
+
+---
 
 ## License
 
-AGPL-3.0 — see [LICENSE](LICENSE) for details.
+[AGPL-3.0](LICENSE)
