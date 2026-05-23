@@ -170,7 +170,7 @@
         hostSseManager = null;
         pageSseState.set(null);
         if (nowTimer) clearInterval(nowTimer);
-        if (updateAgentMessageTimeout) clearTimeout(updateAgentMessageTimeout);
+        if (updateAgentTimeout) clearTimeout(updateAgentTimeout);
         if (copyErrorTimeout) clearTimeout(copyErrorTimeout);
     });
 
@@ -180,6 +180,7 @@
         if (event.type === "host_update") {
             const update = event.data as HostUpdateEvent;
             if (host) {
+                const prevVersion = host.agent_version;
                 host = {
                     ...host,
                     status: update.status,
@@ -191,6 +192,11 @@
                     agent_version: update.agent_version ?? host.agent_version,
                 };
                 clockDesync = update.clock_desync || false;
+                if (updatingAgent && update.agent_version && update.agent_version !== prevVersion) {
+                    if (updateAgentTimeout) clearTimeout(updateAgentTimeout);
+                    updateAgentTimeout = null;
+                    updatingAgent = false;
+                }
             }
         }
         if (event.type === "metrics_update") {
@@ -353,23 +359,21 @@
         }
     }
 
-    let updateAgentMessage = $state("");
-    let updateAgentMessageTimeout: ReturnType<typeof setTimeout> | null = null;
+    let updatingAgent = $state(false);
+    let updateAgentTimeout: ReturnType<typeof setTimeout> | null = null;
 
     async function handleUpdateAgent() {
         if (!host) return;
-        updateAgentMessage = "";
         try {
             await api.triggerAgentUpdate(host.id);
-            updateAgentMessage = "Update requested";
+            updatingAgent = true;
+            if (updateAgentTimeout) clearTimeout(updateAgentTimeout);
+            updateAgentTimeout = setTimeout(() => {
+                updatingAgent = false;
+            }, 120_000);
         } catch (err: unknown) {
-            updateAgentMessage =
-                err instanceof Error ? err.message : "Failed to request update";
+            error = err instanceof Error ? err.message : "Failed to request update";
         }
-        if (updateAgentMessageTimeout) clearTimeout(updateAgentMessageTimeout);
-        updateAgentMessageTimeout = setTimeout(() => {
-            updateAgentMessage = "";
-        }, 4000);
     }
 
     let copyErrorTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -475,10 +479,8 @@
             showAlertRules = true;
         }}
         onUpdateAgent={handleUpdateAgent}
+        {updatingAgent}
     />
-    {#if updateAgentMessage}
-        <p class="mb-3 text-xs text-muted-foreground">{updateAgentMessage}</p>
-    {/if}
 
     {#if regeneratedToken}
         <div

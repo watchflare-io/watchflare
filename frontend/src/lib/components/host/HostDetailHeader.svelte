@@ -23,6 +23,7 @@
         Bell,
         MemoryStick,
         Download,
+        Loader2,
     } from "lucide-svelte";
     import OsIcon from "$lib/components/icons/OsIcon.svelte";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -41,6 +42,7 @@
         onAlertRules,
         onUpdateAgent,
         hasActiveAlertRules = false,
+        updatingAgent = false,
     }: {
         host: Host;
         metric?: Metric | null;
@@ -54,6 +56,7 @@
         onResume: () => void;
         onAlertRules: () => void;
         onUpdateAgent?: () => void;
+        updatingAgent?: boolean;
     } = $props();
 
     const agentOutdated = $derived(isAgentOutdated(host.agent_version, latestAgentVersion));
@@ -105,15 +108,21 @@
             <HostStatusBadge status={host.status} />
         </div>
         <div class="flex items-center gap-1 ml-3">
-            {#if agentOutdated && host.status === 'online' && onUpdateAgent}
+            {#if (agentOutdated || updatingAgent) && host.status === 'online' && onUpdateAgent}
                 <button
                     type="button"
                     onclick={onUpdateAgent}
-                    title="Update agent to v{latestAgentVersion}"
-                    class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
+                    disabled={updatingAgent}
+                    title={updatingAgent ? "Updating to v{latestAgentVersion}…" : "Update agent to v{latestAgentVersion}"}
+                    class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium bg-warning/10 text-warning transition-colors {updatingAgent ? 'opacity-70 cursor-default' : 'hover:bg-warning/20'}"
                 >
-                    <Download class="h-3.5 w-3.5" />
-                    Update
+                    {#if updatingAgent}
+                        <Loader2 class="h-3.5 w-3.5 animate-spin" />
+                        Updating…
+                    {:else}
+                        <Download class="h-3.5 w-3.5" />
+                        Update
+                    {/if}
                 </button>
             {/if}
             <button

@@ -39,6 +39,10 @@
     let statusFilter = $state<HostStatus | "">("");
     let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
+    // Agent update tracking
+    let updatingHosts = $state(new Set<string>());
+    const updateTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
     // Delete modal
     let showDeleteConfirm = $state(false);
     let hostToDelete: Host | null = $state(null);
@@ -123,23 +127,36 @@
             const update = event.data as HostUpdateEvent;
             const idx = hosts.findIndex((h) => h.id === update.id);
             if (idx !== -1) {
+                const prev = hosts[idx];
                 hosts[idx] = {
-                    ...hosts[idx],
+                    ...prev,
                     status: update.status,
                     ip_address_v4:
-                        update.ip_address_v4 ?? hosts[idx].ip_address_v4,
+                        update.ip_address_v4 ?? prev.ip_address_v4,
                     ip_address_v6:
-                        update.ip_address_v6 ?? hosts[idx].ip_address_v6,
+                        update.ip_address_v6 ?? prev.ip_address_v6,
                     configured_ip:
-                        update.configured_ip ?? hosts[idx].configured_ip,
+                        update.configured_ip ?? prev.configured_ip,
                     ignore_ip_mismatch:
                         update.ignore_ip_mismatch ??
-                        hosts[idx].ignore_ip_mismatch,
+                        prev.ignore_ip_mismatch,
                     last_seen: update.last_seen,
                     agent_version:
-                        update.agent_version ?? hosts[idx].agent_version,
+                        update.agent_version ?? prev.agent_version,
                 };
                 hosts = [...hosts];
+                // Clear update spinner when a new agent version is confirmed via SSE
+                if (
+                    update.agent_version &&
+                    update.agent_version !== prev.agent_version &&
+                    updatingHosts.has(update.id)
+                ) {
+                    const t = updateTimeouts.get(update.id);
+                    if (t !== undefined) clearTimeout(t);
+                    updateTimeouts.delete(update.id);
+                    updatingHosts.delete(update.id);
+                    updatingHosts = new Set(updatingHosts);
+                }
             }
         } else if (event.type === "metrics_update") {
             const m = event.data as MetricsUpdateEvent;
@@ -211,6 +228,23 @@
         showDeleteConfirm = true;
     }
 
+    async function handleUpdateAgent(hostId: string) {
+        try {
+            await api.triggerAgentUpdate(hostId);
+            updatingHosts = new Set([...updatingHosts, hostId]);
+            // Safety timeout: clear the spinner after 2 minutes if SSE never arrives
+            const t = setTimeout(() => {
+                updatingHosts.delete(hostId);
+                updatingHosts = new Set(updatingHosts);
+                updateTimeouts.delete(hostId);
+            }, 120_000);
+            updateTimeouts.set(hostId, t);
+        } catch (err) {
+            logger.error("Failed to trigger agent update:", err);
+            error = err instanceof Error ? err.message : "Failed to trigger agent update";
+        }
+    }
+
     async function handleDelete() {
         if (!hostToDelete) return;
         try {
@@ -237,6 +271,7 @@
         if (sseUnsubscribe) sseUnsubscribe();
         if (searchTimeout) clearTimeout(searchTimeout);
         loadAbortController?.abort();
+        for (const t of updateTimeouts.values()) clearTimeout(t);
     });
 </script>
 
@@ -340,6 +375,8 @@
             onPause={handlePause}
             onResume={handleResume}
             onDelete={handleDeleteRequest}
+            onUpdateAgent={handleUpdateAgent}
+            {updatingHosts}
         />
         <Pagination
             {currentPage}

@@ -9,6 +9,8 @@
         Trash2,
         BellRing,
         AlertTriangle,
+        Download,
+        Loader2,
     } from "lucide-svelte";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import HostFilters from "$lib/components/host/HostFilters.svelte";
@@ -25,6 +27,8 @@
         onPause,
         onResume,
         onDelete,
+        onUpdateAgent,
+        updatingHosts,
     }: {
         hosts: HostWithMetrics[];
         latestMetrics: Record<string, Metric>;
@@ -36,6 +40,8 @@
         onPause: (hostId: string) => void;
         onResume: (hostId: string) => void;
         onDelete: (host: Host) => void;
+        onUpdateAgent?: (hostId: string) => void;
+        updatingHosts?: Set<string>;
     } = $props();
 
     function hasIPMismatch(host: Host): boolean {
@@ -378,6 +384,15 @@
                                                 </DropdownMenu.Item>
                                             {/if}
                                         {/if}
+                                        {#if onUpdateAgent && host.status === "online" && isAgentOutdated(host.agent_version, latestAgentVersion)}
+                                            <DropdownMenu.Item
+                                                onclick={() =>
+                                                    onUpdateAgent(host.id)}
+                                            >
+                                                <Download class="h-4 w-4" />
+                                                Update agent
+                                            </DropdownMenu.Item>
+                                        {/if}
                                         <DropdownMenu.Separator />
                                         <DropdownMenu.Item
                                             onclick={() => onDelete(host)}
@@ -464,7 +479,12 @@
                                         class="text-foreground flex items-center gap-1"
                                     >
                                         v{host.agent_version}
-                                        {#if isAgentOutdated(host.agent_version, latestAgentVersion)}
+                                        {#if updatingHosts?.has(host.id)}
+                                            <Loader2
+                                                class="h-3.5 w-3.5 animate-spin text-warning"
+                                                title="Updating to v{latestAgentVersion}…"
+                                            />
+                                        {:else if isAgentOutdated(host.agent_version, latestAgentVersion)}
                                             <span
                                                 class="text-warning font-medium"
                                                 >↑</span
@@ -814,7 +834,12 @@
                                         ? `v${host.agent_version}`
                                         : "—"}
                                 </span>
-                                {#if isAgentOutdated(host.agent_version, latestAgentVersion)}
+                                {#if updatingHosts?.has(host.id)}
+                                    <Loader2
+                                        class="h-3.5 w-3.5 animate-spin text-warning"
+                                        title="Updating to v{latestAgentVersion}…"
+                                    />
+                                {:else if isAgentOutdated(host.agent_version, latestAgentVersion)}
                                     <span
                                         class="inline-flex items-center rounded-full border border-warning/20 bg-warning/10 px-1.5 py-0.5 text-xs font-medium text-warning"
                                         title="v{latestAgentVersion} available"
@@ -907,6 +932,17 @@
                                                 Pause
                                             </DropdownMenu.Item>
                                         {/if}
+                                    {/if}
+                                    {#if onUpdateAgent && host.status === "online" && isAgentOutdated(host.agent_version, latestAgentVersion)}
+                                        <DropdownMenu.Item
+                                            onclick={(e) => {
+                                                e.stopPropagation();
+                                                onUpdateAgent(host.id);
+                                            }}
+                                        >
+                                            <Download class="h-4 w-4" />
+                                            Update agent
+                                        </DropdownMenu.Item>
                                     {/if}
                                     <DropdownMenu.Separator />
                                     <DropdownMenu.Item
