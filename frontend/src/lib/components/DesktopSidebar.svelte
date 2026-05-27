@@ -9,6 +9,7 @@
     import UserMenuButton from "./UserMenuButton.svelte";
     import { navItems, settingsItems } from "$lib/navigation";
     import { alertCount } from "$lib/stores/alerts";
+    import Logo from "./Logo.svelte";
 
     const transitioning = $derived($sidebarTransitioning);
     const collapsed = $derived($sidebarCollapsed);
@@ -74,10 +75,7 @@
     >
         <!-- Logo -->
         <div class="flex h-16 items-center border-b px-2.75">
-            <span
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-lg font-bold text-primary-foreground"
-                >W</span
-            >
+            <Logo class="h-10 w-10 shrink-0" />
             <span
                 class="text-lg font-semibold text-foreground whitespace-nowrap overflow-hidden {textClass}"
                 >Watchflare</span

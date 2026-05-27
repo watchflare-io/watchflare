@@ -10,6 +10,7 @@
     import { Search, Sun, Moon, Monitor } from "lucide-svelte";
     import type { Theme } from "$lib/types";
     import CommandPalette from "./CommandPalette.svelte";
+    import Logo from "./Logo.svelte";
 
     function toggleMenu() {
         mobileMenuOpen.update((val) => !val);
@@ -136,11 +137,9 @@
         </button>
 
         <!-- Logo (mobile/tablet only, centered absolutely) -->
-        <a
-            href="/"
-            class="absolute left-1/2 -translate-x-1/2 lg:hidden flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground"
-            >W</a
-        >
+        <a href="/" class="absolute left-1/2 -translate-x-1/2 lg:hidden" aria-label="Watchflare">
+            <Logo class="h-10 w-10" />
+        </a>
 
         <!-- Right actions -->
         <div class="flex items-center gap-1 shrink-0 ms-auto h-full">

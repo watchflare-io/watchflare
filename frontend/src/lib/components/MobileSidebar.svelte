@@ -8,6 +8,7 @@
     import { alertCount } from "$lib/stores/alerts";
     import SSEStatusBadge from "./SSEStatusBadge.svelte";
     import UserMenuButton from "./UserMenuButton.svelte";
+    import Logo from "./Logo.svelte";
 
     let wasOpenBeforeDesktop = false;
 
@@ -92,7 +93,8 @@
         class="flex h-full flex-col overflow-y-auto bg-surface rounded-2xl border"
     >
         <!-- Logo -->
-        <div class="flex h-16 items-center border-b justify-between px-6">
+        <div class="flex h-16 items-center border-b px-4 gap-3">
+            <Logo class="h-9 w-9 shrink-0" />
             <h1 class="text-xl font-semibold text-foreground">Watchflare</h1>
         </div>
 

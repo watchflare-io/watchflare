@@ -4,6 +4,7 @@
     import { registerSchema, validateForm } from "$lib/validation";
     import { authTheme } from "$lib/stores/auth-theme";
     import AuthThemeToggle from "$lib/components/AuthThemeToggle.svelte";
+    import Logo from "$lib/components/Logo.svelte";
     import { get } from "svelte/store";
 
     let email = $state("");
@@ -52,6 +53,9 @@
     <div class="w-full max-w-md">
         <!-- Logo/Title -->
         <div class="mb-8 text-center">
+            <div class="flex justify-center mb-4">
+                <Logo class="h-16 w-16" />
+            </div>
             <h1 class="text-3xl font-semibold text-foreground mb-2">
                 Watchflare
             </h1>
