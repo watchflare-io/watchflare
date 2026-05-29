@@ -2,23 +2,20 @@
 
 package install
 
-import (
-	"strings"
-	"testing"
-)
+import "testing"
 
-func TestGetServiceManager_Darwin_ReturnsError(t *testing.T) {
+func TestGetServiceManager_Darwin_ReturnsDarwinService(t *testing.T) {
 	svc, err := GetServiceManager()
-	if err == nil {
-		t.Fatal("expected error on macOS, got nil")
+	if err != nil {
+		t.Fatalf("expected no error on macOS, got: %v", err)
 	}
-	if svc != nil {
-		t.Error("expected nil ServiceManager on macOS")
+	if svc == nil {
+		t.Fatal("expected non-nil ServiceManager on macOS")
 	}
-	if !strings.Contains(err.Error(), "Homebrew") {
-		t.Errorf("expected Homebrew hint in error, got: %v", err)
+	if _, ok := svc.(*DarwinService); !ok {
+		t.Errorf("expected *DarwinService, got %T", svc)
 	}
-	if !strings.Contains(err.Error(), "brew services") {
-		t.Errorf("expected brew services command in error, got: %v", err)
+	if svc.RequiresRoot() {
+		t.Error("DarwinService should not require root")
 	}
 }

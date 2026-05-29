@@ -44,15 +44,17 @@ func Status() {
 
 // StartService starts the agent service
 func StartService() {
-	if err := install.CheckRoot(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-
 	svcMgr, err := install.GetServiceManager()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
+	}
+
+	if svcMgr.RequiresRoot() {
+		if err := install.CheckRoot(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	if !svcMgr.IsInstalled() {
@@ -75,15 +77,17 @@ func StartService() {
 
 // StopService stops the agent service
 func StopService() {
-	if err := install.CheckRoot(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-
 	svcMgr, err := install.GetServiceManager()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
+	}
+
+	if svcMgr.RequiresRoot() {
+		if err := install.CheckRoot(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	if !svcMgr.IsInstalled() {
@@ -106,15 +110,17 @@ func StopService() {
 
 // RestartService restarts the agent service
 func RestartService() {
-	if err := install.CheckRoot(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-
 	svcMgr, err := install.GetServiceManager()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
+	}
+
+	if svcMgr.RequiresRoot() {
+		if err := install.CheckRoot(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	if !svcMgr.IsInstalled() {
@@ -135,11 +141,6 @@ func Logs() {
 	svcMgr, err := install.GetServiceManager()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	if !svcMgr.IsInstalled() {
-		fmt.Fprintln(os.Stderr, "Error: agent is not installed")
 		os.Exit(1)
 	}
 

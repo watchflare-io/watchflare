@@ -58,6 +58,9 @@ type ServiceManager interface {
 
 	// ShowLogs displays service logs (follows them)
 	ShowLogs() error
+
+	// RequiresRoot reports whether service control commands need root privileges
+	RequiresRoot() bool
 }
 
 

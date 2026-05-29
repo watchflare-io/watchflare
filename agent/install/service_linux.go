@@ -284,6 +284,9 @@ func (s *LinuxService) ShowLogs() error {
 	return cmd.Run()
 }
 
+// RequiresRoot returns true — systemctl requires root on Linux.
+func (s *LinuxService) RequiresRoot() bool { return true }
+
 // hasSystemd checks if systemd is available.
 // Accepts both "running" and "degraded" states — a degraded system (some units
 // failed) still supports service management commands.

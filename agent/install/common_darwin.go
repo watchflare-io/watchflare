@@ -4,10 +4,9 @@ package install
 
 import "fmt"
 
-// GetServiceManager is not supported on macOS — the agent is managed via Homebrew.
+// GetServiceManager returns a macOS service manager backed by Homebrew and launchctl.
 func GetServiceManager() (ServiceManager, error) {
-	return nil, fmt.Errorf("on macOS, use Homebrew to manage the agent:\n" +
-		"  brew services [start|stop|restart] watchflare-agent")
+	return &DarwinService{}, nil
 }
 
 // CreateUser is not supported on macOS — manual installation is not yet implemented.
