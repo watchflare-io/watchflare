@@ -72,6 +72,8 @@ Open `http://your-host:8080`. On first load you are redirected to create your ad
 
 > **Full guide** → [docs.watchflare.io/get-started/quickstart](https://docs.watchflare.io/get-started/quickstart/)
 
+**Binary install (Linux):** Download a pre-built binary from [GitHub Releases](https://github.com/watchflare-io/watchflare/releases) and follow the [binary install guide](https://docs.watchflare.io/hub/binary-install/).
+
 ## Install an agent
 
 In the dashboard, create a host and copy the registration token. Then run on the target machine:
