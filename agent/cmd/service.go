@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"watchflare-agent/config"
 	"watchflare-agent/install"
 )
 
@@ -19,10 +21,19 @@ func Status() {
 	fmt.Println()
 
 	if !svcMgr.IsInstalled() {
-		fmt.Println("Status: Not installed")
-		fmt.Println()
-		fmt.Println("To install the agent, run:")
-		fmt.Println("  sudo watchflare-agent install --token=YOUR_TOKEN")
+		configPath := filepath.Join(config.GetConfigDir(), config.ConfigFile)
+		if _, err := os.Stat(configPath); err == nil {
+			fmt.Println("Service:    Not installed (no service manager available)")
+			fmt.Println("Registered: ✓ Yes")
+			fmt.Println()
+			fmt.Printf("To start the agent manually:\n  sudo -u %s %s/%s\n", install.UserName, install.InstallDir, install.BinaryName)
+			fmt.Printf("Logs: tail -f %s\n", install.LogPath)
+		} else {
+			fmt.Println("Status: Not installed")
+			fmt.Println()
+			fmt.Println("To install the agent, run:")
+			fmt.Println("  sudo watchflare-agent install --token=YOUR_TOKEN")
+		}
 		return
 	}
 

@@ -217,16 +217,21 @@ fi
 
 echo -e "${YELLOW}[1/6]${NC} Checking for existing installation..."
 HAS_SYSTEMD=false
-if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    HAS_SYSTEMD=true
-    echo "  → Systemd detected"
-    if systemctl is-active --quiet ${SERVICE_NAME}; then
-        echo "  → Stopping existing service..."
-        systemctl stop ${SERVICE_NAME}
-        sleep 1
+if command -v systemctl >/dev/null 2>&1; then
+    SYSTEMD_STATE=$(systemctl is-system-running 2>/dev/null || true)
+    if [ "$SYSTEMD_STATE" = "running" ] || [ "$SYSTEMD_STATE" = "degraded" ]; then
+        HAS_SYSTEMD=true
+        echo "  → Systemd detected (state: ${SYSTEMD_STATE})"
+        if systemctl is-active --quiet ${SERVICE_NAME}; then
+            echo "  → Stopping existing service..."
+            systemctl stop ${SERVICE_NAME}
+            sleep 1
+        fi
+    else
+        echo "  → Systemd not available (state: ${SYSTEMD_STATE:-none})"
     fi
 else
-    echo "  → Systemd not available (container environment)"
+    echo "  → Systemd not available (systemctl not found)"
 fi
 
 echo -e "${YELLOW}[2/6]${NC} Creating system user '${AGENT_USER}'..."
@@ -316,8 +321,15 @@ if [ "$NEEDS_REGISTRATION" = true ]; then
         echo "  2. sudo systemctl enable --now ${SERVICE_NAME}"
     fi
 else
-    echo "Service management:"
-    echo "  Status:  sudo systemctl status ${SERVICE_NAME}"
-    echo "  Restart: sudo systemctl restart ${SERVICE_NAME}"
-    echo "  Logs:    journalctl -u ${SERVICE_NAME} -f"
+    if [ "$HAS_SYSTEMD" = true ]; then
+        echo "Service management:"
+        echo "  Status:  sudo systemctl status ${SERVICE_NAME}"
+        echo "  Restart: sudo systemctl restart ${SERVICE_NAME}"
+        echo "  Logs:    journalctl -u ${SERVICE_NAME} -f"
+    else
+        echo "Systemd is not available. To start the agent:"
+        echo "  sudo -u ${AGENT_USER} ${INSTALL_DIR}/${BINARY_NAME}"
+        echo ""
+        echo "Logs: tail -f ${LOG_FILE}"
+    fi
 fi

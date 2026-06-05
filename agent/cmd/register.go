@@ -69,7 +69,12 @@ func Register() {
 	if isInstalledViaBrew() {
 		fmt.Println("\nYou can now start the agent with: brew services start watchflare-agent")
 	} else if runtime.GOOS == "linux" {
-		fmt.Println("\nYou can now start the agent with: sudo systemctl enable --now watchflare-agent")
+		svcMgr, _ := install.GetServiceManager()
+		if svcMgr != nil && svcMgr.IsInstalled() {
+			fmt.Println("\nYou can now start the agent with: sudo systemctl enable --now watchflare-agent")
+		} else {
+			fmt.Printf("\nYou can now start the agent with: sudo %s/%s\n", install.InstallDir, install.BinaryName)
+		}
 	} else {
 		fmt.Println("\nYou can now start the agent with: ./watchflare-agent")
 	}

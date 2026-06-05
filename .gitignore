@@ -41,7 +41,7 @@ backend/data/
 *.key
 
 # Documentation (kept locally, published on docs.watchflare.io)
-docs/private/
+docs/
 
 # IDE
 .vscode/
