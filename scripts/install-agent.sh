@@ -155,9 +155,6 @@ fi
 
 # ─── Install ──────────────────────────────────────────────────────────────────
 
-echo -e "${GREEN}=== Watchflare Agent Installation ===${NC}"
-echo ""
-
 # Detect architecture
 ARCH=$(uname -m)
 case "$ARCH" in
@@ -215,12 +212,10 @@ else
     echo "  → Downloaded and extracted"
 fi
 
-echo -e "${YELLOW}[1/6]${NC} Checking for existing installation..."
-HAS_SYSTEMD=false
+echo -e "${YELLOW}[1/5]${NC} Checking for existing installation..."
 if command -v systemctl >/dev/null 2>&1; then
     SYSTEMD_STATE=$(systemctl is-system-running 2>/dev/null || true)
     if [ "$SYSTEMD_STATE" = "running" ] || [ "$SYSTEMD_STATE" = "degraded" ]; then
-        HAS_SYSTEMD=true
         echo "  → Systemd detected (state: ${SYSTEMD_STATE})"
         if systemctl is-active --quiet ${SERVICE_NAME}; then
             echo "  → Stopping existing service..."
@@ -234,7 +229,7 @@ else
     echo "  → Systemd not available (systemctl not found)"
 fi
 
-echo -e "${YELLOW}[2/6]${NC} Creating system user '${AGENT_USER}'..."
+echo -e "${YELLOW}[2/5]${NC} Creating system user '${AGENT_USER}'..."
 if ! getent group ${AGENT_GROUP} >/dev/null 2>&1; then
     groupadd --system ${AGENT_GROUP}
     echo "  → Created group '${AGENT_GROUP}'"
@@ -253,7 +248,7 @@ else
     echo "  → User '${AGENT_USER}' already exists"
 fi
 
-echo -e "${YELLOW}[3/6]${NC} Creating directories..."
+echo -e "${YELLOW}[3/5]${NC} Creating directories..."
 for dir in "$CONFIG_DIR" "$DATA_DIR" "${DATA_DIR}/wal"; do
     mkdir -p "$dir"
 done
@@ -261,7 +256,7 @@ chown root:${AGENT_GROUP} "$CONFIG_DIR" && chmod 750 "$CONFIG_DIR"
 chown ${AGENT_USER}:${AGENT_GROUP} "$DATA_DIR" "${DATA_DIR}/wal" && chmod 750 "$DATA_DIR" "${DATA_DIR}/wal"
 echo "  → Created $CONFIG_DIR, $DATA_DIR"
 
-echo -e "${YELLOW}[4/6]${NC} Installing binary..."
+echo -e "${YELLOW}[4/5]${NC} Installing binary..."
 cp "$TMP_BINARY" "${INSTALL_DIR}/${BINARY_NAME}"
 chown root:root "${INSTALL_DIR}/${BINARY_NAME}"
 chmod 755 "${INSTALL_DIR}/${BINARY_NAME}"
@@ -269,67 +264,12 @@ touch "$LOG_FILE"
 chown ${AGENT_USER}:${AGENT_GROUP} "$LOG_FILE" && chmod 644 "$LOG_FILE"
 echo "  → Installed to ${INSTALL_DIR}/${BINARY_NAME}"
 
-echo -e "${YELLOW}[5/6]${NC} Installing systemd service..."
-if [ "$HAS_SYSTEMD" = true ]; then
-    if ! "${INSTALL_DIR}/${BINARY_NAME}" install; then
-        echo -e "  ${RED}→ Failed to install systemd service file${NC}"
-        exit 1
-    fi
-    systemctl daemon-reload
-    echo "  → Service installed"
-else
-    echo "  → Skipped (systemd not available)"
-fi
-
-echo -e "${YELLOW}[6/6]${NC} Registration..."
-NEEDS_REGISTRATION=true
-if [ -f "${CONFIG_DIR}/agent.conf" ]; then
-    echo "  → Configuration file already exists"
-    NEEDS_REGISTRATION=false
-elif [ -n "$TOKEN" ]; then
-    HOST="${HOST:-localhost}"
-    PORT="${PORT:-50051}"
-    if "${INSTALL_DIR}/${BINARY_NAME}" register --token="$TOKEN" --host="$HOST" --port="$PORT"; then
-        echo -e "  → ${GREEN}Registration successful${NC}"
-        NEEDS_REGISTRATION=false
-    else
-        echo -e "  → ${RED}Registration failed${NC}"
-    fi
-else
-    echo -e "${YELLOW}  ⚠ No token provided — register manually:${NC}"
-    echo "     sudo ${INSTALL_DIR}/${BINARY_NAME} register --token=YOUR_TOKEN --host=YOUR_HOST"
-fi
-
-if [ "$NEEDS_REGISTRATION" = false ] && [ "$HAS_SYSTEMD" = true ]; then
-    systemctl enable ${SERVICE_NAME}
-    systemctl start ${SERVICE_NAME}
-    sleep 2
-    if systemctl is-active --quiet ${SERVICE_NAME}; then
-        echo -e "  → ${GREEN}Service started${NC}"
-    else
-        echo -e "  → ${RED}Service failed to start — check: journalctl -u ${SERVICE_NAME}${NC}"
-    fi
-fi
-
-echo ""
-echo -e "${GREEN}=== Installation Complete ===${NC}"
-echo ""
-if [ "$NEEDS_REGISTRATION" = true ]; then
-    echo "Next steps:"
-    echo "  1. sudo ${INSTALL_DIR}/${BINARY_NAME} register --token=YOUR_TOKEN --host=YOUR_HOST"
-    if [ "$HAS_SYSTEMD" = true ]; then
-        echo "  2. sudo systemctl enable --now ${SERVICE_NAME}"
-    fi
-else
-    if [ "$HAS_SYSTEMD" = true ]; then
-        echo "Service management:"
-        echo "  Status:  sudo systemctl status ${SERVICE_NAME}"
-        echo "  Restart: sudo systemctl restart ${SERVICE_NAME}"
-        echo "  Logs:    journalctl -u ${SERVICE_NAME} -f"
-    else
-        echo "Systemd is not available. To start the agent:"
-        echo "  sudo -u ${AGENT_USER} ${INSTALL_DIR}/${BINARY_NAME}"
-        echo ""
-        echo "Logs: tail -f ${LOG_FILE}"
-    fi
+echo -e "${YELLOW}[5/5]${NC} Installing service and registering..."
+INSTALL_ARGS=()
+[ -n "$TOKEN" ] && INSTALL_ARGS+=(--token="$TOKEN")
+[ -n "$HOST" ]  && INSTALL_ARGS+=(--host="$HOST")
+[ -n "$PORT" ]  && INSTALL_ARGS+=(--port="$PORT")
+if ! "${INSTALL_DIR}/${BINARY_NAME}" install "${INSTALL_ARGS[@]}"; then
+    echo -e "  ${RED}→ Installation failed${NC}"
+    exit 1
 fi
