@@ -110,13 +110,23 @@ func isRunningInContainer() bool {
 		return true
 	}
 
-	// Method 2: Check cgroup for container indicators
+	// Method 2: Check cgroup for container indicators (cgroups v1)
 	content := readCgroup()
 	if strings.Contains(content, "docker") ||
 		strings.Contains(content, "lxc") ||
 		strings.Contains(content, "kubepods") ||
 		strings.Contains(content, "podman") {
 		return true
+	}
+
+	// Method 3: Check /proc/1/environ for container= (cgroups v2, Proxmox LXC)
+	// systemd sets container=lxc inside LXC containers regardless of cgroup version
+	if environ := readFileLimited("/proc/1/environ", cgroupReadLimit); environ != "" {
+		if strings.Contains(environ, "container=lxc") ||
+			strings.Contains(environ, "container=docker") ||
+			strings.Contains(environ, "container=podman") {
+			return true
+		}
 	}
 
 	return false
@@ -141,6 +151,19 @@ func detectContainerRuntime() string {
 
 	if _, err := os.Stat("/.dockerenv"); err == nil {
 		return "docker"
+	}
+
+	// Fallback: check /proc/1/environ (cgroups v2, Proxmox LXC)
+	if environ := readFileLimited("/proc/1/environ", cgroupReadLimit); environ != "" {
+		if strings.Contains(environ, "container=lxc") {
+			return "lxc"
+		}
+		if strings.Contains(environ, "container=docker") {
+			return "docker"
+		}
+		if strings.Contains(environ, "container=podman") {
+			return "podman"
+		}
 	}
 
 	return "unknown"
