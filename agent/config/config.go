@@ -142,6 +142,10 @@ func (c *Config) SetDefaults() {
 		c.WALMaxSizeMB = DefaultWALMaxSizeMB
 	}
 
+	if c.LogLevel == "" {
+		c.LogLevel = "info"
+	}
+
 	// Container metrics default: disabled
 	if c.ContainerMetrics == nil {
 		disabled := false
