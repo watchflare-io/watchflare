@@ -15,6 +15,7 @@
     import * as Select from "$lib/components/ui/select";
     import Toggle from "$lib/components/ui/Toggle.svelte";
     import Slider from "$lib/components/ui/Slider.svelte";
+    import WebhookSettings from "$lib/components/WebhookSettings.svelte";
 
     const user = $derived($userStore.user);
 
@@ -585,6 +586,8 @@
         {/if}
     </div>
 </div>
+
+<WebhookSettings />
 
 <!-- Alert Rules -->
 <div

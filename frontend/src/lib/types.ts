@@ -610,3 +610,22 @@ export interface HostTableProps {
   hosts: HostWithMetrics[];
   metricsData: Record<string, Metric[]>;
 }
+
+// ===== Webhooks =====
+
+export interface WebhookEndpoint {
+  id: string;
+  url: string;
+  service_name: string;
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface GetWebhooksResponse {
+  webhooks: WebhookEndpoint[];
+}
+
+export interface AddWebhookResponse {
+  webhook: WebhookEndpoint;
+  warning?: string; // "unknown_service" when service type is Generic
+}

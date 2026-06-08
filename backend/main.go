@@ -208,6 +208,11 @@ func setupRouter() *gin.Engine {
 		settingsGroup.PUT("/alerts", handlers.UpdateAlertRules)
 		settingsGroup.GET("/alerts/active", handlers.GetActiveIncidents)
 		settingsGroup.GET("/alerts/incidents", handlers.GetAllIncidents)
+		settingsGroup.GET("/webhooks", handlers.GetWebhooks)
+		settingsGroup.POST("/webhooks", handlers.AddWebhook)
+		settingsGroup.DELETE("/webhooks/:id", handlers.DeleteWebhook)
+		settingsGroup.PATCH("/webhooks/:id/enabled", handlers.SetWebhookEnabled)
+		settingsGroup.POST("/webhooks/:id/test", handlers.TestWebhook)
 	}
 
 	// Agent info routes (protected)

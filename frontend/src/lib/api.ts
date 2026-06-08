@@ -30,6 +30,9 @@ import type {
   IncidentStatusFilter,
   AlertMetricType,
   HostStatus,
+  WebhookEndpoint,
+  GetWebhooksResponse,
+  AddWebhookResponse,
 } from "./types";
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
@@ -666,4 +669,33 @@ export async function getHostIncidents(
   return apiRequest<GetHostIncidentsResponse>(
     `/hosts/${hostId}/incidents${qs}`,
   );
+}
+
+// Webhook endpoints
+export async function getWebhooks(): Promise<GetWebhooksResponse> {
+  return apiRequest<GetWebhooksResponse>('/settings/webhooks');
+}
+
+export async function addWebhook(url: string): Promise<AddWebhookResponse> {
+  return apiRequest<AddWebhookResponse>('/settings/webhooks', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  });
+}
+
+export async function deleteWebhook(id: string): Promise<void> {
+  return apiRequest<void>(`/settings/webhooks/${id}`, { method: 'DELETE' });
+}
+
+export async function setWebhookEnabled(id: string, enabled: boolean): Promise<void> {
+  return apiRequest<void>(`/settings/webhooks/${id}/enabled`, {
+    method: 'PATCH',
+    body: JSON.stringify({ enabled }),
+  });
+}
+
+export async function testWebhook(id: string): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(`/settings/webhooks/${id}/test`, {
+    method: 'POST',
+  });
 }

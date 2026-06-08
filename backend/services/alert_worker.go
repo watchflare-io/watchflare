@@ -11,6 +11,7 @@ import (
 	"watchflare/backend/database"
 	"watchflare/backend/encryption"
 	"watchflare/backend/models"
+	"watchflare/backend/services/webhook"
 
 	"gorm.io/gorm"
 )
@@ -224,6 +225,8 @@ func (w *AlertWorker) evaluateHost(
 							slog.Info("alert fired", "host", host.DisplayName, "metric_type", metricType, "current_value", currentValue, "threshold", threshold)
 						}
 					}
+					// Fire webhooks regardless of email outcome
+					webhook.SendAll(host, metricType, threshold, currentValue, incident.StartedAt)
 				}
 			} else {
 				// No open incident — track in pending map until duration is reached.
@@ -266,6 +269,8 @@ func (w *AlertWorker) evaluateHost(
 							slog.Info("alert fired", "host", host.DisplayName, "metric_type", metricType, "current_value", currentValue, "threshold", threshold)
 						}
 					}
+					// Fire webhooks regardless of email outcome
+					webhook.SendAll(host, metricType, threshold, currentValue, firstSeen)
 				}
 			}
 		} else {
@@ -280,6 +285,8 @@ func (w *AlertWorker) evaluateHost(
 						if err := sendResolutionEmail(host, metricType, incident.StartedAt, now, recipient); err != nil {
 							slog.Error("alert worker: failed to send resolution email", "host_id", host.ID, "metric_type", metricType, "error", err)
 						}
+						// Fire webhooks regardless of email outcome
+						webhook.SendAllResolution(host, metricType, incident.StartedAt, now)
 					}
 				}
 			}
