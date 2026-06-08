@@ -34,6 +34,8 @@ services:
   postgres:
     image: timescale/timescaledb:latest-pg16
     container_name: watchflare-postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-watchflare}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}

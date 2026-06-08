@@ -5,12 +5,14 @@
         class: className = '',
         onchange,
         'aria-labelledby': ariaLabelledBy,
+        'aria-label': ariaLabel,
     }: {
         checked: boolean;
         size?: 'sm' | 'md';
         class?: string;
         onchange?: (value: boolean) => void;
         'aria-labelledby'?: string;
+        'aria-label'?: string;
     } = $props();
 
     const trackSize = $derived(size === 'sm' ? 'h-5 w-9' : 'h-6 w-11');
@@ -24,6 +26,7 @@
     role="switch"
     aria-checked={checked}
     aria-labelledby={ariaLabelledBy}
+    aria-label={ariaLabel}
     onclick={() => {
         checked = !checked;
         onchange?.(checked);
