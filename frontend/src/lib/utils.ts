@@ -241,17 +241,15 @@ export function isAgentOutdated(current: string | null | undefined, latest: stri
 	return lPat > cPat;
 }
 
-// parsePortBadges extracts host port numbers from Docker/Podman port strings.
-// Input formats: "0.0.0.0:8080->80/tcp", ":::443->443/tcp", "80/tcp", "8080"
-// Returns: array of host port strings (or container port if no host binding)
+// parsePortBadges extracts public port numbers from agent port strings.
+// Input formats: "8080:80/tcp" (PublicPort:PrivatePort/Protocol), "80/tcp" (PrivatePort/Protocol only)
+// Returns: array of public port strings (or private port if no public binding)
 export function parsePortBadges(ports: string): string[] {
 	if (!ports) return [];
 	return ports.split(', ').map(p => {
-		const arrowIdx = p.indexOf('->');
-		if (arrowIdx !== -1) {
-			const hostPart = p.substring(0, arrowIdx);
-			const colonIdx = hostPart.lastIndexOf(':');
-			return colonIdx !== -1 ? hostPart.substring(colonIdx + 1) : hostPart;
+		const colonIdx = p.indexOf(':');
+		if (colonIdx !== -1) {
+			return p.substring(0, colonIdx);
 		}
 		const slashIdx = p.indexOf('/');
 		return slashIdx !== -1 ? p.substring(0, slashIdx) : p;

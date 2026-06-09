@@ -226,15 +226,11 @@ describe('parsePortBadges', () => {
 		expect(parsePortBadges('')).toEqual([]);
 	});
 
-	it('extracts host port from IPv4 mapped port', () => {
-		expect(parsePortBadges('0.0.0.0:8080->80/tcp')).toEqual(['8080']);
+	it('extracts public port from published mapping', () => {
+		expect(parsePortBadges('8080:80/tcp')).toEqual(['8080']);
 	});
 
-	it('extracts host port from IPv6 mapped port', () => {
-		expect(parsePortBadges(':::443->443/tcp')).toEqual(['443']);
-	});
-
-	it('extracts container port when no host binding', () => {
+	it('extracts port from exposed-only binding (no public port)', () => {
 		expect(parsePortBadges('80/tcp')).toEqual(['80']);
 	});
 
@@ -242,11 +238,15 @@ describe('parsePortBadges', () => {
 		expect(parsePortBadges('8080')).toEqual(['8080']);
 	});
 
-	it('handles multiple ports', () => {
-		expect(parsePortBadges('0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp')).toEqual(['80', '443']);
+	it('handles same public and private port', () => {
+		expect(parsePortBadges('443:443/tcp')).toEqual(['443']);
 	});
 
-	it('handles mixed mapped and unmapped ports', () => {
-		expect(parsePortBadges('0.0.0.0:8080->8080/tcp, 9000/tcp')).toEqual(['8080', '9000']);
+	it('handles multiple published ports', () => {
+		expect(parsePortBadges('80:80/tcp, 443:443/tcp')).toEqual(['80', '443']);
+	});
+
+	it('handles mixed published and exposed-only ports', () => {
+		expect(parsePortBadges('8080:80/tcp, 9000/tcp')).toEqual(['8080', '9000']);
 	});
 });
