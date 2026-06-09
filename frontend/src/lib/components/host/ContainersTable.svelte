@@ -228,19 +228,19 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="w-16 shrink-0 text-xs text-muted-foreground">CPU</span>
-                        <div class="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div class="flex-1 h-2.5 rounded-full bg-muted">
                             <div class="h-full rounded-full {cpuBarClass(container.cpu_percent)}" style="width: {Math.min(100, container.cpu_percent)}%"></div>
                         </div>
-                        <span class="text-sm font-mono">{container.cpu_percent.toFixed(1)}%</span>
+                        <span class="w-12 text-sm text-muted-foreground text-left shrink-0">{container.cpu_percent.toFixed(1)}%</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="w-16 shrink-0 text-xs text-muted-foreground">Memory</span>
                         {#if container.memory_limit_bytes > 0}
-                            <div class="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div class="flex-1 h-2.5 rounded-full bg-muted">
                                 <div class="h-full rounded-full {memBarClass(pct)}" style="width: {pct}%"></div>
                             </div>
                         {/if}
-                        <span class="text-sm font-mono">{formatBytes(container.memory_used_bytes)}</span>
+                        <span class="w-12 text-sm text-muted-foreground text-left shrink-0">{formatBytes(container.memory_used_bytes)}</span>
                     </div>
                     <div class="flex items-baseline gap-2">
                         <span class="w-16 shrink-0 text-xs text-muted-foreground">Network</span>
@@ -316,33 +316,29 @@
                                 {container.image ? truncateImage(container.image) : '—'}
                             </span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-sm text-muted-foreground">{container.cpu_percent.toFixed(1)}%</span>
+                                <div class="w-16 h-1.5 rounded-full bg-muted mt-1">
                                     <div
                                         class="h-full rounded-full {cpuBarClass(container.cpu_percent)}"
                                         style="width: {Math.min(100, container.cpu_percent)}%"
                                     ></div>
                                 </div>
-                                <span class="text-sm font-mono text-muted-foreground w-12">{container.cpu_percent.toFixed(1)}%</span>
                             </div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            {#if container.memory_limit_bytes > 0}
-                                <div class="flex items-center gap-2">
-                                    <div class="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-sm text-muted-foreground">{formatBytes(container.memory_used_bytes)}</span>
+                                {#if container.memory_limit_bytes > 0}
+                                    <div class="w-16 h-1.5 rounded-full bg-muted mt-1">
                                         <div
                                             class="h-full rounded-full {memBarClass(pct)}"
                                             style="width: {pct}%"
                                         ></div>
                                     </div>
-                                    <span class="text-sm font-mono text-muted-foreground">
-                                        {formatBytes(container.memory_used_bytes)}
-                                    </span>
-                                </div>
-                            {:else}
-                                <span class="text-sm font-mono text-muted-foreground">{formatBytes(container.memory_used_bytes)}</span>
-                            {/if}
+                                {/if}
+                            </div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-muted-foreground">
                             ↓ {formatRate(container.network_rx_bytes_per_sec, networkUnit)}
