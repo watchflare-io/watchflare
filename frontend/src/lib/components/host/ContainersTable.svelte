@@ -200,7 +200,7 @@
             <div
                 class="rounded-lg border bg-card cursor-pointer"
                 onclick={() => handleRowClick(container)}
-                onkeydown={(e) => e.key === 'Enter' && handleRowClick(container)}
+                onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), handleRowClick(container))}
                 role="button"
                 tabindex="0"
             >
@@ -252,7 +252,7 @@
                                     <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-mono bg-muted text-muted-foreground">{badge}</span>
                                 {/each}
                                 {#if extraPorts > 0}
-                                    <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-mono text-muted-foreground">+{extraPorts}</span>
+                                    <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-mono bg-muted text-muted-foreground">+{extraPorts}</span>
                                 {/if}
                             </div>
                         </div>
@@ -291,7 +291,7 @@
                     <tr
                         class="hover:bg-muted/20 transition-colors cursor-pointer"
                         onclick={() => handleRowClick(container)}
-                        onkeydown={(e) => e.key === 'Enter' && handleRowClick(container)}
+                        onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), handleRowClick(container))}
                         tabindex="0"
                         role="button"
                     >
@@ -349,7 +349,7 @@
                                         <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-mono bg-muted text-muted-foreground">{badge}</span>
                                     {/each}
                                     {#if extraPorts > 0}
-                                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-mono text-muted-foreground">+{extraPorts}</span>
+                                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-mono bg-muted text-muted-foreground">+{extraPorts}</span>
                                     {/if}
                                 </div>
                             {:else}
