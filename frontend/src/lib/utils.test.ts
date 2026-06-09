@@ -9,7 +9,8 @@ import {
 	formatOfflineDuration,
 	formatDateTime,
 	getIntervalForTimeRange,
-	getTimeRangeTimestamps
+	getTimeRangeTimestamps,
+	parsePortBadges,
 } from './utils';
 
 describe('formatBytes', () => {
@@ -217,5 +218,35 @@ describe('getTimeRangeTimestamps', () => {
 	it('returns null for invalid range', () => {
 		const result = getTimeRangeTimestamps('invalid' as any);
 		expect(result).toBeNull();
+	});
+});
+
+describe('parsePortBadges', () => {
+	it('returns empty array for empty string', () => {
+		expect(parsePortBadges('')).toEqual([]);
+	});
+
+	it('extracts public port from published mapping', () => {
+		expect(parsePortBadges('8080:80/tcp')).toEqual(['8080']);
+	});
+
+	it('extracts port from exposed-only binding (no public port)', () => {
+		expect(parsePortBadges('80/tcp')).toEqual(['80']);
+	});
+
+	it('handles port with no protocol suffix', () => {
+		expect(parsePortBadges('8080')).toEqual(['8080']);
+	});
+
+	it('handles same public and private port', () => {
+		expect(parsePortBadges('443:443/tcp')).toEqual(['443']);
+	});
+
+	it('handles multiple published ports', () => {
+		expect(parsePortBadges('80:80/tcp, 443:443/tcp')).toEqual(['80', '443']);
+	});
+
+	it('handles mixed published and exposed-only ports', () => {
+		expect(parsePortBadges('8080:80/tcp, 9000/tcp')).toEqual(['8080', '9000']);
 	});
 });

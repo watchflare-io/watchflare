@@ -240,3 +240,18 @@ export function isAgentOutdated(current: string | null | undefined, latest: stri
 	if (lMin !== cMin) return lMin > cMin;
 	return lPat > cPat;
 }
+
+// parsePortBadges extracts public port numbers from agent port strings.
+// Input formats: "8080:80/tcp" (PublicPort:PrivatePort/Protocol), "80/tcp" (PrivatePort/Protocol only)
+// Returns: array of public port strings (or private port if no public binding)
+export function parsePortBadges(ports: string): string[] {
+	if (!ports) return [];
+	return ports.split(', ').map(p => {
+		const colonIdx = p.indexOf(':');
+		if (colonIdx !== -1) {
+			return p.substring(0, colonIdx);
+		}
+		const slashIdx = p.indexOf('/');
+		return slashIdx !== -1 ? p.substring(0, slashIdx) : p;
+	});
+}
