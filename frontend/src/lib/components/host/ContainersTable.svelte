@@ -235,9 +235,11 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="w-16 shrink-0 text-xs text-muted-foreground">Memory</span>
-                        <div class="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-                            <div class="h-full rounded-full {memBarClass(pct)}" style="width: {pct}%"></div>
-                        </div>
+                        {#if container.memory_limit_bytes > 0}
+                            <div class="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div class="h-full rounded-full {memBarClass(pct)}" style="width: {pct}%"></div>
+                            </div>
+                        {/if}
                         <span class="text-sm font-mono">{formatBytes(container.memory_used_bytes)}</span>
                     </div>
                     <div class="flex items-baseline gap-2">
@@ -326,17 +328,21 @@
                             </div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-                                    <div
-                                        class="h-full rounded-full {memBarClass(pct)}"
-                                        style="width: {pct}%"
-                                    ></div>
+                            {#if container.memory_limit_bytes > 0}
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                                        <div
+                                            class="h-full rounded-full {memBarClass(pct)}"
+                                            style="width: {pct}%"
+                                        ></div>
+                                    </div>
+                                    <span class="text-sm font-mono text-muted-foreground">
+                                        {formatBytes(container.memory_used_bytes)}
+                                    </span>
                                 </div>
-                                <span class="text-sm font-mono text-muted-foreground">
-                                    {formatBytes(container.memory_used_bytes)}
-                                </span>
-                            </div>
+                            {:else}
+                                <span class="text-sm font-mono text-muted-foreground">{formatBytes(container.memory_used_bytes)}</span>
+                            {/if}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-muted-foreground">
                             ↓ {formatRate(container.network_rx_bytes_per_sec, networkUnit)}
