@@ -9,7 +9,8 @@ import {
 	formatOfflineDuration,
 	formatDateTime,
 	getIntervalForTimeRange,
-	getTimeRangeTimestamps
+	getTimeRangeTimestamps,
+	parsePortBadges,
 } from './utils';
 
 describe('formatBytes', () => {
@@ -217,5 +218,35 @@ describe('getTimeRangeTimestamps', () => {
 	it('returns null for invalid range', () => {
 		const result = getTimeRangeTimestamps('invalid' as any);
 		expect(result).toBeNull();
+	});
+});
+
+describe('parsePortBadges', () => {
+	it('returns empty array for empty string', () => {
+		expect(parsePortBadges('')).toEqual([]);
+	});
+
+	it('extracts host port from IPv4 mapped port', () => {
+		expect(parsePortBadges('0.0.0.0:8080->80/tcp')).toEqual(['8080']);
+	});
+
+	it('extracts host port from IPv6 mapped port', () => {
+		expect(parsePortBadges(':::443->443/tcp')).toEqual(['443']);
+	});
+
+	it('extracts container port when no host binding', () => {
+		expect(parsePortBadges('80/tcp')).toEqual(['80']);
+	});
+
+	it('handles port with no protocol suffix', () => {
+		expect(parsePortBadges('8080')).toEqual(['8080']);
+	});
+
+	it('handles multiple ports', () => {
+		expect(parsePortBadges('0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp')).toEqual(['80', '443']);
+	});
+
+	it('handles mixed mapped and unmapped ports', () => {
+		expect(parsePortBadges('0.0.0.0:8080->8080/tcp, 9000/tcp')).toEqual(['8080', '9000']);
 	});
 });
