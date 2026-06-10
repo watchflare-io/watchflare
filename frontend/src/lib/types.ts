@@ -22,6 +22,7 @@ export interface User {
   disk_unit: DiskUnit;
   gauge_warning_threshold: number;
   gauge_critical_threshold: number;
+  totp_enabled: boolean;
   created_at: string;
 }
 
@@ -306,8 +307,23 @@ export interface APIResponse<T> {
 }
 
 export interface LoginResponse {
+  message?: string;
+  totp_required?: boolean;
+}
+
+export interface TOTPSetupResponse {
+  otpauth_url: string;
+  secret: string;
+}
+
+export interface TOTPEnableResponse {
   message: string;
-  user: User;
+  backup_codes: string[];
+}
+
+export interface TOTPRegenerateResponse {
+  message: string;
+  backup_codes: string[];
 }
 
 export interface RegisterResponse {
