@@ -112,7 +112,7 @@
 	[role="button"] {
 		cursor: pointer;
 	}
-	main > * {
+	main > *:not(.fixed) {
 		max-width: 1440px;
 		margin-inline: auto;
 	}

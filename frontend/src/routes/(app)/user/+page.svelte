@@ -2,9 +2,8 @@
     import { changePassword, changeEmail, changeUsername, disableTOTP, regenerateBackupCodes } from "$lib/api";
     import { changePasswordSchema, validateForm } from "$lib/validation";
     import { userStore } from "$lib/stores/user";
-    import { Eye, EyeOff } from "lucide-svelte";
+    import { Eye, EyeOff, Copy, Check, Shield, ShieldCheck } from "lucide-svelte";
     import TwoFactorSetupModal from '$lib/components/TwoFactorSetupModal.svelte';
-    import { Shield, ShieldCheck } from 'lucide-svelte';
 
     // Username form state
     let usernameOverride = $state<string | null>(null);
@@ -92,6 +91,8 @@
     let twoFALoading = $state(false);
     let regenCodes: string[] = $state([]);
     let regenDone = $state(false);
+    let regenCopied = $state(false);
+    let regenSaved = $state(false);
 
     async function handleDisableTOTP() {
         twoFAError = '';
@@ -129,11 +130,19 @@
         showDisableConfirm = true;
     }
 
+    async function copyRegenCodes() {
+        await navigator.clipboard.writeText(regenCodes.join("\n"));
+        regenCopied = true;
+        setTimeout(() => { regenCopied = false; }, 2000);
+    }
+
     function openRegenModal() {
         totpVerifyCode = '';
         twoFAError = '';
         regenCodes = [];
         regenDone = false;
+        regenCopied = false;
+        regenSaved = false;
         showRegenModal = true;
     }
 
@@ -459,7 +468,7 @@
             {:else}
                 <div class="flex items-center gap-2">
                     <Shield class="h-5 w-5 text-muted-foreground" />
-                    <span class="text-sm text-muted-foreground">2FA is not enabled</span>
+                    <span class="text-sm text-muted-foreground">2FA is disabled</span>
                 </div>
                 <button
                     onclick={() => { showSetupModal = true; }}
@@ -552,15 +561,36 @@
             {:else}
                 <p class="text-sm text-muted-foreground mb-4">Your new backup codes (save them now — they won't be shown again):</p>
                 <div class="rounded-lg border bg-muted/50 p-4 mb-4">
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-2 mb-3">
                         {#each regenCodes as rc}
                             <code class="text-xs font-mono text-foreground tracking-wider">{rc}</code>
                         {/each}
                     </div>
+                    <button
+                        onclick={copyRegenCodes}
+                        class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary rounded"
+                    >
+                        {#if regenCopied}
+                            <Check class="h-3.5 w-3.5 text-green-600" />
+                            <span class="text-green-600">Copied!</span>
+                        {:else}
+                            <Copy class="h-3.5 w-3.5" />
+                            Copy all
+                        {/if}
+                    </button>
                 </div>
+                <label class="flex items-start gap-2 mb-6 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        bind:checked={regenSaved}
+                        class="mt-0.5 rounded border-border"
+                    />
+                    <span class="text-sm text-foreground">I have saved my backup codes</span>
+                </label>
                 <button
                     onclick={() => { showRegenModal = false; }}
-                    class="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                    disabled={!regenSaved}
+                    class="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >Done</button>
             {/if}
         </div>
