@@ -4,6 +4,7 @@ import (
 	"testing"
 	"watchflare/backend/config"
 	"watchflare/backend/database"
+	"watchflare/backend/models"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
@@ -65,10 +66,10 @@ func TestLogin(t *testing.T) {
 
 	Register("admin@example.com", "password123", "admin")
 
-	token, err := Login("admin@example.com", "password123")
+	result, err := Login("admin@example.com", "password123")
 
 	assert.NoError(t, err)
-	assert.NotEmpty(t, token)
+	assert.NotEmpty(t, result.Token)
 }
 
 func TestLogin_WrongPassword(t *testing.T) {
@@ -106,9 +107,9 @@ func TestChangePassword(t *testing.T) {
 	assert.Error(t, err)
 
 	// New password must work.
-	token, err := Login("admin@example.com", "newpassword")
+	result, err := Login("admin@example.com", "newpassword")
 	assert.NoError(t, err)
-	assert.NotEmpty(t, token)
+	assert.NotEmpty(t, result.Token)
 }
 
 func TestGenerateJWT(t *testing.T) {
@@ -140,4 +141,22 @@ func TestChangePassword_WrongCurrent(t *testing.T) {
 	err := ChangePassword(user.ID, "wrongpassword", "newpassword")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "incorrect")
+}
+
+func TestLogin_RequiresTOTP(t *testing.T) {
+	setupAuthDB(t)
+	defer teardownAuthDB()
+
+	user, _, _ := Register("totp2@example.com", "password123", "")
+	database.DB.Model(&models.User{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
+		"totp_secret":  "fake_encrypted_secret",
+		"totp_enabled": true,
+	})
+
+	result, err := Login("totp2@example.com", "password123")
+
+	assert.NoError(t, err)
+	assert.True(t, result.Requires2FA)
+	assert.Empty(t, result.Token)
+	assert.Equal(t, user.ID, result.UserID)
 }

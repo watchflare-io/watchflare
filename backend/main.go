@@ -184,6 +184,7 @@ func setupRouter() *gin.Engine {
 		authGroup.POST("/register", handlers.Register)
 		authGroup.POST("/login", handlers.Login)
 		authGroup.POST("/logout", handlers.Logout)
+		authGroup.POST("/verify-totp", handlers.VerifyTOTP)
 	}
 
 	// Protected routes (require JWT)
@@ -195,6 +196,16 @@ func setupRouter() *gin.Engine {
 		protectedGroup.PUT("/change-password", handlers.ChangePassword)
 		protectedGroup.PUT("/change-email", handlers.ChangeEmail)
 		protectedGroup.PUT("/change-username", handlers.ChangeUsername)
+	}
+
+	// 2FA routes (protected)
+	twoFAGroup := api.Group("/2fa")
+	twoFAGroup.Use(middleware.AuthMiddleware())
+	{
+		twoFAGroup.POST("/setup", handlers.SetupTOTP)
+		twoFAGroup.POST("/enable", handlers.EnableTOTPHandler)
+		twoFAGroup.DELETE("", handlers.DisableTOTPHandler)
+		twoFAGroup.POST("/backup-codes/regenerate", handlers.RegenerateBackupCodesHandler)
 	}
 
 	// Settings routes (protected)
