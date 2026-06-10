@@ -1,8 +1,10 @@
 <script lang="ts">
-    import { changePassword, changeEmail, changeUsername } from "$lib/api";
+    import { changePassword, changeEmail, changeUsername, disableTOTP, regenerateBackupCodes } from "$lib/api";
     import { changePasswordSchema, validateForm } from "$lib/validation";
     import { userStore } from "$lib/stores/user";
     import { Eye, EyeOff } from "lucide-svelte";
+    import TwoFactorSetupModal from '$lib/components/TwoFactorSetupModal.svelte';
+    import { Shield, ShieldCheck } from 'lucide-svelte';
 
     // Username form state
     let usernameOverride = $state<string | null>(null);
@@ -80,6 +82,59 @@
         } finally {
             emailLoading = false;
         }
+    }
+
+    let showSetupModal = $state(false);
+    let showDisableConfirm = $state(false);
+    let showRegenModal = $state(false);
+    let totpVerifyCode = $state('');
+    let twoFAError = $state('');
+    let twoFALoading = $state(false);
+    let regenCodes: string[] = $state([]);
+    let regenDone = $state(false);
+
+    async function handleDisableTOTP() {
+        twoFAError = '';
+        twoFALoading = true;
+        try {
+            await disableTOTP(totpVerifyCode);
+            await userStore.load();
+            showDisableConfirm = false;
+            totpVerifyCode = '';
+        } catch {
+            twoFAError = 'Invalid code. Please try again.';
+        } finally {
+            twoFALoading = false;
+        }
+    }
+
+    async function handleRegenCodes() {
+        twoFAError = '';
+        twoFALoading = true;
+        try {
+            const res = await regenerateBackupCodes(totpVerifyCode);
+            regenCodes = res.backup_codes;
+            regenDone = true;
+            totpVerifyCode = '';
+        } catch {
+            twoFAError = 'Invalid code. Please try again.';
+        } finally {
+            twoFALoading = false;
+        }
+    }
+
+    function openDisableConfirm() {
+        totpVerifyCode = '';
+        twoFAError = '';
+        showDisableConfirm = true;
+    }
+
+    function openRegenModal() {
+        totpVerifyCode = '';
+        twoFAError = '';
+        regenCodes = [];
+        regenDone = false;
+        showRegenModal = true;
     }
 
     async function handleChangePassword() {
@@ -373,4 +428,141 @@
         </form>
     </div>
 
+    <!-- 2FA Section -->
+    <div class="rounded-lg border bg-card">
+        <div class="border-b px-6 py-4">
+            <h2 class="text-base font-semibold text-foreground">Two-Factor Authentication</h2>
+            <p class="text-sm text-muted-foreground mt-0.5">
+                Add an extra layer of security to your account.
+            </p>
+        </div>
+        <div class="px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
+            {#if $userStore.user?.totp_enabled}
+                <div class="flex items-center gap-2">
+                    <ShieldCheck class="h-5 w-5 text-green-600" />
+                    <span class="text-sm font-medium text-foreground">2FA is enabled</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button
+                        onclick={openRegenModal}
+                        class="rounded-lg border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                        Regenerate backup codes
+                    </button>
+                    <button
+                        onclick={openDisableConfirm}
+                        class="rounded-lg border border-destructive px-3 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-destructive"
+                    >
+                        Disable 2FA
+                    </button>
+                </div>
+            {:else}
+                <div class="flex items-center gap-2">
+                    <Shield class="h-5 w-5 text-muted-foreground" />
+                    <span class="text-sm text-muted-foreground">2FA is not enabled</span>
+                </div>
+                <button
+                    onclick={() => { showSetupModal = true; }}
+                    class="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                    Enable 2FA
+                </button>
+            {/if}
+        </div>
+    </div>
+
 </div>
+
+<TwoFactorSetupModal
+    open={showSetupModal}
+    onClose={() => { showSetupModal = false; }}
+    onEnabled={() => { showSetupModal = false; userStore.load(); }}
+/>
+
+{#if showDisableConfirm}
+    <div
+        role="dialog"
+        aria-modal="true"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    >
+        <div class="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg">
+            <h3 class="text-base font-semibold text-foreground mb-2">Disable 2FA</h3>
+            <p class="text-sm text-muted-foreground mb-4">Enter your authenticator code to confirm.</p>
+            <input
+                type="text"
+                inputmode="numeric"
+                bind:value={totpVerifyCode}
+                placeholder="000000"
+                maxlength={6}
+                autofocus
+                class="w-full rounded-lg border bg-background px-3 py-2 text-sm mb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary text-center tracking-widest text-lg"
+            />
+            {#if twoFAError}
+                <p class="text-xs text-destructive mb-3">{twoFAError}</p>
+            {/if}
+            <div class="flex gap-2">
+                <button
+                    onclick={() => { showDisableConfirm = false; twoFAError = ''; }}
+                    class="flex-1 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted"
+                >Cancel</button>
+                <button
+                    onclick={handleDisableTOTP}
+                    disabled={twoFALoading || totpVerifyCode.length < 6}
+                    class="flex-1 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                >
+                    {twoFALoading ? 'Disabling...' : 'Disable 2FA'}
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}
+
+{#if showRegenModal}
+    <div
+        role="dialog"
+        aria-modal="true"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    >
+        <div class="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg">
+            <h3 class="text-base font-semibold text-foreground mb-2">Regenerate Backup Codes</h3>
+            {#if !regenDone}
+                <p class="text-sm text-muted-foreground mb-4">Enter your authenticator code to generate new backup codes. Old codes will be invalidated.</p>
+                <input
+                    type="text"
+                    inputmode="numeric"
+                    bind:value={totpVerifyCode}
+                    placeholder="000000"
+                    maxlength={6}
+                    autofocus
+                    class="w-full rounded-lg border bg-background px-3 py-2 text-sm mb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary text-center tracking-widest text-lg"
+                />
+                {#if twoFAError}
+                    <p class="text-xs text-destructive mb-3">{twoFAError}</p>
+                {/if}
+                <div class="flex gap-2">
+                    <button onclick={() => { showRegenModal = false; twoFAError = ''; }} class="flex-1 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted">Cancel</button>
+                    <button
+                        onclick={handleRegenCodes}
+                        disabled={twoFALoading || totpVerifyCode.length < 6}
+                        class="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    >
+                        {twoFALoading ? 'Generating...' : 'Regenerate'}
+                    </button>
+                </div>
+            {:else}
+                <p class="text-sm text-muted-foreground mb-4">Your new backup codes (save them now — they won't be shown again):</p>
+                <div class="rounded-lg border bg-muted/50 p-4 mb-4">
+                    <div class="grid grid-cols-2 gap-2">
+                        {#each regenCodes as rc}
+                            <code class="text-xs font-mono text-foreground tracking-wider">{rc}</code>
+                        {/each}
+                    </div>
+                </div>
+                <button
+                    onclick={() => { showRegenModal = false; }}
+                    class="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >Done</button>
+            {/if}
+        </div>
+    </div>
+{/if}

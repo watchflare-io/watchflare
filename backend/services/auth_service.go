@@ -53,22 +53,37 @@ func Register(email, password, username string) (*models.User, string, error) {
 // ErrServiceUnavailable is returned when the database is unreachable during login.
 var ErrServiceUnavailable = errors.New("service unavailable")
 
-// Login authenticates a user and returns a JWT token.
-func Login(email, password string) (string, error) {
+// LoginResult is returned by Login to signal either a successful auth or a pending 2FA challenge.
+type LoginResult struct {
+	Token       string
+	UserID      string
+	Requires2FA bool
+}
+
+// Login authenticates a user. If 2FA is enabled, returns Requires2FA=true and UserID without a token.
+func Login(email, password string) (*LoginResult, error) {
 	var user models.User
 	if err := database.DB.Where("email = ?", email).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", errors.New("invalid credentials")
+			return nil, errors.New("invalid credentials")
 		}
 		slog.Error("database error during login", "error", err)
-		return "", ErrServiceUnavailable
+		return nil, ErrServiceUnavailable
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return "", errors.New("invalid credentials")
+		return nil, errors.New("invalid credentials")
 	}
 
-	return generateJWT(user.ID)
+	if user.TOTPEnabled {
+		return &LoginResult{UserID: user.ID, Requires2FA: true}, nil
+	}
+
+	token, err := generateJWT(user.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &LoginResult{Token: token}, nil
 }
 
 // ChangePassword updates a user's password after verifying the current one.

@@ -12,6 +12,8 @@ type User struct {
 	ID               string    `gorm:"type:char(36);primarykey" json:"id"`
 	Email            string    `gorm:"unique;not null" json:"email"`
 	Password         string    `gorm:"not null" json:"-"`
+	TOTPSecret       *string   `gorm:"type:text" json:"-"`
+	TOTPEnabled      bool      `gorm:"default:false" json:"totp_enabled"`
 	Username         string    `gorm:"type:varchar(50)" json:"username"`
 	DefaultTimeRange string    `gorm:"type:varchar(10);default:'1h'" json:"default_time_range"`
 	Theme            string    `gorm:"type:varchar(10);default:'system'" json:"theme"`

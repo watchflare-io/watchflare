@@ -103,7 +103,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := services.Login(req.Email, req.Password)
+	result, err := services.Login(req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, services.ErrServiceUnavailable) {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "service unavailable, please try again later"})
@@ -113,11 +113,17 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	setJWTCookie(c, token)
+	if result.Requires2FA {
+		if err := setPreAuthCookie(c, result.UserID); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to initiate 2fa challenge"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"totp_required": true})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-	})
+	setJWTCookie(c, result.Token)
+	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }
 
 // Logout clears the JWT cookie

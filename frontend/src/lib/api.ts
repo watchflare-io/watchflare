@@ -1,5 +1,8 @@
 import type {
   LoginResponse,
+  TOTPSetupResponse,
+  TOTPEnableResponse,
+  TOTPRegenerateResponse,
   RegisterResponse,
   CreateHostResponse,
   RegenerateTokenResponse,
@@ -229,6 +232,45 @@ export async function logout(): Promise<{ message: string }> {
   return apiRequest<{ message: string }>("/auth/logout", {
     method: "POST",
   });
+}
+
+export async function verifyTOTP(totpCode?: string, backupCode?: string): Promise<{ message: string }> {
+  const body: Record<string, string> = {};
+  if (totpCode) body.totp_code = totpCode;
+  if (backupCode) body.backup_code = backupCode;
+  return apiRequest<{ message: string }>(
+    '/auth/verify-totp',
+    { method: 'POST', body: JSON.stringify(body) },
+    true,
+  );
+}
+
+export async function setupTOTP(): Promise<TOTPSetupResponse> {
+  return apiRequest<TOTPSetupResponse>('/2fa/setup', { method: 'POST' });
+}
+
+export async function enableTOTP(code: string): Promise<TOTPEnableResponse> {
+  return apiRequest<TOTPEnableResponse>(
+    '/2fa/enable',
+    { method: 'POST', body: JSON.stringify({ code }) },
+  );
+}
+
+export async function disableTOTP(totpCode?: string, backupCode?: string): Promise<{ message: string }> {
+  const body: Record<string, string> = {};
+  if (totpCode) body.totp_code = totpCode;
+  if (backupCode) body.backup_code = backupCode;
+  return apiRequest<{ message: string }>(
+    '/2fa',
+    { method: 'DELETE', body: JSON.stringify(body) },
+  );
+}
+
+export async function regenerateBackupCodes(code: string): Promise<TOTPRegenerateResponse> {
+  return apiRequest<TOTPRegenerateResponse>(
+    '/2fa/backup-codes/regenerate',
+    { method: 'POST', body: JSON.stringify({ code }) },
+  );
 }
 
 export async function changePassword(

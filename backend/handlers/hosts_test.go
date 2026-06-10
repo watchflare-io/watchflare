@@ -51,11 +51,11 @@ func createTestUser(t *testing.T) *http.Cookie {
 	database.DB.Create(testUser)
 
 	// Generate JWT
-	token, _ := services.Login("test@test.com", "password123")
+	result, _ := services.Login("test@test.com", "password123")
 
 	return &http.Cookie{
 		Name:  "jwt_token",
-		Value: token,
+		Value: result.Token,
 	}
 }
 
