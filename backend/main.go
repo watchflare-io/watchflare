@@ -36,6 +36,12 @@ func main() {
 	// Load configuration
 	config.Load()
 
+	// Ensure data directory exists (required for FROM scratch container)
+	dataDir := "/var/lib/watchflare"
+	if err := os.MkdirAll(dataDir, 0750); err != nil {
+		slog.Warn("failed to create data directory", "path", dataDir, "error", err)
+	}
+
 	// Connect to database
 	if err := database.Connect(config.AppConfig.DatabaseURL); err != nil {
 		logger.Fatal("failed to connect to database", "error", err)
