@@ -20,7 +20,7 @@ type Config struct {
 	Environment  string
 	CookieDomain string // Domain for JWT cookie (empty = localhost, set in production)
 
-	// Cookie security — nil means auto-detect per request (recommended).
+	// Cookie security: nil means auto-detect per request (recommended).
 	// Set via COOKIE_SECURE env var only to force-override auto-detection.
 	CookieSecureOverride *bool
 
@@ -95,9 +95,9 @@ func Load() {
 		os.Exit(1)
 	}
 
-	// Validate SMTP encryption key — required if SMTP is configured, warn otherwise
+	// Validate SMTP encryption key: required if SMTP is configured, warn otherwise
 	if AppConfig.SMTPEncryptionKey == "" {
-		slog.Warn("SMTP_ENCRYPTION_KEY is not set — SMTP password storage will be unavailable",
+		slog.Warn("SMTP_ENCRYPTION_KEY is not set, SMTP password storage will be unavailable",
 			"hint", "Generate a secure key: openssl rand -base64 32",
 		)
 	} else if len(AppConfig.SMTPEncryptionKey) < 32 {
@@ -114,7 +114,7 @@ func Load() {
 	secretLower := strings.ToLower(AppConfig.JWTSecret)
 	for _, weak := range weakSecrets {
 		if strings.Contains(secretLower, weak) {
-			slog.Warn("JWT_SECRET contains common word — use a cryptographically random string", "word", weak)
+			slog.Warn("JWT_SECRET contains common word, use a cryptographically random string", "word", weak)
 			break
 		}
 	}
@@ -125,7 +125,7 @@ func Load() {
 			cookieSecureMode = "true (forced via COOKIE_SECURE)"
 		} else {
 			cookieSecureMode = "false (forced via COOKIE_SECURE)"
-			slog.Warn("COOKIE_SECURE=false is set — cookies will never be marked Secure regardless of HTTPS")
+			slog.Warn("COOKIE_SECURE=false is set, cookies will never be marked Secure regardless of HTTPS")
 		}
 	}
 
@@ -186,9 +186,9 @@ func parseProxies(s string) []string {
 // for the current request.
 //
 // Priority:
-//  1. COOKIE_SECURE env var (explicit override) — forces true or false unconditionally
-//  2. Direct TLS connection (Request.TLS != nil) — always secure
-//  3. X-Forwarded-Proto: https from a trusted proxy IP — secure behind reverse proxy
+//  1. COOKIE_SECURE env var (explicit override): forces true or false unconditionally
+//  2. Direct TLS connection (Request.TLS != nil): always secure
+//  3. X-Forwarded-Proto: https from a trusted proxy IP: secure behind reverse proxy
 //  4. Default: false (plain HTTP)
 func CookieSecure(tls bool, remoteAddr, xForwardedProto string) bool {
 	if AppConfig.CookieSecureOverride != nil {
