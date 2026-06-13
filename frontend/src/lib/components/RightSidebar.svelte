@@ -43,7 +43,7 @@
         {size === 'wide'
         ? 'sm:w-[39rem] sm:max-w-[calc(100vw-1rem)]'
         : 'sm:w-80 sm:max-w-[85vw]'}
-        {open ? 'translate-x-0' : 'translate-x-full'}"
+        {open ? 'translate-x-0' : 'translate-x-[calc(100%+1.5rem)]'}"
 >
     <div
         class="flex h-full flex-col bg-surface sm:rounded-2xl border shadow-lg"
