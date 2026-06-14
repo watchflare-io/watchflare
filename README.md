@@ -113,7 +113,7 @@ mkdir watchflare && cd watchflare && \
 Then generate the three required secrets:
 
 ```bash
-printf "POSTGRES_PASSWORD=%s\nJWT_SECRET=%s\nSMTP_ENCRYPTION_KEY=%s\n" \
+printf "POSTGRES_PASSWORD=%s\nJWT_SECRET=%s\nNOTIFICATION_ENCRYPTION_KEY=%s\n" \
   "$(openssl rand -base64 32)" \
   "$(openssl rand -base64 32)" \
   "$(openssl rand -base64 32)" > .env
@@ -193,7 +193,7 @@ cd backend && go run .
 cd frontend && npm install && npm run dev   # http://localhost:5173
 ```
 
-Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD`, `JWT_SECRET`, and `SMTP_ENCRYPTION_KEY` to random strings (generate each with `openssl rand -base64 32`). On first launch, the Hub redirects you to create your admin account.
+Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD`, `JWT_SECRET`, and `NOTIFICATION_ENCRYPTION_KEY` to random strings (generate each with `openssl rand -base64 32`). On first launch, the Hub redirects you to create your admin account.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide.
 

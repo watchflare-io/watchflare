@@ -34,8 +34,8 @@ func testDSN() string {
 func setupTestDB(t *testing.T) {
 	t.Helper()
 	config.AppConfig = &config.Config{
-		JWTSecret:         "test-secret-key-must-be-32-chars!!",
-		SMTPEncryptionKey: "test-smtp-encryption-key-32chars!",
+		JWTSecret:                 "test-secret-key-must-be-32-chars!!",
+		NotificationEncryptionKey: "test-encryption-key-32-chars-long!",
 	}
 	if err := database.Connect(testDSN()); err != nil {
 		t.Skipf("skipping test: database unavailable: %v", err)
@@ -213,7 +213,7 @@ func TestLogin(t *testing.T) {
 				assert.NotNil(t, jwtCookie)
 				assert.NotEmpty(t, jwtCookie.Value)
 				assert.True(t, jwtCookie.HttpOnly)
-				assert.False(t, jwtCookie.Secure) // plain HTTP in tests — no TLS, no trusted proxy
+				assert.False(t, jwtCookie.Secure) // plain HTTP in tests: no TLS, no trusted proxy
 			},
 		},
 		{
@@ -488,7 +488,7 @@ func TestChangeEmail(t *testing.T) {
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	// Duplicate email — create a second user then try to steal its email.
+	// Duplicate email: create a second user then try to steal its email.
 	u2 := &models.User{Email: "taken@test.com"}
 	u2.HashPassword("password123")
 	database.DB.Create(u2)
@@ -635,7 +635,7 @@ func TestCookieSecureFlag_Login(t *testing.T) {
 		return nil
 	}
 
-	t.Run("plain HTTP — Secure=false", func(t *testing.T) {
+	t.Run("plain HTTP: Secure=false", func(t *testing.T) {
 		config.AppConfig.CookieSecureOverride = nil
 		config.AppConfig.TrustedProxies = []string{"127.0.0.1", "::1"}
 
@@ -650,7 +650,7 @@ func TestCookieSecureFlag_Login(t *testing.T) {
 		assert.False(t, cookie.Secure)
 	})
 
-	t.Run("trusted proxy with X-Forwarded-Proto https — Secure=true", func(t *testing.T) {
+	t.Run("trusted proxy with X-Forwarded-Proto https: Secure=true", func(t *testing.T) {
 		config.AppConfig.CookieSecureOverride = nil
 		config.AppConfig.TrustedProxies = []string{"127.0.0.1", "::1"}
 
@@ -667,7 +667,7 @@ func TestCookieSecureFlag_Login(t *testing.T) {
 		assert.True(t, cookie.Secure)
 	})
 
-	t.Run("untrusted source with X-Forwarded-Proto https — Secure=false", func(t *testing.T) {
+	t.Run("untrusted source with X-Forwarded-Proto https: Secure=false", func(t *testing.T) {
 		config.AppConfig.CookieSecureOverride = nil
 		config.AppConfig.TrustedProxies = []string{"127.0.0.1", "::1"}
 
@@ -684,7 +684,7 @@ func TestCookieSecureFlag_Login(t *testing.T) {
 		assert.False(t, cookie.Secure)
 	})
 
-	t.Run("COOKIE_SECURE override true — Secure=true regardless", func(t *testing.T) {
+	t.Run("COOKIE_SECURE override true: Secure=true regardless", func(t *testing.T) {
 		override := true
 		config.AppConfig.CookieSecureOverride = &override
 		config.AppConfig.TrustedProxies = []string{}

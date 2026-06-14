@@ -46,8 +46,8 @@ func TestParsePreAuthToken_Expired(t *testing.T) {
 func setupTOTPDB(t *testing.T) {
 	t.Helper()
 	config.AppConfig = &config.Config{
-		JWTSecret:         "test-secret-key-must-be-32-chars!!",
-		SMTPEncryptionKey: "test-smtp-encryption-key-32chars!",
+		JWTSecret:                 "test-secret-key-must-be-32-chars!!",
+		NotificationEncryptionKey: "test-encryption-key-32-chars-long!",
 	}
 	if err := database.Connect(testDSN()); err != nil {
 		t.Skipf("skipping test: database unavailable: %v", err)

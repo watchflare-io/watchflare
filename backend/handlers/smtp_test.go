@@ -205,14 +205,14 @@ func TestTestSMTPConnection_NotConfigured(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	// Should fail — SMTP is disabled by default
+	// Should fail: SMTP is disabled by default
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	assert.NotNil(t, resp["error"])
 }
 
-func TestTestSMTPConnection_MissingEncryptionKey(t *testing.T) {
+func TestTestSMTPConnection_MissingNotificationEncryptionKey(t *testing.T) {
 	setupTestDB(t)
 	defer teardownTestDB()
 	defer teardownSMTPSettings()
@@ -236,9 +236,9 @@ func TestTestSMTPConnection_MissingEncryptionKey(t *testing.T) {
 	require.Equal(t, http.StatusOK, w.Code)
 
 	// Simulate server misconfiguration: remove the encryption key
-	origKey := config.AppConfig.SMTPEncryptionKey
-	config.AppConfig.SMTPEncryptionKey = ""
-	defer func() { config.AppConfig.SMTPEncryptionKey = origKey }()
+	origKey := config.AppConfig.NotificationEncryptionKey
+	config.AppConfig.NotificationEncryptionKey = ""
+	defer func() { config.AppConfig.NotificationEncryptionKey = origKey }()
 
 	req2, _ := http.NewRequest("POST", "/settings/smtp/test", bytes.NewBuffer([]byte(`{}`)))
 	req2.Header.Set("Content-Type", "application/json")
