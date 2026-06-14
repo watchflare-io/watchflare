@@ -11,7 +11,7 @@ import (
 	"watchflare/backend/database"
 	"watchflare/backend/encryption"
 	"watchflare/backend/models"
-	"watchflare/backend/services/webhook"
+	"watchflare/backend/notifications"
 
 	"gorm.io/gorm"
 )
@@ -225,8 +225,8 @@ func (w *AlertWorker) evaluateHost(
 							slog.Info("alert fired", "host", host.DisplayName, "metric_type", metricType, "current_value", currentValue, "threshold", threshold)
 						}
 					}
-					// Fire webhooks regardless of email outcome
-					webhook.SendAll(host, metricType, threshold, currentValue, incident.StartedAt)
+					// Broadcast to all enabled alert channels regardless of email outcome.
+					broadcastAlert(w.ctx, host, metricType, threshold, currentValue, incident.StartedAt)
 				}
 			} else {
 				// No open incident: track in pending map until duration is reached.
@@ -269,8 +269,8 @@ func (w *AlertWorker) evaluateHost(
 							slog.Info("alert fired", "host", host.DisplayName, "metric_type", metricType, "current_value", currentValue, "threshold", threshold)
 						}
 					}
-					// Fire webhooks regardless of email outcome
-					webhook.SendAll(host, metricType, threshold, currentValue, firstSeen)
+					// Broadcast to all enabled alert channels regardless of email outcome.
+					broadcastAlert(w.ctx, host, metricType, threshold, currentValue, firstSeen)
 				}
 			}
 		} else {
@@ -285,8 +285,8 @@ func (w *AlertWorker) evaluateHost(
 						if err := sendResolutionEmail(host, metricType, incident.StartedAt, now, recipient); err != nil {
 							slog.Error("alert worker: failed to send resolution email", "host_id", host.ID, "metric_type", metricType, "error", err)
 						}
-						// Fire webhooks regardless of email outcome
-						webhook.SendAllResolution(host, metricType, incident.StartedAt, now)
+						// Broadcast resolution to all enabled alert channels regardless of email outcome.
+						broadcastResolution(w.ctx, host, metricType, incident.StartedAt, now)
 					}
 				}
 			}
@@ -501,6 +501,32 @@ func buildResolutionEmailContent(hostName, metricType string, startedAt, resolve
 	body = fmt.Sprintf("The alert for host %q has been resolved.\n\n%s is back to normal.\n\nAlert duration: %s (started at %s).\n\nThis notification was sent by Watchflare.",
 		hostName, metricLabel, duration, startedAt.Format(time.RFC1123))
 	return
+}
+
+// broadcastAlert delivers an alert notification to every enabled channel
+// subscribed to the alerts category. Errors are logged per channel without
+// blocking the worker.
+func broadcastAlert(ctx context.Context, host *models.Host, metricType string, threshold, currentValue float64, startedAt time.Time) {
+	if notifications.Default == nil {
+		return
+	}
+	title, body := buildAlertContent(host.DisplayName, metricType, threshold, currentValue, startedAt)
+	for _, err := range notifications.Default.Broadcast(ctx, notifications.CategoryAlerts, title, body) {
+		slog.Error("alert worker: notification channel delivery failed", "host_id", host.ID, "metric_type", metricType, "error", err)
+	}
+}
+
+// broadcastResolution delivers a resolution notification to every enabled
+// channel subscribed to the alerts category. Errors are logged per channel
+// without blocking the worker.
+func broadcastResolution(ctx context.Context, host *models.Host, metricType string, startedAt, resolvedAt time.Time) {
+	if notifications.Default == nil {
+		return
+	}
+	title, body := buildResolutionContent(host.DisplayName, metricType, startedAt, resolvedAt)
+	for _, err := range notifications.Default.Broadcast(ctx, notifications.CategoryAlerts, title, body) {
+		slog.Error("alert worker: resolution channel delivery failed", "host_id", host.ID, "metric_type", metricType, "error", err)
+	}
 }
 
 // notificationRecipient returns the configured notification email from smtp_settings
