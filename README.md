@@ -64,9 +64,9 @@ Watchflare collects system metrics in real time, maintains a full package invent
 Every host at a glance with live CPU, memory, disk, network, temperature, agent version, and package status (outdated + security counts).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/hosts-overview-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset=".github/assets/hosts-overview-light.png">
-  <img alt="Hosts overview with multi-host metrics" src=".github/assets/hosts-overview-light.png" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/hosts-list-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset=".github/assets/hosts-list-light.png">
+  <img alt="Hosts list with multi-host metrics" src=".github/assets/hosts-list-light.png" width="100%">
 </picture>
 
 ### Host detail
@@ -74,9 +74,9 @@ Every host at a glance with live CPU, memory, disk, network, temperature, agent 
 Drill into any host for full system metrics with live charts. Continuous TimescaleDB aggregates keep zooming from 1h to 30d instant.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/host-detail-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset=".github/assets/host-detail-light.png">
-  <img alt="Host detail page with live charts" src=".github/assets/host-detail-light.png" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/host-overview-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset=".github/assets/host-overview-light.png">
+  <img alt="Host overview page with live charts" src=".github/assets/host-overview-light.png" width="100%">
 </picture>
 
 ### Package inventory
