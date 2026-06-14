@@ -4,33 +4,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Watchflare — self-hosted host monitoring: **Backend** (Go, gRPC + HTTP), **Agent** (Go), **Frontend** (SvelteKit 5, SSE).
-Data flow: Agents → gRPC/TLS 1.3 → Backend → PostgreSQL/TimescaleDB → SSE → Frontend
+Watchflare: self-hosted host monitoring stack. **Hub** (Go, gRPC + HTTP), **Agent** (Go), **Frontend** (SvelteKit 5, SSE).
+Data flow: Agents → gRPC/TLS 1.3 → Hub → PostgreSQL/TimescaleDB → SSE → Frontend
 
 ## Versioning
 
-**Commit format — Conventional Commits:**
-- `feat: description` — new feature
-- `fix: description` — bug fix
-- `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `style:` — maintenance
+**Commit format (Conventional Commits, English):**
+- `feat: description`: new feature
+- `fix: description`: bug fix
+- `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `style:`: maintenance
 
-Scope is optional: `feat(agent): description`, `fix(backend): description`
+Scope is optional: `feat(agent): description`, `fix(hub): description`.
+
+**Branch naming:** `<type>/<short-description>` matching the Conventional Commits prefix (`feat/discord-alerts`, `fix/scrollbar-overflow`, `docs/contributing-update`). Branch from and target `develop`.
+
+**DCO sign-off required:** every commit must have `Signed-off-by:` (use `git commit -s`). The DCO text is in the `DCO` file at the repo root. The GitHub DCO App enforces this on PRs.
 
 **Release process:** see `docs/release-workflow.md`
 
 ## Build & Run
 
-### Backend
+### Hub
 ```bash
 cd backend
 go run .                                            # Dev
-go build -o watchflare-backend                      # Backend only (no frontend)
-go build -tags embed_frontend -o watchflare-app     # Backend + embedded frontend (production)
+go build -o watchflare-backend                      # Hub binary only (no frontend embedded)
+go build -tags embed_frontend -o watchflare-app     # Hub + embedded frontend (production)
 go test ./...                           # Tests (uses in-memory SQLite)
 go test ./handlers -v                   # Single package
 go test -run TestCreateAgent ./services # Single test
 ```
-Env: copy `.env.example` → `.env`, set `JWT_SECRET` (>=32 chars). Test creds: `admin@watchflare.io` / `watchflare_p4ss`
+Env: copy `.env.example` to `.env`, set `POSTGRES_PASSWORD`, `JWT_SECRET` (>=32 chars), and `NOTIFICATION_ENCRYPTION_KEY` (>=32 chars). Generate each with `openssl rand -base64 32`. On first launch, the Hub redirects to create an admin account.
 
 ### Agent
 ```bash
@@ -50,18 +54,18 @@ npm run test                            # Vitest
 
 ### Database
 ```bash
-docker compose up -d                    # Start TimescaleDB
+docker compose -f docker-compose-postgres.yml up -d   # Start TimescaleDB only
 docker exec -it watchflare-postgres psql -U watchflare -d watchflare
 ```
-Connection: `postgresql://watchflare:watchflare_dev@localhost:5433/watchflare`
+Connection: `postgresql://watchflare:watchflare_dev@localhost:5432/watchflare` (default port from `.env.example`).
 
 ### Dev session
-1. `docker compose up -d` → 2. `cd backend && go run .` → 3. `cd frontend && npm run dev`
+1. `docker compose -f docker-compose-postgres.yml up -d` → 2. `cd backend && go run .` → 3. `cd frontend && npm run dev`
 
 ## Architecture (Key Decisions)
 
 - **Heartbeats**: 5s agent → in-memory cache (no DB write) → SSE broadcast. DB sync every 5min. Stale after 15s.
-- **SSE minification**: metric fields compressed to 1-2 chars in `backend/sse/broker.go`, decoded in `frontend/src/lib/sse.js` — both must be updated together
+- **SSE minification**: metric fields compressed to 1-2 chars in `backend/sse/broker.go`, decoded in `frontend/src/lib/sse.js`. Both must be updated together.
 - **TimescaleDB continuous aggregates**: 10m/15m/2h/8h buckets for time ranges. Migrations embedded via `//go:embed`
 - **Agent security**: runs as unprivileged `watchflare` user. HMAC-SHA256 per RPC, ±5min timestamp window
 - **WAL**: append-only metrics buffer when backend unreachable, auto-replay on reconnect
@@ -88,7 +92,7 @@ Connection: `postgresql://watchflare:watchflare_dev@localhost:5433/watchflare`
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| Backend bootstrap | `backend/main.go` | HTTP + gRPC + 3 background workers |
+| Hub bootstrap | `backend/main.go` | HTTP + gRPC + 3 background workers |
 | Agent bootstrap | `agent/main.go` | register vs run mode |
 | gRPC handlers | `backend/grpc/agent_service.go` | Register, Heartbeat, SendMetrics, SendPackageInventory |
 | HTTP handlers | `backend/handlers/` | auth, hosts, metrics, packages, sse |
@@ -96,9 +100,32 @@ Connection: `postgresql://watchflare:watchflare_dev@localhost:5433/watchflare`
 | Cache | `backend/cache/heartbeat.go` | In-memory heartbeat state |
 | SSE broker | `backend/sse/broker.go` | Event broadcasting |
 
+## Tests and vulnerability checks
+
+Before submitting any change, run:
+- `cd backend && go test ./... && govulncheck ./...`
+- `cd agent && go test ./... && govulncheck ./...`
+- `cd frontend && npm run test && npm audit --omit=dev`
+
+CI runs the same checks on every PR (`.github/workflows/vulncheck.yml`).
+
+## Strategic constraints (non-negotiable)
+
+- **AGPL-3.0 forever.** No Community Edition vs Enterprise Edition split. The Hub code is never modified to add paywalled features.
+- **DCO only, no CLA.** Contributions are accepted under AGPL-3.0 only. No relicensing.
+- **Cloud monetization plans are private.** When implemented, Cloud features live in a separate repo and talk to the Hub via its public API (satellite architecture). Never propose modifying the Hub to support proprietary Cloud features.
+- **Notifications library:** `github.com/nicholas-fedor/shoutrrr` (fork) once integrated. Do not propose alternatives without strong reason.
+
+Full strategic context in `docs/private/business-strategy.md` (gitignored, local only).
+
 ## Documentation
 
-- `README.md` — project intro
-- `SECURITY.md` — security policy
-- `docs/` (local, gitignored) — architecture, internals, install guides, version history
-- `.claude/rules/` — detailed supplementary rules (architecture, code style, testing, security, agent paths)
+- `README.md`: project intro and screenshots
+- `CONTRIBUTING.md`: contribution workflow (DCO, branch naming, PR rules)
+- `CODE_OF_CONDUCT.md`: Contributor Covenant 3.0
+- `DCO`: Developer Certificate of Origin (verbatim, do not modify)
+- `SECURITY.md`: security disclosure policy
+- `docs/` (local, gitignored): architecture deep dives, internals, install guides, version history
+- `docs/private/` (local, gitignored): strategic and business documents
+- `.claude/rules/`: detailed supplementary rules for AI agents (architecture, code style, testing, security, agent paths)
+- [`watchflare-io/docs`](https://github.com/watchflare-io/docs): separate GitHub repo for public user-facing documentation, published at [docs.watchflare.io](https://docs.watchflare.io)
