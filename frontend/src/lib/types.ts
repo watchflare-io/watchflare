@@ -627,21 +627,38 @@ export interface HostTableProps {
   metricsData: Record<string, Metric[]>;
 }
 
-// ===== Webhooks =====
+// ===== Notification channels =====
 
-export interface WebhookEndpoint {
+export type NotificationCategory = 'alerts' | 'transactional';
+
+export interface NotificationChannel {
   id: string;
-  url: string;
-  service_name: string;
+  name: string;
+  url_masked: string;
+  categories: NotificationCategory[];
   enabled: boolean;
   created_at: string;
+  updated_at: string;
 }
 
-export interface GetWebhooksResponse {
-  webhooks: WebhookEndpoint[];
+export interface ListNotificationChannelsResponse {
+  channels: NotificationChannel[];
 }
 
-export interface AddWebhookResponse {
-  webhook: WebhookEndpoint;
-  warning?: string; // "unknown_service" when service type is Generic
+export interface NotificationChannelResponse {
+  channel: NotificationChannel;
+}
+
+export interface CreateNotificationChannelInput {
+  name: string;
+  url: string;
+  categories?: NotificationCategory[];
+  enabled?: boolean;
+}
+
+export interface UpdateNotificationChannelInput {
+  name?: string;
+  url?: string;
+  categories?: NotificationCategory[];
+  enabled?: boolean;
 }

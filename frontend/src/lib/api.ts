@@ -33,9 +33,10 @@ import type {
   IncidentStatusFilter,
   AlertMetricType,
   HostStatus,
-  WebhookEndpoint,
-  GetWebhooksResponse,
-  AddWebhookResponse,
+  ListNotificationChannelsResponse,
+  NotificationChannelResponse,
+  CreateNotificationChannelInput,
+  UpdateNotificationChannelInput,
 } from "./types";
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
@@ -713,31 +714,45 @@ export async function getHostIncidents(
   );
 }
 
-// Webhook endpoints
-export async function getWebhooks(): Promise<GetWebhooksResponse> {
-  return apiRequest<GetWebhooksResponse>('/settings/webhooks');
+// Notification channels (Shoutrrr-backed)
+export async function listNotificationChannels(): Promise<ListNotificationChannelsResponse> {
+  return apiRequest<ListNotificationChannelsResponse>('/notifications/channels');
 }
 
-export async function addWebhook(url: string): Promise<AddWebhookResponse> {
-  return apiRequest<AddWebhookResponse>('/settings/webhooks', {
+export async function createNotificationChannel(
+  input: CreateNotificationChannelInput,
+): Promise<NotificationChannelResponse> {
+  return apiRequest<NotificationChannelResponse>('/notifications/channels', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateNotificationChannel(
+  id: string,
+  input: UpdateNotificationChannelInput,
+): Promise<void> {
+  return apiRequest<void>(`/notifications/channels/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteNotificationChannel(id: string): Promise<void> {
+  return apiRequest<void>(`/notifications/channels/${id}`, { method: 'DELETE' });
+}
+
+export async function testNotificationChannel(id: string): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(`/notifications/channels/${id}/test`, {
+    method: 'POST',
+  });
+}
+
+export async function testNotificationChannelDraft(
+  url: string,
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>('/notifications/channels/test', {
     method: 'POST',
     body: JSON.stringify({ url }),
-  });
-}
-
-export async function deleteWebhook(id: string): Promise<void> {
-  return apiRequest<void>(`/settings/webhooks/${id}`, { method: 'DELETE' });
-}
-
-export async function setWebhookEnabled(id: string, enabled: boolean): Promise<void> {
-  return apiRequest<void>(`/settings/webhooks/${id}/enabled`, {
-    method: 'PATCH',
-    body: JSON.stringify({ enabled }),
-  });
-}
-
-export async function testWebhook(id: string): Promise<{ message: string }> {
-  return apiRequest<{ message: string }>(`/settings/webhooks/${id}/test`, {
-    method: 'POST',
   });
 }

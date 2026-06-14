@@ -15,7 +15,7 @@
     import * as Select from "$lib/components/ui/select";
     import Toggle from "$lib/components/ui/Toggle.svelte";
     import Slider from "$lib/components/ui/Slider.svelte";
-    import WebhookSettings from "$lib/components/WebhookSettings.svelte";
+    import NotificationChannelsSettings from "$lib/components/NotificationChannelsSettings.svelte";
 
     const user = $derived($userStore.user);
 
@@ -587,7 +587,7 @@
     </div>
 </div>
 
-<WebhookSettings />
+<NotificationChannelsSettings />
 
 <!-- Alert Rules -->
 <div
