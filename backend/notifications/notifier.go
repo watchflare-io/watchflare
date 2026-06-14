@@ -2,8 +2,7 @@ package notifications
 
 import "context"
 
-// Category values for NotificationChannel.Categories.
-// A channel can subscribe to one or more categories of events.
+// A channel can subscribe to one or more of these categories.
 const (
 	CategoryAlerts        = "alerts"
 	CategoryTransactional = "transactional"

@@ -25,12 +25,10 @@ type Channel struct {
 	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
-// TableName overrides the default GORM pluralization.
 func (Channel) TableName() string {
 	return "notification_channels"
 }
 
-// BeforeCreate generates a UUID if none was provided.
 func (c *Channel) BeforeCreate(_ *gorm.DB) error {
 	if c.ID == "" {
 		c.ID = uuid.NewString()
@@ -38,7 +36,6 @@ func (c *Channel) BeforeCreate(_ *gorm.DB) error {
 	return nil
 }
 
-// Repository persists notification channels.
 type Repository struct {
 	db *gorm.DB
 }

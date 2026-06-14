@@ -225,7 +225,6 @@ func (w *AlertWorker) evaluateHost(
 							slog.Info("alert fired", "host", host.DisplayName, "metric_type", metricType, "current_value", currentValue, "threshold", threshold)
 						}
 					}
-					// Broadcast to all enabled alert channels regardless of email outcome.
 					broadcastAlert(w.ctx, host, metricType, threshold, currentValue, incident.StartedAt)
 				}
 			} else {
@@ -269,7 +268,6 @@ func (w *AlertWorker) evaluateHost(
 							slog.Info("alert fired", "host", host.DisplayName, "metric_type", metricType, "current_value", currentValue, "threshold", threshold)
 						}
 					}
-					// Broadcast to all enabled alert channels regardless of email outcome.
 					broadcastAlert(w.ctx, host, metricType, threshold, currentValue, firstSeen)
 				}
 			}
@@ -285,7 +283,6 @@ func (w *AlertWorker) evaluateHost(
 						if err := sendResolutionEmail(host, metricType, incident.StartedAt, now, recipient); err != nil {
 							slog.Error("alert worker: failed to send resolution email", "host_id", host.ID, "metric_type", metricType, "error", err)
 						}
-						// Broadcast resolution to all enabled alert channels regardless of email outcome.
 						broadcastResolution(w.ctx, host, metricType, incident.StartedAt, now)
 					}
 				}
@@ -503,9 +500,7 @@ func buildResolutionEmailContent(hostName, metricType string, startedAt, resolve
 	return
 }
 
-// broadcastAlert delivers an alert notification to every enabled channel
-// subscribed to the alerts category. Errors are logged per channel without
-// blocking the worker.
+// Errors are logged per channel without blocking the worker.
 func broadcastAlert(ctx context.Context, host *models.Host, metricType string, threshold, currentValue float64, startedAt time.Time) {
 	if notifications.Default == nil {
 		return
@@ -516,9 +511,6 @@ func broadcastAlert(ctx context.Context, host *models.Host, metricType string, t
 	}
 }
 
-// broadcastResolution delivers a resolution notification to every enabled
-// channel subscribed to the alerts category. Errors are logged per channel
-// without blocking the worker.
 func broadcastResolution(ctx context.Context, host *models.Host, metricType string, startedAt, resolvedAt time.Time) {
 	if notifications.Default == nil {
 		return

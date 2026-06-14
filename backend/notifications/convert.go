@@ -8,13 +8,7 @@ import (
 
 // ConvertNativeURL maps a native service webhook URL (Discord, Slack, Telegram)
 // to the equivalent Shoutrrr URL. Unknown HTTP(S) URLs are wrapped as generic://.
-//
-// Returned values:
-//   - shoutrrrURL: the converted URL
-//   - serviceName: the detected service ("discord", "slack", "telegram", "generic")
-//   - err: non-nil if the input cannot be parsed at all
-//
-// Used at startup to migrate existing webhook_endpoints into notification_channels.
+// serviceName is one of "discord", "slack", "telegram", "generic".
 func ConvertNativeURL(rawURL string) (shoutrrrURL, serviceName string, err error) {
 	u, err := url.Parse(strings.TrimSpace(rawURL))
 	if err != nil {
@@ -86,7 +80,6 @@ func convertTelegram(u *url.URL) (string, string, error) {
 	return fmt.Sprintf("telegram://%s@telegram?chats=%s", token, chat), "telegram", nil
 }
 
-// Generic: wraps any HTTP(S) URL as generic://host/path?query
 func convertGeneric(u *url.URL) string {
 	out := "generic://" + u.Host + u.Path
 	if u.RawQuery != "" {
@@ -96,8 +89,8 @@ func convertGeneric(u *url.URL) string {
 }
 
 // MaskShoutrrrURL returns a redacted form of a Shoutrrr URL safe for API
-// responses and logs. Keeps the scheme so the user can see the service type;
-// hides everything else because URLs typically embed tokens or passwords.
+// responses and logs. Keeps the scheme; hides the rest because URLs typically
+// embed tokens or passwords.
 func MaskShoutrrrURL(shoutrrrURL string) string {
 	scheme, _, found := strings.Cut(shoutrrrURL, "://")
 	if !found || scheme == "" {
