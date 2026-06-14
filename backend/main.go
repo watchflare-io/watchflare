@@ -237,6 +237,7 @@ func setupRouter() *gin.Engine {
 	{
 		notificationsGroup.GET("/channels", handlers.ListNotificationChannels)
 		notificationsGroup.POST("/channels", handlers.CreateNotificationChannel)
+		notificationsGroup.POST("/channels/test", handlers.TestNotificationChannelDraft)
 		notificationsGroup.GET("/channels/:id", handlers.GetNotificationChannel)
 		notificationsGroup.PATCH("/channels/:id", handlers.UpdateNotificationChannel)
 		notificationsGroup.DELETE("/channels/:id", handlers.DeleteNotificationChannel)

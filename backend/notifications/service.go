@@ -58,8 +58,13 @@ func (s *Service) Broadcast(ctx context.Context, category, title, message string
 	return errs
 }
 
-// SendToChannel delivers a one-off message to a single channel. Used for the
-// "test channel" endpoint.
+// SendToURL delivers a one-off message to an arbitrary shoutrrr URL without
+// touching the database.
+func (s *Service) SendToURL(ctx context.Context, url, title, message string) error {
+	return s.notifier.Send(ctx, url, title, message)
+}
+
+// SendToChannel delivers a one-off message to a single channel.
 func (s *Service) SendToChannel(ctx context.Context, id, title, message string) error {
 	ch, err := s.repo.Get(ctx, id)
 	if err != nil {
@@ -72,15 +77,11 @@ func (s *Service) SendToChannel(ctx context.Context, id, title, message string) 
 	return s.notifier.Send(ctx, url, title, message)
 }
 
-// Repo exposes the underlying repository so HTTP handlers can query channels
-// directly without going through Broadcast.
+// Repo exposes the underlying repository.
 func (s *Service) Repo() *Repository {
 	return s.repo
 }
 
-// errEncryptionKeyMissing is returned whenever a method needs the encryption
-// key but it was not configured. Centralized so the message stays consistent
-// between EncryptURL, DecryptURL and Broadcast paths.
 var errEncryptionKeyMissing = errors.New("NOTIFICATION_ENCRYPTION_KEY is not configured")
 
 // EncryptURL encrypts a plain shoutrrr URL for storage.

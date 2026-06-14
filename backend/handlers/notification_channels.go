@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -15,21 +17,22 @@ import (
 	"watchflare/backend/notifications"
 )
 
-// testCooldownPeriod is the minimum interval between two test sends for the
-// same notification channel. Prevents accidental double-clicks and discourages
-// abuse of the /test endpoint as a notification relay.
-const testCooldownPeriod = 10 * time.Second
+// Must stay in sync with COOLDOWN_MS in NotificationChannelsSettings.svelte.
+const testCooldownPeriod = 5 * time.Second
 
-// testCooldowns tracks the last test send per channel in memory. Cleared on
-// process restart. Safe for concurrent access.
+const (
+	testNotificationTitle = "Watchflare test notification"
+	testNotificationBody  = "Your notification channel is configured correctly."
+)
+
+// In-memory; cleared on process restart.
 var testCooldowns = struct {
 	mu   sync.Mutex
 	last map[string]time.Time
 }{last: map[string]time.Time{}}
 
 // acquireTestSlot returns the remaining cooldown for channelID. When > 0 the
-// caller must reject the request. When 0, the slot is reserved (last test
-// timestamp updated) and the caller may proceed.
+// caller must reject. When 0, the slot is reserved and the caller may proceed.
 func acquireTestSlot(channelID string) time.Duration {
 	testCooldowns.mu.Lock()
 	defer testCooldowns.mu.Unlock()
@@ -43,8 +46,7 @@ func acquireTestSlot(channelID string) time.Duration {
 	return 0
 }
 
-// channelResponse is the API shape for a NotificationChannel.
-// URL is always masked (full URL never leaves the server).
+// URL is always masked: the full URL never leaves the server.
 type channelResponse struct {
 	ID         string    `json:"id"`
 	Name       string    `json:"name"`
@@ -67,7 +69,6 @@ func toChannelResponse(c notifications.Channel, plainURL string) channelResponse
 	}
 }
 
-// ListNotificationChannels returns all channels (URL masked).
 func ListNotificationChannels(c *gin.Context) {
 	channels, err := notifications.Default.Repo().List(c.Request.Context())
 	if err != nil {
@@ -88,7 +89,6 @@ func ListNotificationChannels(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"channels": out})
 }
 
-// GetNotificationChannel returns a single channel by ID.
 func GetNotificationChannel(c *gin.Context) {
 	id := c.Param("id")
 	ch, err := notifications.Default.Repo().Get(c.Request.Context(), id)
@@ -105,7 +105,6 @@ func GetNotificationChannel(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"channel": toChannelResponse(ch, plain)})
 }
 
-// createChannelRequest is the body for POST /notifications/channels.
 type createChannelRequest struct {
 	Name       string   `json:"name"`
 	URL        string   `json:"url"`
@@ -113,7 +112,6 @@ type createChannelRequest struct {
 	Enabled    *bool    `json:"enabled"`
 }
 
-// CreateNotificationChannel inserts a new channel.
 func CreateNotificationChannel(c *gin.Context) {
 	var req createChannelRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -168,8 +166,7 @@ func CreateNotificationChannel(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"channel": toChannelResponse(*ch, req.URL)})
 }
 
-// updateChannelRequest is the body for PATCH /notifications/channels/:id.
-// All fields are optional. URL is updated only when non-empty (empty preserves the stored URL).
+// All fields optional. An empty URL preserves the stored value.
 type updateChannelRequest struct {
 	Name       *string  `json:"name"`
 	URL        *string  `json:"url"`
@@ -177,7 +174,6 @@ type updateChannelRequest struct {
 	Enabled    *bool    `json:"enabled"`
 }
 
-// UpdateNotificationChannel patches an existing channel.
 func UpdateNotificationChannel(c *gin.Context) {
 	id := c.Param("id")
 	var req updateChannelRequest
@@ -241,7 +237,6 @@ func UpdateNotificationChannel(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "notification channel updated"})
 }
 
-// DeleteNotificationChannel removes a channel by ID.
 func DeleteNotificationChannel(c *gin.Context) {
 	id := c.Param("id")
 	if err := notifications.Default.Repo().Delete(c.Request.Context(), id); err != nil {
@@ -256,8 +251,58 @@ func DeleteNotificationChannel(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "notification channel deleted"})
 }
 
-// TestNotificationChannel sends a fixed test message to a single channel.
-// A per-channel cooldown protects against accidental double-clicks and abuse.
+type testDraftChannelRequest struct {
+	URL string `json:"url"`
+}
+
+// Cooldown keyed by SHA-256 of the URL: throttles rapid retries of the same
+// target without affecting tests of different URLs.
+func TestNotificationChannelDraft(c *gin.Context) {
+	var req testDraftChannelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+	url := strings.TrimSpace(req.URL)
+	if url == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "url is required"})
+		return
+	}
+	if err := notifications.ValidateShoutrrrURL(url); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	cooldownKey := "draft:" + hashURL(url)
+	if remaining := acquireTestSlot(cooldownKey); remaining > 0 {
+		c.Header("Retry-After", strconv.Itoa(int(remaining.Round(time.Second).Seconds())))
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"error":               "test cooldown active",
+			"retry_after_seconds": int(remaining.Round(time.Second).Seconds()),
+		})
+		return
+	}
+
+	err := notifications.Default.SendToURL(
+		c.Request.Context(),
+		url,
+		testNotificationTitle,
+		testNotificationBody,
+	)
+	if err != nil {
+		slog.Error("send draft test notification failed", "error", err)
+		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to deliver test notification"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "test notification sent"})
+}
+
+// Hashed so the full URL (which may carry secrets) never lands in the cooldown table.
+func hashURL(url string) string {
+	sum := sha256.Sum256([]byte(url))
+	return hex.EncodeToString(sum[:16])
+}
+
 func TestNotificationChannel(c *gin.Context) {
 	id := c.Param("id")
 
@@ -273,8 +318,8 @@ func TestNotificationChannel(c *gin.Context) {
 	err := notifications.Default.SendToChannel(
 		c.Request.Context(),
 		id,
-		"Watchflare test notification",
-		"Your notification channel is configured correctly.",
+		testNotificationTitle,
+		testNotificationBody,
 	)
 	if err != nil {
 		if errors.Is(err, notifications.ErrChannelNotFound) {
@@ -288,9 +333,8 @@ func TestNotificationChannel(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "test notification sent"})
 }
 
-// normalizeCategories cleans the user-provided categories list:
-// trims whitespace, drops empty entries and unknown values, deduplicates,
-// and falls back to [CategoryAlerts] when nothing valid remains.
+// Trims, drops empty and unknown values, deduplicates, falls back to
+// [CategoryAlerts] when nothing valid remains.
 func normalizeCategories(in []string) []string {
 	seen := map[string]bool{}
 	out := make([]string, 0, len(in))
