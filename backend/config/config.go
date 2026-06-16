@@ -12,13 +12,13 @@ import (
 )
 
 type Config struct {
-	GRPCPort    string
-	DatabaseURL string
-	JWTSecret         string
-	SMTPEncryptionKey string
-	CORSOrigins       []string
-	Environment  string
-	CookieDomain string // Domain for JWT cookie (empty = localhost, set in production)
+	GRPCPort                  string
+	DatabaseURL               string
+	JWTSecret                 string
+	NotificationEncryptionKey string
+	CORSOrigins               []string
+	Environment               string
+	CookieDomain              string // Domain for JWT cookie (empty = localhost, set in production)
 
 	// Cookie security: nil means auto-detect per request (recommended).
 	// Set via COOKIE_SECURE env var only to force-override auto-detection.
@@ -58,13 +58,13 @@ func Load() {
 			getEnv("POSTGRES_DB", "watchflare"),
 			getEnv("POSTGRES_SSLMODE", "disable"),
 		),
-		JWTSecret:         getEnv("JWT_SECRET", ""),
-		SMTPEncryptionKey: getEnv("SMTP_ENCRYPTION_KEY", ""),
-		CORSOrigins:          parseOrigins(getEnv("CORS_ORIGINS", "http://localhost:5173")),
-		Environment:          getEnv("ENV", "development"),
-		CookieDomain:         getEnv("COOKIE_DOMAIN", ""),
-		CookieSecureOverride: getOptionalBoolEnv("COOKIE_SECURE"),
-		TrustedProxies:       parseProxies(getEnv("TRUSTED_PROXIES", "127.0.0.1,::1")),
+		JWTSecret:                 getEnv("JWT_SECRET", ""),
+		NotificationEncryptionKey: getEnv("NOTIFICATION_ENCRYPTION_KEY", ""),
+		CORSOrigins:               parseOrigins(getEnv("CORS_ORIGINS", "http://localhost:5173")),
+		Environment:               getEnv("ENV", "development"),
+		CookieDomain:              getEnv("COOKIE_DOMAIN", ""),
+		CookieSecureOverride:      getOptionalBoolEnv("COOKIE_SECURE"),
+		TrustedProxies:            parseProxies(getEnv("TRUSTED_PROXIES", "127.0.0.1,::1")),
 
 		// TLS Configuration
 		TLSMode:   getEnv("TLS_MODE", "auto"),
@@ -95,14 +95,14 @@ func Load() {
 		os.Exit(1)
 	}
 
-	// Validate SMTP encryption key: required if SMTP is configured, warn otherwise
-	if AppConfig.SMTPEncryptionKey == "" {
-		slog.Warn("SMTP_ENCRYPTION_KEY is not set, SMTP password storage will be unavailable",
+	// Validate encryption key: required to store SMTP passwords and notification channel URLs at rest
+	if AppConfig.NotificationEncryptionKey == "" {
+		slog.Warn("NOTIFICATION_ENCRYPTION_KEY is not set, SMTP password and notification channel storage will be unavailable",
 			"hint", "Generate a secure key: openssl rand -base64 32",
 		)
-	} else if len(AppConfig.SMTPEncryptionKey) < 32 {
-		slog.Error("SMTP_ENCRYPTION_KEY too short",
-			"current_length", len(AppConfig.SMTPEncryptionKey),
+	} else if len(AppConfig.NotificationEncryptionKey) < 32 {
+		slog.Error("NOTIFICATION_ENCRYPTION_KEY too short",
+			"current_length", len(AppConfig.NotificationEncryptionKey),
 			"required", 32,
 			"hint", "Generate a secure key: openssl rand -base64 32",
 		)

@@ -17,6 +17,7 @@ import (
 	"watchflare/backend/handlers"
 	"watchflare/backend/logger"
 	"watchflare/backend/middleware"
+	"watchflare/backend/notifications"
 	"watchflare/backend/pki"
 	"watchflare/backend/services"
 	pb "watchflare/shared/proto/agent/v1"
@@ -46,6 +47,9 @@ func main() {
 	if err := database.Connect(config.AppConfig.DatabaseURL); err != nil {
 		logger.Fatal("failed to connect to database", "error", err)
 	}
+
+	// Initialize notifications service (depends on DB + encryption key)
+	notifications.Init(database.DB, config.AppConfig.NotificationEncryptionKey)
 
 	// Initialize PKI (auto-generate or validate custom certs)
 	pkiConfig := &pki.Config{
@@ -225,11 +229,19 @@ func setupRouter() *gin.Engine {
 		settingsGroup.PUT("/alerts", handlers.UpdateAlertRules)
 		settingsGroup.GET("/alerts/active", handlers.GetActiveIncidents)
 		settingsGroup.GET("/alerts/incidents", handlers.GetAllIncidents)
-		settingsGroup.GET("/webhooks", handlers.GetWebhooks)
-		settingsGroup.POST("/webhooks", handlers.AddWebhook)
-		settingsGroup.DELETE("/webhooks/:id", handlers.DeleteWebhook)
-		settingsGroup.PATCH("/webhooks/:id/enabled", handlers.SetWebhookEnabled)
-		settingsGroup.POST("/webhooks/:id/test", handlers.TestWebhook)
+	}
+
+	// Notifications routes (protected): destination channels backed by Shoutrrr
+	notificationsGroup := api.Group("/notifications")
+	notificationsGroup.Use(middleware.AuthMiddleware())
+	{
+		notificationsGroup.GET("/channels", handlers.ListNotificationChannels)
+		notificationsGroup.POST("/channels", handlers.CreateNotificationChannel)
+		notificationsGroup.POST("/channels/test", handlers.TestNotificationChannelDraft)
+		notificationsGroup.GET("/channels/:id", handlers.GetNotificationChannel)
+		notificationsGroup.PATCH("/channels/:id", handlers.UpdateNotificationChannel)
+		notificationsGroup.DELETE("/channels/:id", handlers.DeleteNotificationChannel)
+		notificationsGroup.POST("/channels/:id/test", handlers.TestNotificationChannel)
 	}
 
 	// Agent info routes (protected)

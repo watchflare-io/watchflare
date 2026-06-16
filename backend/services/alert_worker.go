@@ -11,7 +11,7 @@ import (
 	"watchflare/backend/database"
 	"watchflare/backend/encryption"
 	"watchflare/backend/models"
-	"watchflare/backend/services/webhook"
+	"watchflare/backend/notifications"
 
 	"gorm.io/gorm"
 )
@@ -185,7 +185,7 @@ func (w *AlertWorker) evaluateHost(
 		pendingKey := host.ID + ":" + metricType
 
 		if !enabled {
-			// Rule disabled — clear pending state and resolve any open incident silently
+			// Rule disabled: clear pending state and resolve any open incident silently
 			delete(w.pending, pendingKey)
 			resolveIncident(host.ID, metricType, now)
 			continue
@@ -210,7 +210,7 @@ func (w *AlertWorker) evaluateHost(
 
 		if breaching {
 			if hasIncident {
-				// Incident already exists (restart scenario) — update current value and
+				// Incident already exists (restart scenario): update current value and
 				// send notification if duration elapsed and not yet notified.
 				if err := database.DB.Model(&incident).Update("current_value", currentValue).Error; err != nil {
 					slog.Error("alert worker: failed to update incident value", "host_id", host.ID, "metric_type", metricType, "error", err)
@@ -225,11 +225,10 @@ func (w *AlertWorker) evaluateHost(
 							slog.Info("alert fired", "host", host.DisplayName, "metric_type", metricType, "current_value", currentValue, "threshold", threshold)
 						}
 					}
-					// Fire webhooks regardless of email outcome
-					webhook.SendAll(host, metricType, threshold, currentValue, incident.StartedAt)
+					broadcastAlert(w.ctx, host, metricType, threshold, currentValue, incident.StartedAt)
 				}
 			} else {
-				// No open incident — track in pending map until duration is reached.
+				// No open incident: track in pending map until duration is reached.
 				firstSeen, ok := w.pending[pendingKey]
 				if !ok {
 					// First tick this breach is observed. For host_down, backdate to
@@ -245,7 +244,7 @@ func (w *AlertWorker) evaluateHost(
 					w.pending[pendingKey] = firstSeen
 				}
 
-				// Duration reached — create incident and fire notification atomically.
+				// Duration reached: create incident and fire notification atomically.
 				if now.Sub(firstSeen) >= time.Duration(durationMinutes)*time.Minute {
 					incident = models.AlertIncident{
 						HostID:         host.ID,
@@ -269,12 +268,11 @@ func (w *AlertWorker) evaluateHost(
 							slog.Info("alert fired", "host", host.DisplayName, "metric_type", metricType, "current_value", currentValue, "threshold", threshold)
 						}
 					}
-					// Fire webhooks regardless of email outcome
-					webhook.SendAll(host, metricType, threshold, currentValue, firstSeen)
+					broadcastAlert(w.ctx, host, metricType, threshold, currentValue, firstSeen)
 				}
 			}
 		} else {
-			// Not breaching — discard pending state and resolve open incident if any.
+			// Not breaching: discard pending state and resolve open incident if any.
 			delete(w.pending, pendingKey)
 			if hasIncident {
 				if err := database.DB.Model(&incident).Update("resolved_at", now).Error; err != nil {
@@ -285,8 +283,7 @@ func (w *AlertWorker) evaluateHost(
 						if err := sendResolutionEmail(host, metricType, incident.StartedAt, now, recipient); err != nil {
 							slog.Error("alert worker: failed to send resolution email", "host_id", host.ID, "metric_type", metricType, "error", err)
 						}
-						// Fire webhooks regardless of email outcome
-						webhook.SendAllResolution(host, metricType, incident.StartedAt, now)
+						broadcastResolution(w.ctx, host, metricType, incident.StartedAt, now)
 					}
 				}
 			}
@@ -367,21 +364,21 @@ func sendAlertEmail(host *models.Host, metricType string, threshold, currentValu
 	var s models.SmtpSettings
 	if err := database.DB.First(&s).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil // SMTP not configured — skip silently
+			return nil // SMTP not configured: skip silently
 		}
 		return err
 	}
 	if !s.Enabled {
-		return nil // SMTP disabled — skip silently
+		return nil // SMTP disabled: skip silently
 	}
 
 	var plainPassword string
 	if s.EncryptedPassword != "" {
-		if config.AppConfig.SMTPEncryptionKey == "" {
-			return errors.New("SMTP_ENCRYPTION_KEY is not configured")
+		if config.AppConfig.NotificationEncryptionKey == "" {
+			return errors.New("NOTIFICATION_ENCRYPTION_KEY is not configured")
 		}
 		var err error
-		plainPassword, err = encryption.Decrypt(s.EncryptedPassword, config.AppConfig.SMTPEncryptionKey)
+		plainPassword, err = encryption.Decrypt(s.EncryptedPassword, config.AppConfig.NotificationEncryptionKey)
 		if err != nil {
 			return fmt.Errorf("failed to decrypt SMTP password: %w", err)
 		}
@@ -434,7 +431,7 @@ func buildAlertEmailContent(hostName, metricType string, threshold, currentValue
 		valueDesc = fmt.Sprintf("%.2f (threshold: %.2f)", currentValue, threshold)
 	}
 
-	subject = fmt.Sprintf("[Watchflare Alert] %s — %s exceeded", hostName, metricLabel)
+	subject = fmt.Sprintf("[Watchflare Alert] %s: %s exceeded", hostName, metricLabel)
 	body = fmt.Sprintf("An alert has been triggered for host %q.\n\n%s: %s\n\nThis alert started at %s.\n\nThis notification was sent by Watchflare.",
 		hostName, metricLabel, valueDesc, startedAt.Format(time.RFC1123))
 	return
@@ -455,11 +452,11 @@ func sendResolutionEmail(host *models.Host, metricType string, startedAt, resolv
 
 	var plainPassword string
 	if s.EncryptedPassword != "" {
-		if config.AppConfig.SMTPEncryptionKey == "" {
-			return errors.New("SMTP_ENCRYPTION_KEY is not configured")
+		if config.AppConfig.NotificationEncryptionKey == "" {
+			return errors.New("NOTIFICATION_ENCRYPTION_KEY is not configured")
 		}
 		var err error
-		plainPassword, err = encryption.Decrypt(s.EncryptedPassword, config.AppConfig.SMTPEncryptionKey)
+		plainPassword, err = encryption.Decrypt(s.EncryptedPassword, config.AppConfig.NotificationEncryptionKey)
 		if err != nil {
 			return fmt.Errorf("failed to decrypt SMTP password: %w", err)
 		}
@@ -497,10 +494,31 @@ func buildResolutionEmailContent(hostName, metricType string, startedAt, resolve
 		metricLabel = metricType
 	}
 
-	subject = fmt.Sprintf("[Watchflare Resolved] %s — %s back to normal", hostName, metricLabel)
+	subject = fmt.Sprintf("[Watchflare Resolved] %s: %s back to normal", hostName, metricLabel)
 	body = fmt.Sprintf("The alert for host %q has been resolved.\n\n%s is back to normal.\n\nAlert duration: %s (started at %s).\n\nThis notification was sent by Watchflare.",
 		hostName, metricLabel, duration, startedAt.Format(time.RFC1123))
 	return
+}
+
+// Errors are logged per channel without blocking the worker.
+func broadcastAlert(ctx context.Context, host *models.Host, metricType string, threshold, currentValue float64, startedAt time.Time) {
+	if notifications.Default == nil {
+		return
+	}
+	title, body := buildAlertContent(host.DisplayName, metricType, threshold, currentValue, startedAt)
+	for _, err := range notifications.Default.Broadcast(ctx, notifications.CategoryAlerts, title, body) {
+		slog.Error("alert worker: notification channel delivery failed", "host_id", host.ID, "metric_type", metricType, "error", err)
+	}
+}
+
+func broadcastResolution(ctx context.Context, host *models.Host, metricType string, startedAt, resolvedAt time.Time) {
+	if notifications.Default == nil {
+		return
+	}
+	title, body := buildResolutionContent(host.DisplayName, metricType, startedAt, resolvedAt)
+	for _, err := range notifications.Default.Broadcast(ctx, notifications.CategoryAlerts, title, body) {
+		slog.Error("alert worker: resolution channel delivery failed", "host_id", host.ID, "metric_type", metricType, "error", err)
+	}
 }
 
 // notificationRecipient returns the configured notification email from smtp_settings

@@ -20,7 +20,7 @@ git checkout develop
 docker compose -f docker-compose-postgres.yml up -d
 
 cp .env.example .env
-# Set POSTGRES_PASSWORD, JWT_SECRET, and SMTP_ENCRYPTION_KEY to random strings.
+# Set POSTGRES_PASSWORD, JWT_SECRET, and NOTIFICATION_ENCRYPTION_KEY to random strings.
 # Generate each with: openssl rand -base64 32
 
 # Hub (terminal 1)

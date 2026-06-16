@@ -33,7 +33,7 @@ func (e *SMTPConfigError) Error() string { return e.msg }
 func newConfigError(msg string) error    { return &SMTPConfigError{msg: msg} }
 
 // SMTPSettingsResponse is the API representation of SMTP settings.
-// The password is never returned — only a flag indicating whether one is stored.
+// The password is never returned: only a flag indicating whether one is stored.
 type SMTPSettingsResponse struct {
 	Host              string `json:"host"`
 	Port              int    `json:"port"`
@@ -112,10 +112,10 @@ func UpdateSMTPSettings(input SMTPSettingsInput) error {
 	s.Enabled = input.Enabled
 
 	if input.Password != "" {
-		if config.AppConfig.SMTPEncryptionKey == "" {
-			return errors.New("SMTP_ENCRYPTION_KEY is not configured")
+		if config.AppConfig.NotificationEncryptionKey == "" {
+			return errors.New("NOTIFICATION_ENCRYPTION_KEY is not configured")
 		}
-		encrypted, err := encryption.Encrypt(input.Password, config.AppConfig.SMTPEncryptionKey)
+		encrypted, err := encryption.Encrypt(input.Password, config.AppConfig.NotificationEncryptionKey)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt password: %w", err)
 		}
@@ -149,11 +149,11 @@ func TestSMTPConnection(recipient string) error {
 
 	var plainPassword string
 	if s.EncryptedPassword != "" {
-		if config.AppConfig.SMTPEncryptionKey == "" {
-			return errors.New("SMTP_ENCRYPTION_KEY is not configured")
+		if config.AppConfig.NotificationEncryptionKey == "" {
+			return errors.New("NOTIFICATION_ENCRYPTION_KEY is not configured")
 		}
 		var err error
-		plainPassword, err = encryption.Decrypt(s.EncryptedPassword, config.AppConfig.SMTPEncryptionKey)
+		plainPassword, err = encryption.Decrypt(s.EncryptedPassword, config.AppConfig.NotificationEncryptionKey)
 		if err != nil {
 			return fmt.Errorf("failed to decrypt SMTP password: %w", err)
 		}
@@ -200,7 +200,7 @@ func sendEmail(s *models.SmtpSettings, plainPassword, recipient, subject, body s
 		opts = append(opts, mail.WithSSL())
 	}
 	if s.Username != "" && plainPassword == "" {
-		slog.Warn("SMTP username is configured but no password is set — sending without authentication")
+		slog.Warn("SMTP username is configured but no password is set: sending without authentication")
 	}
 	if s.Username != "" && plainPassword != "" {
 		authMethod := mail.SMTPAuthPlain
