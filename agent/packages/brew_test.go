@@ -87,9 +87,9 @@ func TestParseBrewFormulaeJSON_FullNameTakesPrecedence(t *testing.T) {
 	output := []byte(`{
 		"formulae": [
 			{
-				"name": "beszel-agent",
-				"full_name": "henrygd/beszel/beszel-agent",
-				"desc": "Agent",
+				"name": "example-pkg",
+				"full_name": "example/tools/example-pkg",
+				"desc": "Tap-prefixed package",
 				"installed": [{"version": "0.9.0"}]
 			},
 			{
@@ -109,8 +109,8 @@ func TestParseBrewFormulaeJSON_FullNameTakesPrecedence(t *testing.T) {
 	if len(pkgs) != 2 {
 		t.Fatalf("expected 2 packages, got %d", len(pkgs))
 	}
-	if pkgs[0].Name != "henrygd/beszel/beszel-agent" {
-		t.Errorf("full_name should take precedence: got %q, want %q", pkgs[0].Name, "henrygd/beszel/beszel-agent")
+	if pkgs[0].Name != "example/tools/example-pkg" {
+		t.Errorf("full_name should take precedence: got %q, want %q", pkgs[0].Name, "example/tools/example-pkg")
 	}
 	if pkgs[1].Name != "curl" {
 		t.Errorf("should fall back to name when full_name empty: got %q, want %q", pkgs[1].Name, "curl")
