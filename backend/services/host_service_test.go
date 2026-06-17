@@ -496,6 +496,69 @@ func TestMergeCache(t *testing.T) {
 	}
 }
 
+func TestPauseHost_MarksOpenIncidentsAsPaused(t *testing.T) {
+	setupTestDB(t)
+	defer teardownTestDB()
+
+	host, _, _, err := CreateAgent("host-paused-1", "10.0.0.1", false)
+	assert.NoError(t, err)
+	// Move the host out of pending so PauseHost is allowed.
+	host.Status = models.StatusOnline
+	assert.NoError(t, database.DB.Save(host).Error)
+
+	open := models.AlertIncident{
+		HostID:     host.ID,
+		MetricType: models.MetricTypeCPUUsage,
+		StartedAt:  time.Now().Add(-10 * time.Minute),
+	}
+	assert.NoError(t, database.DB.Create(&open).Error)
+
+	resolved := models.AlertIncident{
+		HostID:     host.ID,
+		MetricType: models.MetricTypeMemoryUsage,
+		StartedAt:  time.Now().Add(-1 * time.Hour),
+		ResolvedAt: ptrTime(time.Now().Add(-30 * time.Minute)),
+	}
+	assert.NoError(t, database.DB.Create(&resolved).Error)
+
+	assert.NoError(t, PauseHost(host.ID))
+
+	var got models.AlertIncident
+	assert.NoError(t, database.DB.First(&got, "id = ?", open.ID).Error)
+	assert.NotNil(t, got.PausedAt, "open incident should be paused")
+	assert.Nil(t, got.ResolvedAt, "open incident should not be resolved")
+
+	var stillResolved models.AlertIncident
+	assert.NoError(t, database.DB.First(&stillResolved, "id = ?", resolved.ID).Error)
+	assert.Nil(t, stillResolved.PausedAt, "resolved incident should remain untouched")
+	assert.NotNil(t, stillResolved.ResolvedAt)
+}
+
+func TestResumeHost_ClearsPausedAt(t *testing.T) {
+	setupTestDB(t)
+	defer teardownTestDB()
+
+	host, _, _, err := CreateAgent("host-resume-1", "10.0.0.2", false)
+	assert.NoError(t, err)
+	host.Status = models.StatusOnline
+	assert.NoError(t, database.DB.Save(host).Error)
+
+	open := models.AlertIncident{
+		HostID:     host.ID,
+		MetricType: models.MetricTypeCPUUsage,
+		StartedAt:  time.Now().Add(-10 * time.Minute),
+	}
+	assert.NoError(t, database.DB.Create(&open).Error)
+
+	assert.NoError(t, PauseHost(host.ID))
+	assert.NoError(t, ResumeHost(host.ID))
+
+	var got models.AlertIncident
+	assert.NoError(t, database.DB.First(&got, "id = ?", open.ID).Error)
+	assert.Nil(t, got.PausedAt, "resume should clear paused_at")
+	assert.Nil(t, got.ResolvedAt, "resume should not resolve the incident")
+}
+
 func TestListHosts_PageZeroTreatedAsOne(t *testing.T) {
 	setupTestDB(t)
 	defer teardownTestDB()
@@ -538,3 +601,5 @@ func TestHashToken(t *testing.T) {
 	// Verify hash is SHA-256 (64 hex chars)
 	assert.Len(t, hash1, 64)
 }
+
+func ptrTime(t time.Time) *time.Time { return &t }

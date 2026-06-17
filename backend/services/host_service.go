@@ -287,7 +287,8 @@ func RegenerateToken(hostID string) (string, error) {
 	return token, nil
 }
 
-// PauseHost sets a host's status to "paused" and removes it from heartbeat cache.
+// PauseHost sets a host's status to "paused", suspends any open alert incidents,
+// and removes it from the heartbeat cache and the alert worker's pending state.
 func PauseHost(hostID string) error {
 	var host models.Host
 	if err := database.DB.Where("id = ?", hostID).First(&host).Error; err != nil {
@@ -309,13 +310,27 @@ func PauseHost(hostID string) error {
 		return err
 	}
 
+	now := time.Now()
+	if err := database.DB.Model(&models.AlertIncident{}).
+		Where("host_id = ? AND resolved_at IS NULL AND paused_at IS NULL", host.ID).
+		Update("paused_at", now).Error; err != nil {
+		return err
+	}
+
 	// Remove from heartbeat cache so the stale checker ignores it.
 	cache.GetCache().Remove(host.AgentID)
+
+	// Drop any pending firstSeen entries so a stale value cannot survive a pause/resume.
+	if DefaultAlertWorker != nil {
+		DefaultAlertWorker.ClearHost(host.ID)
+	}
 
 	return nil
 }
 
-// ResumeHost sets a paused host back to "online".
+// ResumeHost sets a paused host back to "online" and clears the paused state
+// on any of its open incidents. The next alert worker tick will continue or
+// resolve them as appropriate.
 func ResumeHost(hostID string) error {
 	var host models.Host
 	if err := database.DB.Where("id = ?", hostID).First(&host).Error; err != nil {
@@ -330,7 +345,13 @@ func ResumeHost(hostID string) error {
 	}
 
 	host.Status = models.StatusOnline
-	return database.DB.Save(&host).Error
+	if err := database.DB.Save(&host).Error; err != nil {
+		return err
+	}
+
+	return database.DB.Model(&models.AlertIncident{}).
+		Where("host_id = ? AND paused_at IS NOT NULL AND resolved_at IS NULL", host.ID).
+		Update("paused_at", nil).Error
 }
 
 // DeleteHost permanently removes a host and its associated data.
