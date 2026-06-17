@@ -57,6 +57,7 @@ type AlertIncident struct {
 	MetricType     string     `gorm:"type:varchar(20);not null" json:"metric_type"`
 	StartedAt      time.Time  `gorm:"not null" json:"started_at"`
 	ResolvedAt     *time.Time `json:"resolved_at,omitempty"`
+	PausedAt       *time.Time `json:"paused_at,omitempty"`
 	Notified       bool       `gorm:"not null;default:false" json:"-"`
 	ThresholdValue float64    `gorm:"not null;default:0" json:"threshold_value"`
 	CurrentValue   float64    `gorm:"not null;default:0" json:"current_value"`
