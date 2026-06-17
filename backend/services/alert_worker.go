@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
+	"sync"
 	"time"
 	"watchflare/backend/cache"
 	"watchflare/backend/config"
@@ -16,11 +18,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// DefaultAlertWorker is the singleton set by NewAlertWorker, used by services
+// outside this file (e.g. PauseHost) to clear in-memory pending state.
+var DefaultAlertWorker *AlertWorker
+
 // AlertWorker evaluates alert rules every interval and fires email notifications.
 type AlertWorker struct {
 	interval time.Duration
 	ctx      context.Context
 	cancel   context.CancelFunc
+	mu       sync.Mutex
 	// pending tracks when each host+metric first started breaching.
 	// An incident is only written to DB once the configured duration has elapsed.
 	// Key format: "hostID:metricType"
@@ -29,12 +36,14 @@ type AlertWorker struct {
 
 func NewAlertWorker(interval time.Duration) *AlertWorker {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &AlertWorker{
+	w := &AlertWorker{
 		interval: interval,
 		ctx:      ctx,
 		cancel:   cancel,
 		pending:  make(map[string]time.Time),
 	}
+	DefaultAlertWorker = w
+	return w
 }
 
 // Start runs the worker loop. Call in a goroutine.
@@ -186,7 +195,9 @@ func (w *AlertWorker) evaluateHost(
 
 		if !enabled {
 			// Rule disabled: clear pending state and resolve any open incident silently
+			w.mu.Lock()
 			delete(w.pending, pendingKey)
+			w.mu.Unlock()
 			resolveIncident(host.ID, metricType, now)
 			continue
 		}
@@ -229,8 +240,9 @@ func (w *AlertWorker) evaluateHost(
 				}
 			} else {
 				// No open incident: track in pending map until duration is reached.
-				firstSeen, ok := w.pending[pendingKey]
-				if !ok {
+				w.mu.Lock()
+				firstSeen, ok2 := w.pending[pendingKey]
+				if !ok2 {
 					// First tick this breach is observed. For host_down, backdate to
 					// actual offline time so duration is measured from the real event.
 					firstSeen = now
@@ -243,6 +255,7 @@ func (w *AlertWorker) evaluateHost(
 					}
 					w.pending[pendingKey] = firstSeen
 				}
+				w.mu.Unlock()
 
 				// Duration reached: create incident and fire notification atomically.
 				if now.Sub(firstSeen) >= time.Duration(durationMinutes)*time.Minute {
@@ -257,7 +270,9 @@ func (w *AlertWorker) evaluateHost(
 						slog.Error("alert worker: failed to create incident", "host_id", host.ID, "metric_type", metricType, "error", err)
 						continue
 					}
+					w.mu.Lock()
 					delete(w.pending, pendingKey)
+					w.mu.Unlock()
 
 					if err := sendAlertEmail(host, metricType, threshold, currentValue, firstSeen, recipient); err != nil {
 						slog.Error("alert worker: failed to send alert email", "host_id", host.ID, "metric_type", metricType, "error", err)
@@ -273,7 +288,9 @@ func (w *AlertWorker) evaluateHost(
 			}
 		} else {
 			// Not breaching: discard pending state and resolve open incident if any.
+			w.mu.Lock()
 			delete(w.pending, pendingKey)
+			w.mu.Unlock()
 			if hasIncident {
 				if err := database.DB.Model(&incident).Update("resolved_at", now).Error; err != nil {
 					slog.Error("alert worker: failed to resolve incident", "host_id", host.ID, "metric_type", metricType, "error", err)
@@ -540,4 +557,17 @@ func notificationRecipient() (string, error) {
 		return "", errors.New("first user has no email address")
 	}
 	return user.Email, nil
+}
+
+// ClearHost removes any in-memory pending-incident state for the given host.
+// Called from PauseHost so a stale firstSeen does not survive a pause/resume.
+func (w *AlertWorker) ClearHost(hostID string) {
+	prefix := hostID + ":"
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for k := range w.pending {
+		if strings.HasPrefix(k, prefix) {
+			delete(w.pending, k)
+		}
+	}
 }

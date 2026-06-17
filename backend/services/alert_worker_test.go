@@ -189,3 +189,24 @@ func TestBuildResolutionEmailContent_UnknownMetric(t *testing.T) {
 	assert.Contains(t, subject, "custom_metric")
 	assert.Contains(t, body, "db01")
 }
+
+func TestClearHost_RemovesPendingForHost(t *testing.T) {
+	w := NewAlertWorker(30 * time.Second)
+	w.pending["host-a:cpu_usage"] = time.Now()
+	w.pending["host-a:memory_usage"] = time.Now()
+	w.pending["host-b:cpu_usage"] = time.Now()
+
+	w.ClearHost("host-a")
+
+	assert.NotContains(t, w.pending, "host-a:cpu_usage")
+	assert.NotContains(t, w.pending, "host-a:memory_usage")
+	assert.Contains(t, w.pending, "host-b:cpu_usage")
+}
+
+func TestNewAlertWorker_SetsDefault(t *testing.T) {
+	prev := DefaultAlertWorker
+	t.Cleanup(func() { DefaultAlertWorker = prev })
+
+	w := NewAlertWorker(30 * time.Second)
+	assert.Same(t, w, DefaultAlertWorker)
+}
