@@ -4,6 +4,7 @@
     import * as api from "$lib/api";
     import type { GlobalIncident, IncidentStatusFilter } from "$lib/types";
     import { ALERT_METRIC_LABELS } from "$lib/types";
+    import { incidentState, BADGE_CLASSES, BADGE_LABELS, type IncidentState } from "$lib/incident-state";
     import { formatDateTime, formatRelativeTime } from "$lib/utils";
     import { userStore } from "$lib/stores/user";
     import Pagination from "$lib/components/Pagination.svelte";
@@ -84,7 +85,11 @@
     onMount(() => {
         const params = $page.url.searchParams;
         const urlStatus = params.get("status");
-        if (urlStatus === "active" || urlStatus === "resolved") {
+        if (
+            urlStatus === "active" ||
+            urlStatus === "paused" ||
+            urlStatus === "resolved"
+        ) {
             statusFilter = urlStatus;
         }
         const urlOffset = Number(params.get("offset"));
@@ -138,7 +143,7 @@
         </p>
     </div>
     <div class="flex items-center gap-1">
-        {#each ["all", "active", "resolved"] as IncidentStatusFilter[] as filter}
+        {#each ["all", "active", "paused", "resolved"] as IncidentStatusFilter[] as filter}
             <button
                 type="button"
                 onclick={() => handleFilterChange(filter)}
@@ -205,6 +210,7 @@
                 : ''}"
         >
             {#each incidents as incident (incident.id)}
+                {@const state = incidentState(incident)}
                 <div class="rounded-lg border bg-card">
                     <div
                         class="rounded-t-lg bg-table-header px-4 py-2.5 border-b border-border flex items-center justify-between gap-2"
@@ -215,17 +221,10 @@
                         >
                             {incident.host_name}
                         </a>
-                        {#if incident.resolved_at}
-                            <span
-                                class="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-success/10 text-success border border-success/20"
-                                >Resolved</span
-                            >
-                        {:else}
-                            <span
-                                class="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20"
-                                >Active</span
-                            >
-                        {/if}
+                        <span
+                            class="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {BADGE_CLASSES[state]}"
+                            >{BADGE_LABELS[state]}</span
+                        >
                     </div>
                     <div class="px-4 py-2.5 flex flex-col gap-1">
                         <p class="text-sm text-foreground font-medium">
@@ -318,21 +317,15 @@
                         : ''}"
                 >
                     {#each incidents as incident (incident.id)}
+                        {@const state = incidentState(incident)}
                         <tr
                             class="hover:bg-muted/20 transition-colors whitespace-nowrap"
                         >
                             <td class="px-4 py-3">
-                                {#if incident.resolved_at}
-                                    <span
-                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-success/10 text-success border border-success/20"
-                                        >Resolved</span
-                                    >
-                                {:else}
-                                    <span
-                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20"
-                                        >Active</span
-                                    >
-                                {/if}
+                                <span
+                                    class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {BADGE_CLASSES[state]}"
+                                    >{BADGE_LABELS[state]}</span
+                                >
                             </td>
                             <td class="px-4 py-3">
                                 <a

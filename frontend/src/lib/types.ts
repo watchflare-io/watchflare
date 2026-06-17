@@ -570,6 +570,7 @@ export interface GlobalIncident {
   metric_type: AlertMetricType;
   started_at: string;
   resolved_at: string | null;
+  paused_at: string | null;
   threshold_value: number;
   current_value: number;
 }
@@ -586,11 +587,12 @@ export interface HostIncident {
   metric_type: AlertMetricType;
   started_at: string;
   resolved_at: string | null;
+  paused_at: string | null;
   threshold_value: number;
   current_value: number;
 }
 
-export type IncidentStatusFilter = "all" | "active" | "resolved";
+export type IncidentStatusFilter = "all" | "active" | "paused" | "resolved";
 
 export interface GetHostIncidentsResponse {
   incidents: HostIncident[];
