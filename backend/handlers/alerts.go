@@ -168,7 +168,7 @@ func GetActiveIncidents(c *gin.Context) {
 	err := database.DB.Table("alert_incidents").
 		Select("alert_incidents.id, alert_incidents.host_id, hosts.display_name AS host_name, alert_incidents.metric_type, alert_incidents.started_at, alert_incidents.threshold_value, alert_incidents.current_value").
 		Joins("JOIN hosts ON hosts.id = alert_incidents.host_id").
-		Where("alert_incidents.resolved_at IS NULL").
+		Where("alert_incidents.resolved_at IS NULL AND alert_incidents.paused_at IS NULL").
 		Order("alert_incidents.started_at DESC").
 		Scan(&items).Error
 	if err != nil {
@@ -190,12 +190,13 @@ type GlobalIncidentItem struct {
 	MetricType     string     `json:"metric_type"`
 	StartedAt      time.Time  `json:"started_at"`
 	ResolvedAt     *time.Time `json:"resolved_at"`
+	PausedAt       *time.Time `json:"paused_at"`
 	ThresholdValue float64    `json:"threshold_value"`
 	CurrentValue   float64    `json:"current_value"`
 }
 
 // GetAllIncidents returns all alert incidents across all hosts (paginated).
-// Query params: status=all|active|resolved (default: all), limit (default: 20, max: 100), offset (default: 0).
+// Query params: status=all|active|paused|resolved (default: all), limit (default: 20, max: 100), offset (default: 0).
 func GetAllIncidents(c *gin.Context) {
 	limitStr := c.DefaultQuery("limit", "20")
 	offsetStr := c.DefaultQuery("offset", "0")
@@ -214,7 +215,9 @@ func GetAllIncidents(c *gin.Context) {
 		Joins("JOIN hosts ON hosts.id = alert_incidents.host_id")
 	switch statusFilter {
 	case "active":
-		query = query.Where("alert_incidents.resolved_at IS NULL")
+		query = query.Where("alert_incidents.resolved_at IS NULL AND alert_incidents.paused_at IS NULL")
+	case "paused":
+		query = query.Where("alert_incidents.resolved_at IS NULL AND alert_incidents.paused_at IS NOT NULL")
 	case "resolved":
 		query = query.Where("alert_incidents.resolved_at IS NOT NULL")
 	}
@@ -228,7 +231,7 @@ func GetAllIncidents(c *gin.Context) {
 
 	var items []GlobalIncidentItem
 	err := query.
-		Select("alert_incidents.id, alert_incidents.host_id, hosts.display_name AS host_name, alert_incidents.metric_type, alert_incidents.started_at, alert_incidents.resolved_at, alert_incidents.threshold_value, alert_incidents.current_value").
+		Select("alert_incidents.id, alert_incidents.host_id, hosts.display_name AS host_name, alert_incidents.metric_type, alert_incidents.started_at, alert_incidents.resolved_at, alert_incidents.paused_at, alert_incidents.threshold_value, alert_incidents.current_value").
 		Order("alert_incidents.started_at DESC").
 		Limit(limit).Offset(offset).
 		Scan(&items).Error
@@ -255,12 +258,13 @@ type HostIncidentItem struct {
 	MetricType     string     `json:"metric_type"`
 	StartedAt      time.Time  `json:"started_at"`
 	ResolvedAt     *time.Time `json:"resolved_at"`
+	PausedAt       *time.Time `json:"paused_at"`
 	ThresholdValue float64    `json:"threshold_value"`
 	CurrentValue   float64    `json:"current_value"`
 }
 
 // GetHostIncidents returns the incident history for a specific host (paginated).
-// Query params: status=all|active|resolved (default: all), limit (default: 20, max: 100), offset (default: 0).
+// Query params: status=all|active|paused|resolved (default: all), limit (default: 20, max: 100), offset (default: 0).
 func GetHostIncidents(c *gin.Context) {
 	hostID := c.Param("id")
 
@@ -280,7 +284,9 @@ func GetHostIncidents(c *gin.Context) {
 	query := database.DB.Model(&models.AlertIncident{}).Where("host_id = ?", hostID)
 	switch statusFilter {
 	case "active":
-		query = query.Where("resolved_at IS NULL")
+		query = query.Where("resolved_at IS NULL AND paused_at IS NULL")
+	case "paused":
+		query = query.Where("resolved_at IS NULL AND paused_at IS NOT NULL")
 	case "resolved":
 		query = query.Where("resolved_at IS NOT NULL")
 	}
@@ -306,6 +312,7 @@ func GetHostIncidents(c *gin.Context) {
 			MetricType:     inc.MetricType,
 			StartedAt:      inc.StartedAt,
 			ResolvedAt:     inc.ResolvedAt,
+			PausedAt:       inc.PausedAt,
 			ThresholdValue: inc.ThresholdValue,
 			CurrentValue:   inc.CurrentValue,
 		}
