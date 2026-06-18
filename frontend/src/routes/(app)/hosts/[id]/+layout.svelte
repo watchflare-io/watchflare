@@ -7,7 +7,7 @@
     import { SSEManager } from "$lib/sse/manager.js";
     import { pageSseState } from "$lib/stores/pageSse.js";
     import { alertsStore } from "$lib/stores/alerts";
-    import { handleSSEReactivation, formatOfflineDuration } from "$lib/utils";
+    import { handleSSEReactivation } from "$lib/utils";
     import type {
         Host,
         Metric,
@@ -44,8 +44,6 @@
     let latestAgentVersion: string | null = $state(null);
     let latestMetric: Metric | null = $state(null);
     let hasActiveAlertRules = $state(false);
-    let now = $state(Date.now());
-    let nowTimer: ReturnType<typeof setInterval> | null = null;
 
     // Tab data caches — persist between tab switches for the duration of the host detail session
     let overviewCache: {
@@ -158,7 +156,6 @@
         pageSseState.set(hostSseManager.getState());
         hostSseManager.connect();
         loadHost();
-        nowTimer = setInterval(() => { now = Date.now(); }, 30_000);
         const state = $page.state as { newHostToken?: string };
         if (state.newHostToken) {
             regeneratedToken = state.newHostToken;
@@ -170,7 +167,6 @@
         hostSseManager?.disconnect();
         hostSseManager = null;
         pageSseState.set(null);
-        if (nowTimer) clearInterval(nowTimer);
         if (updateAgentTimeout) clearTimeout(updateAgentTimeout);
         if (copyErrorTimeout) clearTimeout(copyErrorTimeout);
     });
@@ -547,11 +543,6 @@
     />
 
     <HostLiveStats metric={latestMetric} />
-    {#if host.status !== "online" && host.last_seen}
-        <p class="text-xs text-muted-foreground mb-6">
-            {formatOfflineDuration(host.last_seen, now)}
-        </p>
-    {/if}
 
     <!-- Tab Navigation -->
     <div
