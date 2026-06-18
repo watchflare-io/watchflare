@@ -184,10 +184,11 @@
                 host = {
                     ...host,
                     status: update.status,
-                    ip_address_v4: update.ip_address_v4,
-                    ip_address_v6: update.ip_address_v6,
-                    configured_ip: update.configured_ip,
-                    ignore_ip_mismatch: update.ignore_ip_mismatch,
+                    ip_address_v4: update.ip_address_v4 ?? host.ip_address_v4,
+                    ip_address_v6: update.ip_address_v6 ?? host.ip_address_v6,
+                    configured_ip: update.configured_ip ?? host.configured_ip,
+                    ignore_ip_mismatch:
+                        update.ignore_ip_mismatch ?? host.ignore_ip_mismatch,
                     last_seen: update.last_seen,
                     agent_version: update.agent_version ?? host.agent_version,
                 };
