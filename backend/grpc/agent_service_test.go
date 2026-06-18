@@ -71,7 +71,7 @@ func createPendingHost(t *testing.T, token string) *models.Host {
 	host := &models.Host{
 		ID:                     uuid.New().String(),
 		AgentID:                uuid.New().String(),
-		DisplayName: "test-host-" + token[:8],
+		DisplayName:            "test-host-" + token[:8],
 		Status:                 models.StatusPending,
 		RegistrationToken:      strPtr(hashTestToken(token)),
 		ExpiresAt:              &expiry,
@@ -113,7 +113,7 @@ func TestRegisterHost_AlreadyRegistered(t *testing.T) {
 	host := &models.Host{
 		ID:                     uuid.New().String(),
 		AgentID:                uuid.New().String(),
-		DisplayName: "already-registered",
+		DisplayName:            "already-registered",
 		Status:                 models.StatusOnline,
 		RegistrationToken:      strPtr(hashTestToken(token)),
 		ExpiresAt:              &expiry,
@@ -142,7 +142,7 @@ func TestRegisterHost_ExpiredToken(t *testing.T) {
 	host := &models.Host{
 		ID:                     uuid.New().String(),
 		AgentID:                uuid.New().String(),
-		DisplayName: "expired-host",
+		DisplayName:            "expired-host",
 		Status:                 models.StatusPending,
 		RegistrationToken:      strPtr(hashTestToken(token)),
 		ExpiresAt:              &expiry,
@@ -250,11 +250,11 @@ func TestSendMetrics_PausedHost(t *testing.T) {
 	s := NewAgentServer()
 
 	host := &models.Host{
-		ID:       uuid.New().String(),
-		AgentID:  uuid.New().String(),
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
 		DisplayName: "paused-host",
-		Status:   models.StatusPaused,
-		AgentKey: "paused-agent-key-abc123",
+		Status:      models.StatusPaused,
+		AgentKey:    "paused-agent-key-abc123",
 	}
 	require.NoError(t, database.DB.Create(host).Error)
 	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
@@ -275,11 +275,11 @@ func TestSendMetrics_NilMetrics(t *testing.T) {
 	s := NewAgentServer()
 
 	host := &models.Host{
-		ID:       uuid.New().String(),
-		AgentID:  uuid.New().String(),
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
 		DisplayName: "online-host",
-		Status:   models.StatusOnline,
-		AgentKey: "online-agent-key-abc123",
+		Status:      models.StatusOnline,
+		AgentKey:    "online-agent-key-abc123",
 	}
 	require.NoError(t, database.DB.Create(host).Error)
 	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
@@ -418,11 +418,11 @@ func TestHeartbeat_PausedHost(t *testing.T) {
 	s := NewAgentServer()
 
 	host := &models.Host{
-		ID:       uuid.New().String(),
-		AgentID:  uuid.New().String(),
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
 		DisplayName: "paused-hb-host",
-		Status:   models.StatusPaused,
-		AgentKey: "paused-hb-key-abc123",
+		Status:      models.StatusPaused,
+		AgentKey:    "paused-hb-key-abc123",
 	}
 	require.NoError(t, database.DB.Create(host).Error)
 	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
@@ -442,11 +442,11 @@ func TestHeartbeat_Online(t *testing.T) {
 	s := NewAgentServer()
 
 	host := &models.Host{
-		ID:       uuid.New().String(),
-		AgentID:  uuid.New().String(),
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
 		DisplayName: "online-hb-host",
-		Status:   models.StatusOnline,
-		AgentKey: "online-hb-key-abc123",
+		Status:      models.StatusOnline,
+		AgentKey:    "online-hb-key-abc123",
 	}
 	require.NoError(t, database.DB.Create(host).Error)
 	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
@@ -541,11 +541,11 @@ func TestReportDroppedMetrics_Success(t *testing.T) {
 	s := NewAgentServer()
 
 	host := &models.Host{
-		ID:       uuid.New().String(),
-		AgentID:  uuid.New().String(),
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
 		DisplayName: "drop-host",
-		Status:   models.StatusOnline,
-		AgentKey: "drop-agent-key-abc123",
+		Status:      models.StatusOnline,
+		AgentKey:    "drop-agent-key-abc123",
 	}
 	require.NoError(t, database.DB.Create(host).Error)
 	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
@@ -577,15 +577,44 @@ func TestSendPackageInventory_InvalidCredentials(t *testing.T) {
 	assert.False(t, resp.Success)
 }
 
+func TestSendPackageInventory_PausedHost(t *testing.T) {
+	setupGRPCTestDB(t)
+	s := NewAgentServer()
+
+	host := &models.Host{
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
+		DisplayName: "paused-pkg-host",
+		Status:      models.StatusPaused,
+		AgentKey:    "paused-pkg-key-abc123",
+	}
+	require.NoError(t, database.DB.Create(host).Error)
+	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
+
+	req := &pb.SendPackageInventoryRequest{
+		AgentId:       host.AgentID,
+		AgentKey:      host.AgentKey,
+		InventoryType: models.CollectionTypeFull,
+		AllPackages: []*pb.Package{
+			{Name: "curl", Version: "7.88.0", PackageManager: "apt"},
+		},
+		TotalPackageCount: 1,
+	}
+	resp, err := s.SendPackageInventory(context.Background(), req)
+	require.NoError(t, err)
+	assert.True(t, resp.Success)
+	assert.Contains(t, resp.Message, "paused")
+}
+
 func TestProcessPackageInventory_UnknownType(t *testing.T) {
 	setupGRPCTestDB(t)
 
 	host := &models.Host{
-		ID:       uuid.New().String(),
-		AgentID:  uuid.New().String(),
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
 		DisplayName: "pkg-inv-host",
-		Status:   models.StatusOnline,
-		AgentKey: "pkg-inv-key-abc123",
+		Status:      models.StatusOnline,
+		AgentKey:    "pkg-inv-key-abc123",
 	}
 	require.NoError(t, database.DB.Create(host).Error)
 	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
@@ -604,11 +633,11 @@ func TestProcessPackageInventory_FullInventory(t *testing.T) {
 	setupGRPCTestDB(t)
 
 	host := &models.Host{
-		ID:       uuid.New().String(),
-		AgentID:  uuid.New().String(),
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
 		DisplayName: "pkg-full-host",
-		Status:   models.StatusOnline,
-		AgentKey: "pkg-full-key-abc123",
+		Status:      models.StatusOnline,
+		AgentKey:    "pkg-full-key-abc123",
 	}
 	require.NoError(t, database.DB.Create(host).Error)
 	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
@@ -631,11 +660,11 @@ func TestProcessPackageInventory_DeltaInventory(t *testing.T) {
 	setupGRPCTestDB(t)
 
 	host := &models.Host{
-		ID:       uuid.New().String(),
-		AgentID:  uuid.New().String(),
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
 		DisplayName: "pkg-delta-host",
-		Status:   models.StatusOnline,
-		AgentKey: "pkg-delta-key-abc123",
+		Status:      models.StatusOnline,
+		AgentKey:    "pkg-delta-key-abc123",
 	}
 	require.NoError(t, database.DB.Create(host).Error)
 	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
