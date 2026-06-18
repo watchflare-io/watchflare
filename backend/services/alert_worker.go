@@ -14,6 +14,7 @@ import (
 	"watchflare/backend/encryption"
 	"watchflare/backend/models"
 	"watchflare/backend/notifications"
+	"watchflare/backend/sse"
 
 	"gorm.io/gorm"
 )
@@ -270,6 +271,7 @@ func (w *AlertWorker) evaluateHost(
 						slog.Error("alert worker: failed to create incident", "host_id", host.ID, "metric_type", metricType, "error", err)
 						continue
 					}
+					sse.GetBroker().BroadcastIncidentsChanged()
 					w.mu.Lock()
 					delete(w.pending, pendingKey)
 					w.mu.Unlock()
@@ -295,6 +297,7 @@ func (w *AlertWorker) evaluateHost(
 				if err := database.DB.Model(&incident).Update("resolved_at", now).Error; err != nil {
 					slog.Error("alert worker: failed to resolve incident", "host_id", host.ID, "metric_type", metricType, "error", err)
 				} else {
+					sse.GetBroker().BroadcastIncidentsChanged()
 					slog.Info("alert resolved", "host", host.DisplayName, "metric_type", metricType)
 					if incident.Notified {
 						if err := sendResolutionEmail(host, metricType, incident.StartedAt, now, recipient); err != nil {
@@ -371,9 +374,12 @@ func evaluateMetric(
 
 // resolveIncident silently resolves any open incident for the given host + metric type.
 func resolveIncident(hostID, metricType string, now time.Time) {
-	database.DB.Model(&models.AlertIncident{}).
+	result := database.DB.Model(&models.AlertIncident{}).
 		Where("host_id = ? AND metric_type = ? AND resolved_at IS NULL", hostID, metricType).
 		Update("resolved_at", now)
+	if result.RowsAffected > 0 {
+		sse.GetBroker().BroadcastIncidentsChanged()
+	}
 }
 
 // sendAlertEmail delivers an alert notification email.

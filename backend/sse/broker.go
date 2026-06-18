@@ -15,6 +15,7 @@ const (
 	EventTypeAggregatedMetricsUpdate = "aggregated_metrics_update"
 	EventTypeContainerMetricsUpdate  = "container_metrics_update"
 	EventTypePackageInventoryUpdate  = "package_inventory_update"
+	EventTypeIncidentsChanged        = "incidents_changed"
 )
 
 // Event represents a host event.
@@ -286,6 +287,12 @@ func (b *Broker) BroadcastContainerMetricsUpdate(update ContainerMetricsUpdate) 
 
 func (b *Broker) BroadcastPackageInventoryUpdate(update PackageInventoryUpdate) {
 	b.Broadcast(Event{Type: EventTypePackageInventoryUpdate, Data: update, HostID: update.HostID})
+}
+
+// BroadcastIncidentsChanged signals connected clients that the active-incident
+// set has changed. The payload is empty: clients re-fetch on receipt.
+func (b *Broker) BroadcastIncidentsChanged() {
+	b.Broadcast(Event{Type: EventTypeIncidentsChanged, Data: struct{}{}})
 }
 
 // toMinifiedMetrics converts a MetricsUpdate to the compact wire format.

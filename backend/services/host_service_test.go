@@ -559,11 +559,11 @@ func TestResumeHost_ClearsPausedAt(t *testing.T) {
 	assert.Nil(t, got.ResolvedAt, "resume should not resolve the incident")
 }
 
-func TestResumeHost_SetsStatusOffline(t *testing.T) {
+func TestResumeHost_SetsStatusPending(t *testing.T) {
 	setupTestDB(t)
 	defer teardownTestDB()
 
-	host, _, _, err := CreateAgent("host-resume-offline", "10.0.0.3", false)
+	host, _, _, err := CreateAgent("host-resume-pending", "10.0.0.3", false)
 	assert.NoError(t, err)
 	host.Status = models.StatusOnline
 	assert.NoError(t, database.DB.Save(host).Error)
@@ -573,7 +573,9 @@ func TestResumeHost_SetsStatusOffline(t *testing.T) {
 
 	var got models.Host
 	assert.NoError(t, database.DB.First(&got, "id = ?", host.ID).Error)
-	assert.Equal(t, models.StatusOffline, got.Status, "resume should leave the host offline until a heartbeat arrives")
+	assert.Equal(t, models.StatusPending, got.Status, "resume should leave the host pending until a heartbeat arrives or the stale checker promotes it")
+	assert.NotNil(t, got.LastSeen, "resume should reset last_seen so the stale-pending timer starts now")
+	assert.WithinDuration(t, time.Now(), *got.LastSeen, 5*time.Second)
 }
 
 func TestListHosts_PageZeroTreatedAsOne(t *testing.T) {

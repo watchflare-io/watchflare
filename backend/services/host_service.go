@@ -10,6 +10,7 @@ import (
 	"watchflare/backend/cache"
 	"watchflare/backend/database"
 	"watchflare/backend/models"
+	"watchflare/backend/sse"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -311,10 +312,14 @@ func PauseHost(hostID string) error {
 	}
 
 	now := time.Now()
-	if err := database.DB.Model(&models.AlertIncident{}).
+	result := database.DB.Model(&models.AlertIncident{}).
 		Where("host_id = ? AND resolved_at IS NULL AND paused_at IS NULL", host.ID).
-		Update("paused_at", now).Error; err != nil {
-		return err
+		Update("paused_at", now)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected > 0 {
+		sse.GetBroker().BroadcastIncidentsChanged()
 	}
 
 	// Remove from heartbeat cache so the stale checker ignores it.
@@ -328,11 +333,13 @@ func PauseHost(hostID string) error {
 	return nil
 }
 
-// ResumeHost sets a paused host back to "offline" and clears the paused state
-// on any of its open incidents. We set offline (not online) because we have no
-// signal that the agent is alive yet: the heartbeat cache was wiped on pause.
+// ResumeHost sets a paused host to "pending" and clears the paused state on any
+// of its open incidents. We set pending (not online or offline) because we have
+// no signal that the agent is alive yet: the heartbeat cache was wiped on pause.
+// last_seen is reset to now so the stale-pending promotion timer starts here.
 // The next incoming heartbeat will flip the host to online via the gRPC handler;
-// until then, the alert worker keeps the host_down incident open.
+// if no heartbeat arrives within the stale-checker timeout, the host is promoted
+// to offline and the alert worker reopens the host_down incident.
 func ResumeHost(hostID string) error {
 	var host models.Host
 	if err := database.DB.Where("id = ?", hostID).First(&host).Error; err != nil {
@@ -346,14 +353,23 @@ func ResumeHost(hostID string) error {
 		return errors.New("host is not paused")
 	}
 
-	host.Status = models.StatusOffline
+	now := time.Now()
+	host.Status = models.StatusPending
+	host.LastSeen = &now
 	if err := database.DB.Save(&host).Error; err != nil {
 		return err
 	}
 
-	return database.DB.Model(&models.AlertIncident{}).
+	result := database.DB.Model(&models.AlertIncident{}).
 		Where("host_id = ? AND paused_at IS NOT NULL AND resolved_at IS NULL", host.ID).
-		Update("paused_at", nil).Error
+		Update("paused_at", nil)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected > 0 {
+		sse.GetBroker().BroadcastIncidentsChanged()
+	}
+	return nil
 }
 
 // DeleteHost permanently removes a host and its associated data.
