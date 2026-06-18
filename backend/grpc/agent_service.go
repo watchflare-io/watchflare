@@ -234,6 +234,17 @@ func (s *AgentServer) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest) (
 		}, nil
 	}
 
+	// If host is pending (newly registered or just resumed), promote it to online
+	// in the DB. The alert worker filters pending out at the SQL level, so without
+	// this the worker would skip the host until the next sync (up to 5 min) and
+	// any open incident (e.g. host_down) would stay open even after the agent
+	// came back.
+	if host.Status == models.StatusPending {
+		if err := database.DB.Model(&host).Update("status", models.StatusOnline).Error; err != nil {
+			slog.Warn("failed to promote pending host to online on heartbeat", "host_id", host.ID, "error", err)
+		}
+	}
+
 	// Update agent version in DB if it changed (e.g. immediately after a self-update + restart)
 	if req.AgentVersion != "" {
 		currentVersion := ""
