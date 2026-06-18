@@ -268,7 +268,8 @@ export type SSEEventType =
   | "metrics_update"
   | "aggregated_metrics_update"
   | "container_metrics_update"
-  | "package_inventory_update";
+  | "package_inventory_update"
+  | "incidents_changed";
 
 export interface SSEEvent {
   type: SSEEventType;

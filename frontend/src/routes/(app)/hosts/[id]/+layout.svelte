@@ -6,6 +6,7 @@
     import { API_BASE_URL } from "$lib/api.js";
     import { SSEManager } from "$lib/sse/manager.js";
     import { pageSseState } from "$lib/stores/pageSse.js";
+    import { alertsStore } from "$lib/stores/alerts";
     import { handleSSEReactivation, formatOfflineDuration } from "$lib/utils";
     import type {
         Host,
@@ -341,6 +342,7 @@
         try {
             await api.pauseHost(host.id);
             host = { ...host, status: "paused" };
+            alertsStore.loadIncidents();
         } catch (err) {
             host = { ...host, status: previousStatus };
             error = err instanceof Error ? err.message : "Failed to pause host";
@@ -352,7 +354,8 @@
         const previousStatus = host.status;
         try {
             await api.resumeHost(host.id);
-            host = { ...host, status: "online" };
+            host = { ...host, status: "pending" };
+            alertsStore.loadIncidents();
         } catch (err) {
             host = { ...host, status: previousStatus };
             error =

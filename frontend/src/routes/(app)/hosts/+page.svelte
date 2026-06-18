@@ -12,6 +12,7 @@
         HostStatus,
     } from "$lib/types";
     import { sseStore, metricsStore, latestMetrics } from "$lib/stores";
+    import { alertsStore } from "$lib/stores/alerts";
     import HostTable from "$lib/components/HostTable.svelte";
     import HostFilters from "$lib/components/host/HostFilters.svelte";
     import Pagination from "$lib/components/Pagination.svelte";
@@ -202,6 +203,7 @@
                 hosts[idx] = { ...hosts[idx], status: "paused" };
                 hosts = [...hosts];
             }
+            alertsStore.loadIncidents();
         } catch (err) {
             logger.error("Failed to pause host:", err);
             error = err instanceof Error ? err.message : "Failed to pause host";
@@ -213,9 +215,10 @@
             await api.resumeHost(hostId);
             const idx = hosts.findIndex((h) => h.id === hostId);
             if (idx !== -1) {
-                hosts[idx] = { ...hosts[idx], status: "online" };
+                hosts[idx] = { ...hosts[idx], status: "pending" };
                 hosts = [...hosts];
             }
+            alertsStore.loadIncidents();
         } catch (err) {
             logger.error("Failed to resume host:", err);
             error =

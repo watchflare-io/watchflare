@@ -281,6 +281,10 @@ export class SSEManager {
 			this.bufferEvent({ type: 'package_inventory_update', data });
 		});
 
+		this.eventSource.addEventListener('incidents_changed', () => {
+			this.bufferEvent({ type: 'incidents_changed', data: {} });
+		});
+
 		this.eventSource.onerror = (error: Event) => {
 			logger.error('SSE error:', error);
 			this.handleError(error);

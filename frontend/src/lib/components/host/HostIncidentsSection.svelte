@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { onMount, getContext } from "svelte";
+    import { onMount, onDestroy, getContext } from "svelte";
     import * as api from "$lib/api";
-    import type { HostIncident, IncidentStatusFilter } from "$lib/types";
+    import type { HostIncident, IncidentStatusFilter, SSEEvent } from "$lib/types";
     import { ALERT_METRIC_LABELS } from "$lib/types";
     import { formatDateTime, formatRelativeTime } from "$lib/utils";
     import { userStore } from "$lib/stores/user";
@@ -24,6 +24,7 @@
     const ctx = getContext<{
         incidentsCache: IncidentsCache | null;
         setIncidentsCache: (data: IncidentsCache) => void;
+        subscribeToSSE?: (cb: (event: SSEEvent) => void) => () => void;
     }>("hostDetail");
 
     const cached = ctx?.incidentsCache;
@@ -37,8 +38,19 @@
         cached?.statusFilter ?? "all",
     );
 
+    let unsubscribeSSE: (() => void) | undefined;
+
     onMount(() => {
         loadIncidents(true, !!cached);
+        unsubscribeSSE = ctx?.subscribeToSSE?.((event) => {
+            if (event.type === "incidents_changed") {
+                loadIncidents(true, true);
+            }
+        });
+    });
+
+    onDestroy(() => {
+        unsubscribeSSE?.();
     });
 
     function saveToCache() {

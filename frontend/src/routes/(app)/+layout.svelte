@@ -6,7 +6,9 @@
         sidebarTransitioning,
         userStore,
         alertsStore,
+        sseStore,
     } from "$lib/stores";
+    import type { SSEEvent } from "$lib/types";
     import DesktopSidebar from "$lib/components/DesktopSidebar.svelte";
     import MobileSidebar from "$lib/components/MobileSidebar.svelte";
     import Header from "$lib/components/Header.svelte";
@@ -17,6 +19,7 @@
     let rightSidebarOpen = $derived($uiStore.rightSidebarOpen);
     let userReady = $state(false);
     let incidentPollInterval: ReturnType<typeof setInterval> | undefined;
+    let sseUnsubscribe: (() => void) | undefined;
 
     onMount(async () => {
         try {
@@ -30,10 +33,16 @@
             () => alertsStore.loadIncidents(),
             30_000,
         );
+        sseUnsubscribe = sseStore.connect((event: SSEEvent) => {
+            if (event.type === "incidents_changed") {
+                alertsStore.loadIncidents();
+            }
+        });
     });
 
     onDestroy(() => {
         clearInterval(incidentPollInterval);
+        sseUnsubscribe?.();
     });
 </script>
 
