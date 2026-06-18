@@ -328,9 +328,11 @@ func PauseHost(hostID string) error {
 	return nil
 }
 
-// ResumeHost sets a paused host back to "online" and clears the paused state
-// on any of its open incidents. The next alert worker tick will continue or
-// resolve them as appropriate.
+// ResumeHost sets a paused host back to "offline" and clears the paused state
+// on any of its open incidents. We set offline (not online) because we have no
+// signal that the agent is alive yet: the heartbeat cache was wiped on pause.
+// The next incoming heartbeat will flip the host to online via the gRPC handler;
+// until then, the alert worker keeps the host_down incident open.
 func ResumeHost(hostID string) error {
 	var host models.Host
 	if err := database.DB.Where("id = ?", hostID).First(&host).Error; err != nil {
@@ -344,7 +346,7 @@ func ResumeHost(hostID string) error {
 		return errors.New("host is not paused")
 	}
 
-	host.Status = models.StatusOnline
+	host.Status = models.StatusOffline
 	if err := database.DB.Save(&host).Error; err != nil {
 		return err
 	}
