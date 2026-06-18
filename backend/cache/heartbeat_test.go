@@ -235,3 +235,47 @@ func TestRemove_NonexistentAgent(t *testing.T) {
 	// Must not panic.
 	c.Remove("nonexistent")
 }
+
+func TestPrimeFromHosts(t *testing.T) {
+	c := GetCache()
+	c.clear()
+
+	lastSeen := time.Now().Add(-1 * time.Minute)
+	ipv4 := "10.0.0.5"
+	ipv6 := "fe80::1"
+
+	hosts := []models.Host{
+		{AgentID: "agent-online", Status: models.StatusOnline, LastSeen: &lastSeen, IPAddressV4: &ipv4, IPAddressV6: &ipv6},
+		{AgentID: "agent-offline", Status: models.StatusOffline, LastSeen: &lastSeen, IPAddressV4: &ipv4},
+		{AgentID: "agent-paused", Status: models.StatusPaused, LastSeen: &lastSeen},
+		{AgentID: "agent-pending", Status: models.StatusPending},
+		{AgentID: "agent-expired", Status: models.StatusExpired},
+	}
+	c.PrimeFromHosts(hosts)
+
+	data, ok := c.Get("agent-online")
+	if !ok {
+		t.Fatal("expected online host to be primed")
+	}
+	if data.Status != models.StatusOnline {
+		t.Errorf("status: got %s, want online", data.Status)
+	}
+	if !data.LastSeen.Equal(lastSeen) {
+		t.Errorf("last_seen: got %s, want %s", data.LastSeen, lastSeen)
+	}
+	if data.IPv4Address != ipv4 {
+		t.Errorf("ipv4: got %s, want %s", data.IPv4Address, ipv4)
+	}
+	if data.IPv6Address != ipv6 {
+		t.Errorf("ipv6: got %s, want %s", data.IPv6Address, ipv6)
+	}
+	if data.Updated {
+		t.Error("expected Updated=false on primed entry (no DB re-sync needed)")
+	}
+
+	for _, agentID := range []string{"agent-offline", "agent-paused", "agent-pending", "agent-expired"} {
+		if _, ok := c.Get(agentID); ok {
+			t.Errorf("expected %s not to be primed (non-online status)", agentID)
+		}
+	}
+}
