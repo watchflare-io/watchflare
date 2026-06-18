@@ -26,6 +26,7 @@ func setupAlertsRouter() *gin.Engine {
 		protected.GET("/settings/alerts", GetAlertRules)
 		protected.PUT("/settings/alerts", UpdateAlertRules)
 		protected.GET("/settings/alerts/active", GetActiveIncidents)
+		protected.GET("/settings/alerts/incidents", GetAllIncidents)
 		protected.GET("/hosts/:id/alerts", GetHostAlertRules)
 		protected.PUT("/hosts/:id/alerts/:metric_type", UpsertHostAlertRule)
 		protected.DELETE("/hosts/:id/alerts/:metric_type", DeleteHostAlertRule)
@@ -481,4 +482,104 @@ func TestGetActiveIncidents_Unauthenticated(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestGetActiveIncidents_ExcludesPaused(t *testing.T) {
+	setupTestDB(t)
+	defer teardownAlertData()
+
+	r := setupAlertsRouter()
+	cookie := registerAndGetCookie(t, "pausedtest@test.com")
+
+	host := models.Host{ID: "host-paused-1", DisplayName: "paused-test-host", Status: "online"}
+	require.NoError(t, database.DB.Create(&host).Error)
+
+	// Create an active incident (not paused)
+	active := models.AlertIncident{
+		HostID:         host.ID,
+		MetricType:     models.MetricTypeCPUUsage,
+		StartedAt:      time.Now().Add(-5 * time.Minute),
+		ThresholdValue: 80.0,
+		CurrentValue:   85.0,
+	}
+	require.NoError(t, database.DB.Create(&active).Error)
+
+	// Create a paused incident
+	paused := models.AlertIncident{
+		HostID:         host.ID,
+		MetricType:     models.MetricTypeMemoryUsage,
+		StartedAt:      time.Now().Add(-10 * time.Minute),
+		PausedAt:       ptrTime(time.Now().Add(-1 * time.Minute)),
+		ThresholdValue: 90.0,
+		CurrentValue:   92.0,
+	}
+	require.NoError(t, database.DB.Create(&paused).Error)
+
+	req, _ := http.NewRequest("GET", "/settings/alerts/active", nil)
+	req.AddCookie(cookie)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var body map[string]interface{}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+	incidents, ok := body["incidents"].([]interface{})
+	require.True(t, ok)
+	require.Len(t, incidents, 1)
+
+	item := incidents[0].(map[string]interface{})
+	assert.Equal(t, active.ID, item["id"])
+}
+
+func TestGetAllIncidents_StatusFilterPaused(t *testing.T) {
+	setupTestDB(t)
+	defer teardownAlertData()
+
+	r := setupAlertsRouter()
+	cookie := registerAndGetCookie(t, "pausedfilter@test.com")
+
+	host := models.Host{ID: "host-paused-2", DisplayName: "paused-filter-host", Status: "online"}
+	require.NoError(t, database.DB.Create(&host).Error)
+
+	// Create an active incident
+	active := models.AlertIncident{
+		HostID:         host.ID,
+		MetricType:     models.MetricTypeCPUUsage,
+		StartedAt:      time.Now().Add(-5 * time.Minute),
+		ThresholdValue: 80.0,
+		CurrentValue:   85.0,
+	}
+	require.NoError(t, database.DB.Create(&active).Error)
+
+	// Create a paused incident
+	paused := models.AlertIncident{
+		HostID:         host.ID,
+		MetricType:     models.MetricTypeMemoryUsage,
+		StartedAt:      time.Now().Add(-10 * time.Minute),
+		PausedAt:       ptrTime(time.Now().Add(-1 * time.Minute)),
+		ThresholdValue: 90.0,
+		CurrentValue:   92.0,
+	}
+	require.NoError(t, database.DB.Create(&paused).Error)
+
+	// Test paused filter
+	req, _ := http.NewRequest("GET", "/settings/alerts/incidents?status=paused", nil)
+	req.AddCookie(cookie)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var body map[string]interface{}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+	incidents, ok := body["incidents"].([]interface{})
+	require.True(t, ok)
+	assert.Equal(t, float64(1), body["total_count"])
+	require.Len(t, incidents, 1)
+
+	item := incidents[0].(map[string]interface{})
+	assert.Equal(t, paused.ID, item["id"])
+}
+
+func ptrTime(t time.Time) *time.Time {
+	return &t
 }

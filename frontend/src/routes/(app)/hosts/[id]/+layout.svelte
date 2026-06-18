@@ -6,7 +6,8 @@
     import { API_BASE_URL } from "$lib/api.js";
     import { SSEManager } from "$lib/sse/manager.js";
     import { pageSseState } from "$lib/stores/pageSse.js";
-    import { handleSSEReactivation, formatOfflineDuration } from "$lib/utils";
+    import { alertsStore } from "$lib/stores/alerts";
+    import { handleSSEReactivation } from "$lib/utils";
     import type {
         Host,
         Metric,
@@ -43,8 +44,6 @@
     let latestAgentVersion: string | null = $state(null);
     let latestMetric: Metric | null = $state(null);
     let hasActiveAlertRules = $state(false);
-    let now = $state(Date.now());
-    let nowTimer: ReturnType<typeof setInterval> | null = null;
 
     // Tab data caches — persist between tab switches for the duration of the host detail session
     let overviewCache: {
@@ -157,7 +156,6 @@
         pageSseState.set(hostSseManager.getState());
         hostSseManager.connect();
         loadHost();
-        nowTimer = setInterval(() => { now = Date.now(); }, 30_000);
         const state = $page.state as { newHostToken?: string };
         if (state.newHostToken) {
             regeneratedToken = state.newHostToken;
@@ -169,7 +167,6 @@
         hostSseManager?.disconnect();
         hostSseManager = null;
         pageSseState.set(null);
-        if (nowTimer) clearInterval(nowTimer);
         if (updateAgentTimeout) clearTimeout(updateAgentTimeout);
         if (copyErrorTimeout) clearTimeout(copyErrorTimeout);
     });
@@ -184,10 +181,11 @@
                 host = {
                     ...host,
                     status: update.status,
-                    ip_address_v4: update.ip_address_v4,
-                    ip_address_v6: update.ip_address_v6,
-                    configured_ip: update.configured_ip,
-                    ignore_ip_mismatch: update.ignore_ip_mismatch,
+                    ip_address_v4: update.ip_address_v4 ?? host.ip_address_v4,
+                    ip_address_v6: update.ip_address_v6 ?? host.ip_address_v6,
+                    configured_ip: update.configured_ip ?? host.configured_ip,
+                    ignore_ip_mismatch:
+                        update.ignore_ip_mismatch ?? host.ignore_ip_mismatch,
                     last_seen: update.last_seen,
                     agent_version: update.agent_version ?? host.agent_version,
                 };
@@ -340,6 +338,7 @@
         try {
             await api.pauseHost(host.id);
             host = { ...host, status: "paused" };
+            alertsStore.loadIncidents();
         } catch (err) {
             host = { ...host, status: previousStatus };
             error = err instanceof Error ? err.message : "Failed to pause host";
@@ -351,7 +350,8 @@
         const previousStatus = host.status;
         try {
             await api.resumeHost(host.id);
-            host = { ...host, status: "online" };
+            host = { ...host, status: "pending" };
+            alertsStore.loadIncidents();
         } catch (err) {
             host = { ...host, status: previousStatus };
             error =
@@ -543,11 +543,6 @@
     />
 
     <HostLiveStats metric={latestMetric} />
-    {#if host.status !== "online" && host.last_seen}
-        <p class="text-xs text-muted-foreground mb-6">
-            {formatOfflineDuration(host.last_seen, now)}
-        </p>
-    {/if}
 
     <!-- Tab Navigation -->
     <div

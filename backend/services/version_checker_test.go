@@ -119,4 +119,3 @@ func TestFetchAndCacheLatestVersion_ErrorLeavesCache(t *testing.T) {
 		t.Errorf("got %q, want 1.0.0 (cache must not be cleared on error)", got)
 	}
 }
-

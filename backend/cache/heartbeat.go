@@ -190,6 +190,43 @@ func (c *HeartbeatCache) SetClockDesync(agentID string) {
 	}
 }
 
+// PrimeFromHosts seeds the cache from hosts loaded from the database. Used at
+// boot to reconcile in-memory state with the last-known DB state. Only online
+// hosts are added; paused/offline/pending/expired hosts don't need a cache
+// entry. Updated is set to false so the sync worker doesn't re-write these
+// values back to the DB. The stale checker will transition entries to offline
+// if no heartbeat arrives within its timeout.
+func (c *HeartbeatCache) PrimeFromHosts(hosts []models.Host) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for _, h := range hosts {
+		if h.Status != models.StatusOnline {
+			continue
+		}
+		lastSeen := time.Now()
+		if h.LastSeen != nil {
+			lastSeen = *h.LastSeen
+		}
+		ipv4 := ""
+		if h.IPAddressV4 != nil {
+			ipv4 = *h.IPAddressV4
+		}
+		ipv6 := ""
+		if h.IPAddressV6 != nil {
+			ipv6 = *h.IPAddressV6
+		}
+		c.cache[h.AgentID] = &HeartbeatData{
+			AgentID:     h.AgentID,
+			LastSeen:    lastSeen,
+			Status:      models.StatusOnline,
+			IPv4Address: ipv4,
+			IPv6Address: ipv6,
+			Updated:     false,
+		}
+	}
+}
+
 func (c *HeartbeatCache) Remove(agentID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

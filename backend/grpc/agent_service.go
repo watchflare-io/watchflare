@@ -234,6 +234,17 @@ func (s *AgentServer) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest) (
 		}, nil
 	}
 
+	// If host is pending (newly registered or just resumed), promote it to online
+	// in the DB. The alert worker filters pending out at the SQL level, so without
+	// this the worker would skip the host until the next sync (up to 5 min) and
+	// any open incident (e.g. host_down) would stay open even after the agent
+	// came back.
+	if host.Status == models.StatusPending {
+		if err := database.DB.Model(&host).Update("status", models.StatusOnline).Error; err != nil {
+			slog.Warn("failed to promote pending host to online on heartbeat", "host_id", host.ID, "error", err)
+		}
+	}
+
 	// Update agent version in DB if it changed (e.g. immediately after a self-update + restart)
 	if req.AgentVersion != "" {
 		currentVersion := ""
@@ -418,21 +429,21 @@ func (s *AgentServer) SendMetrics(ctx context.Context, req *pb.SendMetricsReques
 
 	// Create metric record
 	metric := &models.Metric{
-		HostID:               host.ID,
-		Timestamp:            time.Unix(req.Metrics.Timestamp, 0),
-		CPUUsagePercent:      req.Metrics.CpuUsagePercent,
-		CPUIowaitPercent:     req.Metrics.CpuIowaitPercent,
-		CPUStealPercent:      req.Metrics.CpuStealPercent,
-		MemoryTotalBytes:     req.Metrics.MemoryTotalBytes,
-		MemoryUsedBytes:      req.Metrics.MemoryUsedBytes,
-		MemoryAvailableBytes: req.Metrics.MemoryAvailableBytes,
-		MemoryBuffersBytes:   req.Metrics.MemoryBuffersBytes,
-		MemoryCachedBytes:    req.Metrics.MemoryCachedBytes,
-		SwapTotalBytes:       req.Metrics.SwapTotalBytes,
-		SwapUsedBytes:        req.Metrics.SwapUsedBytes,
-		LoadAvg1Min:          req.Metrics.LoadAvg_1Min,
-		LoadAvg5Min:          req.Metrics.LoadAvg_5Min,
-		LoadAvg15Min:         req.Metrics.LoadAvg_15Min,
+		HostID:                host.ID,
+		Timestamp:             time.Unix(req.Metrics.Timestamp, 0),
+		CPUUsagePercent:       req.Metrics.CpuUsagePercent,
+		CPUIowaitPercent:      req.Metrics.CpuIowaitPercent,
+		CPUStealPercent:       req.Metrics.CpuStealPercent,
+		MemoryTotalBytes:      req.Metrics.MemoryTotalBytes,
+		MemoryUsedBytes:       req.Metrics.MemoryUsedBytes,
+		MemoryAvailableBytes:  req.Metrics.MemoryAvailableBytes,
+		MemoryBuffersBytes:    req.Metrics.MemoryBuffersBytes,
+		MemoryCachedBytes:     req.Metrics.MemoryCachedBytes,
+		SwapTotalBytes:        req.Metrics.SwapTotalBytes,
+		SwapUsedBytes:         req.Metrics.SwapUsedBytes,
+		LoadAvg1Min:           req.Metrics.LoadAvg_1Min,
+		LoadAvg5Min:           req.Metrics.LoadAvg_5Min,
+		LoadAvg15Min:          req.Metrics.LoadAvg_15Min,
 		DiskTotalBytes:        req.Metrics.DiskTotalBytes,
 		DiskUsedBytes:         req.Metrics.DiskUsedBytes,
 		DiskReadBytesPerSec:   req.Metrics.DiskReadBytesPerSec,
@@ -448,21 +459,21 @@ func (s *AgentServer) SendMetrics(ctx context.Context, req *pb.SendMetricsReques
 	// Broadcast SSE first for low-latency real-time display (Netdata/Prometheus pattern)
 	broker := sse.GetBroker()
 	broker.BroadcastMetricsUpdate(sse.MetricsUpdate{
-		HostID:               host.ID,
-		Timestamp:            metric.Timestamp.Format(time.RFC3339),
-		CPUUsagePercent:      metric.CPUUsagePercent,
-		CPUIowaitPercent:     metric.CPUIowaitPercent,
-		CPUStealPercent:      metric.CPUStealPercent,
-		MemoryTotalBytes:     metric.MemoryTotalBytes,
-		MemoryUsedBytes:      metric.MemoryUsedBytes,
-		MemoryAvailableBytes: metric.MemoryAvailableBytes,
-		MemoryBuffersBytes:   metric.MemoryBuffersBytes,
-		MemoryCachedBytes:    metric.MemoryCachedBytes,
-		SwapTotalBytes:       metric.SwapTotalBytes,
-		SwapUsedBytes:        metric.SwapUsedBytes,
-		LoadAvg1Min:          metric.LoadAvg1Min,
-		LoadAvg5Min:          metric.LoadAvg5Min,
-		LoadAvg15Min:         metric.LoadAvg15Min,
+		HostID:                host.ID,
+		Timestamp:             metric.Timestamp.Format(time.RFC3339),
+		CPUUsagePercent:       metric.CPUUsagePercent,
+		CPUIowaitPercent:      metric.CPUIowaitPercent,
+		CPUStealPercent:       metric.CPUStealPercent,
+		MemoryTotalBytes:      metric.MemoryTotalBytes,
+		MemoryUsedBytes:       metric.MemoryUsedBytes,
+		MemoryAvailableBytes:  metric.MemoryAvailableBytes,
+		MemoryBuffersBytes:    metric.MemoryBuffersBytes,
+		MemoryCachedBytes:     metric.MemoryCachedBytes,
+		SwapTotalBytes:        metric.SwapTotalBytes,
+		SwapUsedBytes:         metric.SwapUsedBytes,
+		LoadAvg1Min:           metric.LoadAvg1Min,
+		LoadAvg5Min:           metric.LoadAvg5Min,
+		LoadAvg15Min:          metric.LoadAvg15Min,
 		DiskTotalBytes:        metric.DiskTotalBytes,
 		DiskUsedBytes:         metric.DiskUsedBytes,
 		DiskReadBytesPerSec:   metric.DiskReadBytesPerSec,
@@ -614,6 +625,15 @@ func (s *AgentServer) SendPackageInventory(ctx context.Context, req *pb.SendPack
 			}, nil
 		}
 		return nil, result.Error
+	}
+
+	// If host is paused, acknowledge but don't process the inventory
+	if host.Status == models.StatusPaused {
+		slog.Info("package inventory discarded for paused host", "name", host.DisplayName, "host_id", host.ID)
+		return &pb.SendPackageInventoryResponse{
+			Success: true,
+			Message: "Host is paused, inventory discarded",
+		}, nil
 	}
 
 	// Process package inventory

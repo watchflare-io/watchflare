@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { onMount, getContext } from "svelte";
+    import { onMount, onDestroy, getContext } from "svelte";
     import * as api from "$lib/api";
-    import type { HostIncident, IncidentStatusFilter } from "$lib/types";
+    import type { HostIncident, IncidentStatusFilter, SSEEvent } from "$lib/types";
     import { ALERT_METRIC_LABELS } from "$lib/types";
     import { formatDateTime, formatRelativeTime } from "$lib/utils";
     import { userStore } from "$lib/stores/user";
+    import { incidentState, BADGE_CLASSES, BADGE_LABELS } from "$lib/incident-state";
 
     const { hostId }: { hostId: string } = $props();
 
@@ -23,6 +24,7 @@
     const ctx = getContext<{
         incidentsCache: IncidentsCache | null;
         setIncidentsCache: (data: IncidentsCache) => void;
+        subscribeToSSE?: (cb: (event: SSEEvent) => void) => () => void;
     }>("hostDetail");
 
     const cached = ctx?.incidentsCache;
@@ -36,8 +38,19 @@
         cached?.statusFilter ?? "all",
     );
 
+    let unsubscribeSSE: (() => void) | undefined;
+
     onMount(() => {
         loadIncidents(true, !!cached);
+        unsubscribeSSE = ctx?.subscribeToSSE?.((event) => {
+            if (event.type === "incidents_changed") {
+                loadIncidents(true, true);
+            }
+        });
+    });
+
+    onDestroy(() => {
+        unsubscribeSSE?.();
     });
 
     function saveToCache() {
@@ -117,7 +130,7 @@
 <div class="mb-6">
     <div class="mb-4 flex items-center justify-end">
         <div class="flex rounded-lg border bg-card p-0.5">
-            {#each ["all", "active", "resolved"] as IncidentStatusFilter[] as filter}
+            {#each ["all", "active", "paused", "resolved"] as IncidentStatusFilter[] as filter}
                 <button
                     type="button"
                     onclick={() => handleFilterChange(filter)}
@@ -178,6 +191,7 @@
                     : ''}"
             >
                 {#each incidents as incident (incident.id)}
+                    {@const state = incidentState(incident)}
                     <div class="rounded-lg border bg-card">
                         <div
                             class="rounded-t-lg bg-table-header px-4 py-2.5 border-b border-border flex items-center justify-between gap-2"
@@ -186,17 +200,10 @@
                                 {ALERT_METRIC_LABELS[incident.metric_type] ??
                                     incident.metric_type}
                             </span>
-                            {#if incident.resolved_at}
-                                <span
-                                    class="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-success/10 text-success border border-success/20"
-                                    >Resolved</span
-                                >
-                            {:else}
-                                <span
-                                    class="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20"
-                                    >Active</span
-                                >
-                            {/if}
+                            <span
+                                class="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {BADGE_CLASSES[state]}"
+                                >{BADGE_LABELS[state]}</span
+                            >
                         </div>
                         <div class="px-4 py-2.5 flex flex-col gap-1">
                             <p class="text-xs text-muted-foreground">
@@ -286,21 +293,15 @@
                             : ''}"
                     >
                         {#each incidents as incident (incident.id)}
+                            {@const state = incidentState(incident)}
                             <tr
                                 class="hover:bg-muted/20 transition-colors whitespace-nowrap"
                             >
                                 <td class="px-4 py-3">
-                                    {#if incident.resolved_at}
-                                        <span
-                                            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-success/10 text-success border border-success/20"
-                                            >Resolved</span
-                                        >
-                                    {:else}
-                                        <span
-                                            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20"
-                                            >Active</span
-                                        >
-                                    {/if}
+                                    <span
+                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {BADGE_CLASSES[state]}"
+                                        >{BADGE_LABELS[state]}</span
+                                    >
                                 </td>
                                 <td
                                     class="px-4 py-3 text-sm font-medium text-foreground"

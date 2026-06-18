@@ -12,7 +12,7 @@ import (
 
 // MetricsQueryParams holds parameters for metrics retrieval.
 type MetricsQueryParams struct {
-	HostID string
+	HostID   string
 	Start    time.Time
 	End      time.Time
 	Interval string // e.g., "1m", "5m", "15m", "1h"

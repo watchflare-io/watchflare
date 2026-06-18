@@ -17,6 +17,7 @@ import (
 	"watchflare/backend/handlers"
 	"watchflare/backend/logger"
 	"watchflare/backend/middleware"
+	"watchflare/backend/models"
 	"watchflare/backend/notifications"
 	"watchflare/backend/pki"
 	"watchflare/backend/services"
@@ -78,6 +79,18 @@ func main() {
 	// Sync worker: writes cache to DB every 5 minutes
 	syncWorker := cache.NewSyncWorker(5 * time.Minute)
 	go syncWorker.Start()
+
+	// Prime the cache from the last-known DB state so the stale checker can
+	// transition hosts whose agents died during the backend downtime to offline.
+	// Without this, the cache would be empty at boot and the DB-only status
+	// would stay "online" forever for dead agents.
+	var primedHosts []models.Host
+	if err := database.DB.Where("status = ?", models.StatusOnline).Find(&primedHosts).Error; err != nil {
+		slog.Error("failed to load hosts to prime heartbeat cache", "error", err)
+	} else {
+		cache.GetCache().PrimeFromHosts(primedHosts)
+		slog.Info("primed heartbeat cache from database", "host_count", len(primedHosts))
+	}
 
 	// Stale checker: marks agents offline if no heartbeat for 15s (3x 5s interval)
 	staleChecker := cache.NewStaleChecker(10*time.Second, 15*time.Second)
