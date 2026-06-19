@@ -1,5 +1,6 @@
 <script lang="ts">
     import { setupTOTP, enableTOTP } from "$lib/api";
+    import { lockBodyScroll } from "$lib/actions/lockBodyScroll";
     import QRCode from "qrcode";
     import { Copy, Check } from "lucide-svelte";
 
@@ -89,18 +90,23 @@
 </script>
 
 {#if open}
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Set up two-factor authentication"
+        role="presentation"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
         onkeydown={(e) => {
             if (e.key === "Escape") onClose();
         }}
+        onclick={() => { if (step !== "backup") onClose(); }}
+        use:lockBodyScroll
     >
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
         <div
             class="w-full max-w-md rounded-lg border bg-card shadow-lg"
-            role="presentation"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Set up two-factor authentication"
+            tabindex="-1"
             onclick={(e) => e.stopPropagation()}
         >
             <div class="flex items-center justify-between border-b px-6 py-4">

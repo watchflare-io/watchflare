@@ -4,6 +4,7 @@
     import { userStore } from "$lib/stores/user";
     import { Eye, EyeOff, Copy, Check, Shield, ShieldCheck } from "lucide-svelte";
     import TwoFactorSetupModal from '$lib/components/TwoFactorSetupModal.svelte';
+    import { lockBodyScroll } from "$lib/actions/lockBodyScroll";
 
     // Username form state
     let usernameOverride = $state<string | null>(null);
@@ -489,12 +490,21 @@
 />
 
 {#if showDisableConfirm}
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
-        role="dialog"
-        aria-modal="true"
+        role="presentation"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        onclick={() => { showDisableConfirm = false; twoFAError = ''; }}
+        use:lockBodyScroll
     >
-        <div class="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg">
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+        <div
+            role="dialog"
+            aria-modal="true"
+            tabindex="-1"
+            onclick={(e) => e.stopPropagation()}
+            class="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg"
+        >
             <h3 class="text-base font-semibold text-foreground mb-2">Disable 2FA</h3>
             <p class="text-sm text-muted-foreground mb-4">Enter your authenticator code to confirm.</p>
             <input
@@ -527,12 +537,21 @@
 {/if}
 
 {#if showRegenModal}
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
-        role="dialog"
-        aria-modal="true"
+        role="presentation"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        onclick={() => { if (!regenDone) { showRegenModal = false; twoFAError = ''; } }}
+        use:lockBodyScroll
     >
-        <div class="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg">
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+        <div
+            role="dialog"
+            aria-modal="true"
+            tabindex="-1"
+            onclick={(e) => e.stopPropagation()}
+            class="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg"
+        >
             <h3 class="text-base font-semibold text-foreground mb-2">Regenerate Backup Codes</h3>
             {#if !regenDone}
                 <p class="text-sm text-muted-foreground mb-4">Enter your authenticator code to generate new backup codes. Old codes will be invalidated.</p>
