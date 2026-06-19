@@ -29,22 +29,22 @@
 			stroke: 'var(--chart-7)',
 			fill: 'var(--chart-7)',
 			width: 2,
-			value: (_u: uPlot, v: number | null) => v != null ? formatRate(v, networkUnit) : '—',
+			value: (_u: uPlot, v: number | null) => (v != null ? formatRate(v, networkUnit) : '—')
 		},
 		{
 			label: 'Upload (TX)',
 			stroke: 'var(--chart-8)',
 			fill: 'var(--chart-8)',
 			width: 2,
-			value: (_u: uPlot, v: number | null) => v != null ? formatRate(v, networkUnit) : '—',
+			value: (_u: uPlot, v: number | null) => (v != null ? formatRate(v, networkUnit) : '—')
 		}
 	]);
 
 	const axes = $derived<uPlot.Axis[]>([
 		{},
 		{
-			values: (_u: uPlot, ticks: number[]) => ticks.map(v => formatRate(v, networkUnit)),
-			size: networkUnit === 'bits' ? 88 : 70,
+			values: (_u: uPlot, ticks: number[]) => ticks.map((v) => formatRate(v, networkUnit)),
+			size: networkUnit === 'bits' ? 88 : 70
 		}
 	]);
 </script>

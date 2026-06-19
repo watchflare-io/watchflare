@@ -23,7 +23,7 @@
 			stroke: 'var(--chart-1)',
 			fill: 'var(--chart-1)',
 			width: 2,
-			value: (_u: uPlot, v: number | null) => v != null ? v.toFixed(1) + '%' : '—',
+			value: (_u: uPlot, v: number | null) => (v != null ? v.toFixed(1) + '%' : '—')
 		}
 	];
 
@@ -31,7 +31,7 @@
 
 	const axes: uPlot.Axis[] = [
 		{},
-		{ values: (_u: uPlot, ticks: number[]) => ticks.map(v => v + '%') }
+		{ values: (_u: uPlot, ticks: number[]) => ticks.map((v) => v + '%') }
 	];
 </script>
 

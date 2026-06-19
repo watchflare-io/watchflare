@@ -11,7 +11,7 @@
 		itemLabel = 'items',
 		onPageChange,
 		onPageSizeChange,
-		pageSizeOptions,
+		pageSizeOptions
 	}: {
 		currentPage: number;
 		totalPages: number;
@@ -33,16 +33,17 @@
 	<div class="sm:hidden flex flex-col gap-2 border-t px-4 py-3">
 		<div class="flex items-center justify-between">
 			<p class="text-sm text-muted-foreground" role="status" aria-live="polite">
-				{start}-{end} of {totalItems} {itemLabel}
+				{start}-{end} of {totalItems}
+				{itemLabel}
 			</p>
 			{#if onPageSizeChange && pageSizeOptions}
 				<Select.Root
 					type="single"
 					value={String(pageSize)}
 					onValueChange={(v) => {
-								const n = Number(v);
-								if (Number.isFinite(n) && pageSizeOptions.includes(n)) onPageSizeChange(n);
-							}}
+						const n = Number(v);
+						if (Number.isFinite(n) && pageSizeOptions.includes(n)) onPageSizeChange(n);
+					}}
 				>
 					<Select.Trigger class="py-1.5 text-sm" items={pageSizeOptions.map(String)}>
 						<span>{pageSize} / page</span>
@@ -84,16 +85,17 @@
 	<div class="hidden sm:flex items-center justify-between border-t px-4 py-3">
 		<div class="flex items-center gap-3">
 			<p class="text-sm text-muted-foreground" role="status" aria-live="polite">
-				{start}-{end} of {totalItems} {itemLabel}
+				{start}-{end} of {totalItems}
+				{itemLabel}
 			</p>
 			{#if onPageSizeChange && pageSizeOptions}
 				<Select.Root
 					type="single"
 					value={String(pageSize)}
 					onValueChange={(v) => {
-								const n = Number(v);
-								if (Number.isFinite(n) && pageSizeOptions.includes(n)) onPageSizeChange(n);
-							}}
+						const n = Number(v);
+						if (Number.isFinite(n) && pageSizeOptions.includes(n)) onPageSizeChange(n);
+					}}
 				>
 					<Select.Trigger class="py-1.5 text-sm" items={pageSizeOptions.map(String)}>
 						<span>{pageSize} / page</span>

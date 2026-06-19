@@ -8,22 +8,22 @@ interface UIState {
 function createUIStore() {
 	const { subscribe, set, update } = writable<UIState>({
 		loading: false,
-		rightSidebarOpen: false,
+		rightSidebarOpen: false
 	});
 
 	return {
 		subscribe,
 
 		setLoading(loading: boolean): void {
-			update(state => ({ ...state, loading }));
+			update((state) => ({ ...state, loading }));
 		},
 
 		toggleRightSidebar(): void {
-			update(state => ({ ...state, rightSidebarOpen: !state.rightSidebarOpen }));
+			update((state) => ({ ...state, rightSidebarOpen: !state.rightSidebarOpen }));
 		},
 
 		setRightSidebar(open: boolean): void {
-			update(state => ({ ...state, rightSidebarOpen: open }));
+			update((state) => ({ ...state, rightSidebarOpen: open }));
 		},
 
 		reset(): void {

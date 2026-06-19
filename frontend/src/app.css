@@ -1,7 +1,7 @@
-@import "@fontsource-variable/inter";
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "./styles/tokens.css";
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import './styles/tokens.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -77,15 +77,15 @@
 	--color-table-header-active: var(--table-header-active);
 
 	/* Charts */
-	--color-chart-1:  var(--chart-1);
-	--color-chart-2:  var(--chart-2);
-	--color-chart-3:  var(--chart-3);
-	--color-chart-4:  var(--chart-4);
-	--color-chart-5:  var(--chart-5);
-	--color-chart-6:  var(--chart-6);
-	--color-chart-7:  var(--chart-7);
-	--color-chart-8:  var(--chart-8);
-	--color-chart-9:  var(--chart-9);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-chart-6: var(--chart-6);
+	--color-chart-7: var(--chart-7);
+	--color-chart-8: var(--chart-8);
+	--color-chart-9: var(--chart-9);
 	--color-chart-10: var(--chart-10);
 	--color-chart-11: var(--chart-11);
 	--color-chart-12: var(--chart-12);
@@ -109,7 +109,7 @@
 	}
 	button,
 	select,
-	[role="button"] {
+	[role='button'] {
 		cursor: pointer;
 	}
 	main > *:not(.fixed) {

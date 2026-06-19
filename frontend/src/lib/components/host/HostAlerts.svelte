@@ -12,7 +12,7 @@
 		clockDesync = false,
 		onUpdateIP,
 		onIgnoreIP,
-		onDismissReactivation,
+		onDismissReactivation
 	}: {
 		host: Host;
 		showIPMismatchWarning: boolean;
@@ -30,7 +30,8 @@
 			<div class="flex-1">
 				<p class="text-sm font-medium text-foreground">Clock Synchronization Error</p>
 				<p class="text-sm text-muted-foreground mt-1">
-					The agent's system clock is out of sync with the backend (&gt;5 min difference). Heartbeats are being rejected.
+					The agent's system clock is out of sync with the backend (&gt;5 min difference).
+					Heartbeats are being rejected.
 				</p>
 			</div>
 		</div>
@@ -48,14 +49,14 @@
 				</p>
 				<div class="mt-3 flex gap-2">
 					<button
-         type="button"
+						type="button"
 						onclick={onUpdateIP}
 						class="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
 					>
 						Update to {host.ip_address_v4}
 					</button>
 					<button
-         type="button"
+						type="button"
 						onclick={onIgnoreIP}
 						class="rounded-lg border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
 					>
@@ -75,11 +76,19 @@
 				<div>
 					<p class="text-sm font-medium text-foreground">Agent Reactivated</p>
 					<p class="text-sm text-muted-foreground mt-1">
-						Same physical host detected via UUID at {formatDateTime(host.reactivated_at, timeFormat)}
+						Same physical host detected via UUID at {formatDateTime(
+							host.reactivated_at,
+							timeFormat
+						)}
 					</p>
 				</div>
 			</div>
-			<button type="button" onclick={onDismissReactivation} class="text-primary hover:text-primary/80" aria-label="Dismiss reactivation notice">
+			<button
+				type="button"
+				onclick={onDismissReactivation}
+				class="text-primary hover:text-primary/80"
+				aria-label="Dismiss reactivation notice"
+			>
 				<X class="h-5 w-5" />
 			</button>
 		</div>

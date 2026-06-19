@@ -8,7 +8,7 @@
 		tableLoading = false,
 		class: className,
 		children,
-		footer,
+		footer
 	}: {
 		grow?: boolean;
 		tableLoading?: boolean;
@@ -47,15 +47,9 @@
 
 <div
 	bind:this={el}
-	class={cn(
-		'rounded-xl border bg-card flex flex-col min-h-64 overflow-hidden',
-		className
-	)}
+	class={cn('rounded-xl border bg-card flex flex-col min-h-64 overflow-hidden', className)}
 >
-	<div class={cn(
-		'overflow-auto flex-1 min-h-0',
-		tableLoading && 'opacity-50 pointer-events-none'
-	)}>
+	<div class={cn('overflow-auto flex-1 min-h-0', tableLoading && 'opacity-50 pointer-events-none')}>
 		{@render children()}
 	</div>
 	{#if footer}

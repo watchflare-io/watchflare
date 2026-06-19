@@ -25,7 +25,7 @@ function createSSEStore() {
 	 * Broadcast message to all subscribers
 	 */
 	function broadcastMessage(event: SSEEvent): void {
-		subscribers.forEach(callback => callback(event));
+		subscribers.forEach((callback) => callback(event));
 	}
 
 	/**
@@ -36,14 +36,14 @@ function createSSEStore() {
 
 		// Create manager with configuration
 		manager = new SSEManager(`${API_BASE_URL}/hosts/events`, {
-			initialRetryDelay: 1000,  // Start with 1s
-			maxRetryDelay: 30000,     // Cap at 30s
-			maxRetries: Infinity,     // Retry indefinitely
+			initialRetryDelay: 1000, // Start with 1s
+			maxRetryDelay: 30000, // Cap at 30s
+			maxRetries: Infinity // Retry indefinitely
 		});
 
 		// Register state change callback
 		manager.onStateChange((state) => {
-			update(s => ({
+			update((s) => ({
 				...s,
 				connectionState: state,
 				reconnectAttempts: state === 'reconnecting' ? s.reconnectAttempts + 1 : 0
@@ -53,7 +53,7 @@ function createSSEStore() {
 		// Register error callback
 		manager.onError((error) => {
 			const errorMessage = error instanceof Error ? error.message : 'SSE connection error';
-			update(s => ({
+			update((s) => ({
 				...s,
 				lastError: errorMessage
 			}));
@@ -149,7 +149,7 @@ function createSSEStore() {
 		 * Clear error
 		 */
 		clearError(): void {
-			update(s => ({ ...s, lastError: null }));
+			update((s) => ({ ...s, lastError: null }));
 		}
 	};
 }
@@ -157,7 +157,10 @@ function createSSEStore() {
 export const sseStore = createSSEStore();
 
 // Derived stores for convenience
-export const sseConnectionState = derived(sseStore, $store => $store.connectionState);
-export const sseIsConnected = derived(sseStore, $store => $store.connectionState === 'connected');
-export const sseIsReconnecting = derived(sseStore, $store => $store.connectionState === 'reconnecting');
-export const sseLastError = derived(sseStore, $store => $store.lastError);
+export const sseConnectionState = derived(sseStore, ($store) => $store.connectionState);
+export const sseIsConnected = derived(sseStore, ($store) => $store.connectionState === 'connected');
+export const sseIsReconnecting = derived(
+	sseStore,
+	($store) => $store.connectionState === 'reconnecting'
+);
+export const sseLastError = derived(sseStore, ($store) => $store.lastError);

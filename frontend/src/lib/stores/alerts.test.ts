@@ -3,11 +3,11 @@ import { get } from 'svelte/store';
 
 vi.mock('$lib/api', () => ({
 	getDroppedMetrics: vi.fn(),
-	getActiveIncidents: vi.fn(),
+	getActiveIncidents: vi.fn()
 }));
 
 vi.mock('$lib/utils', () => ({
-	logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() },
+	logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() }
 }));
 
 import { alertsStore, alertCount } from './alerts';
@@ -17,7 +17,12 @@ const mockGetDroppedMetrics = vi.mocked(getDroppedMetrics);
 const mockGetActiveIncidents = vi.mocked(getActiveIncidents);
 
 function makeDroppedMetric(hostId: string) {
-	return { host_id: hostId, host_name: `host-${hostId}`, dropped_at: new Date().toISOString(), reason: 'test' };
+	return {
+		host_id: hostId,
+		host_name: `host-${hostId}`,
+		dropped_at: new Date().toISOString(),
+		reason: 'test'
+	};
 }
 
 function makeIncident(id: string) {
@@ -31,7 +36,7 @@ function makeIncident(id: string) {
 		threshold: 90,
 		current_value: 95,
 		started_at: new Date().toISOString(),
-		acknowledged: false,
+		acknowledged: false
 	};
 }
 
@@ -102,7 +107,9 @@ describe('alertCount derived store', () => {
 
 	it('reflects number of active incidents', async () => {
 		expect(get(alertCount)).toBe(0);
-		mockGetActiveIncidents.mockResolvedValueOnce({ incidents: [makeIncident('i1'), makeIncident('i2')] });
+		mockGetActiveIncidents.mockResolvedValueOnce({
+			incidents: [makeIncident('i1'), makeIncident('i2')]
+		});
 		await alertsStore.loadIncidents();
 		expect(get(alertCount)).toBe(2);
 	});

@@ -40,22 +40,24 @@ function createAggregatedStore() {
 	async function load(timeRange: TimeRange): Promise<void> {
 		if (loadInFlight) return;
 		loadInFlight = true;
-		update(state => ({ ...state, loading: true, error: null, timeRange }));
+		update((state) => ({ ...state, loading: true, error: null, timeRange }));
 
 		try {
 			const data = await getAggregatedMetrics(timeRange);
 			const metricsArray = data.metrics || [];
 
-			update(state => ({
+			update((state) => ({
 				...state,
 				metrics: metricsArray,
 				// Initialize latestMetric from loaded data if not yet set
-				latestMetric: state.latestMetric || (metricsArray.length > 0 ? metricsArray[metricsArray.length - 1] : null),
+				latestMetric:
+					state.latestMetric ||
+					(metricsArray.length > 0 ? metricsArray[metricsArray.length - 1] : null),
 				loading: false
 			}));
 		} catch (err) {
 			const error = err instanceof Error ? err.message : 'Failed to load aggregated metrics';
-			update(state => ({ ...state, loading: false, error }));
+			update((state) => ({ ...state, loading: false, error }));
 			logger.error('Failed to load aggregated metrics:', err);
 		} finally {
 			loadInFlight = false;
@@ -71,7 +73,7 @@ function createAggregatedStore() {
 			let shouldReload = false;
 			let reloadTimeRange: TimeRange = '1h';
 
-			update(state => {
+			update((state) => {
 				// Always update latestMetric for real-time stats cards
 				const newState = { ...state, latestMetric: metric };
 
@@ -110,7 +112,7 @@ function createAggregatedStore() {
 
 		// Change time range
 		setTimeRange(timeRange: TimeRange): void {
-			update(state => ({ ...state, timeRange }));
+			update((state) => ({ ...state, timeRange }));
 		},
 
 		// Clear all data
@@ -129,8 +131,8 @@ function createAggregatedStore() {
 export const aggregatedStore = createAggregatedStore();
 
 // Derived stores for convenience
-export const aggregatedMetrics = derived(aggregatedStore, $store => $store.metrics);
-export const currentTimeRange = derived(aggregatedStore, $store => $store.timeRange);
+export const aggregatedMetrics = derived(aggregatedStore, ($store) => $store.metrics);
+export const currentTimeRange = derived(aggregatedStore, ($store) => $store.timeRange);
 
 // Derived store for computed stats (memoized to avoid recalculation on irrelevant store changes)
 let cachedStats: ReturnType<typeof computeStats> | null = null;
@@ -138,11 +140,7 @@ let cachedLastPoint: AggregatedMetric | null = null;
 let cachedOnlineCount = -1;
 let cachedTotalCount = -1;
 
-function computeStats(
-	lastPoint: AggregatedMetric | null,
-	totalHosts: number,
-	onlineHosts: number
-) {
+function computeStats(lastPoint: AggregatedMetric | null, totalHosts: number, onlineHosts: number) {
 	const avgCPU = lastPoint?.cpu_usage_percent || 0;
 	const totalMemory = lastPoint?.memory_total_bytes || 0;
 	const usedMemory = lastPoint?.memory_used_bytes || 0;
@@ -167,7 +165,7 @@ function computeStats(
 		usedDisk,
 		loadAvg,
 		loadAvg5,
-		loadAvg15,
+		loadAvg15
 	};
 }
 

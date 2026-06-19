@@ -49,7 +49,7 @@ function createUserStore() {
 
 		// Load current user from API
 		async load(): Promise<void> {
-			update(state => ({ ...state, loading: true, error: null }));
+			update((state) => ({ ...state, loading: true, error: null }));
 
 			try {
 				const userData = await getCurrentUser();
@@ -62,14 +62,14 @@ function createUserStore() {
 				applyTheme(theme);
 				themeStore.set(theme);
 
-				update(state => ({
+				update((state) => ({
 					...state,
 					user,
 					loading: false
 				}));
 			} catch (err) {
 				const error = err instanceof Error ? err.message : 'Failed to load user';
-				update(state => ({ ...state, loading: false, error }));
+				update((state) => ({ ...state, loading: false, error }));
 				throw err;
 			}
 		},
@@ -82,20 +82,30 @@ function createUserStore() {
 				applyTheme(payload.theme as Theme);
 			}
 
-			update(state => {
+			update((state) => {
 				if (!state.user) return state;
 				return {
 					...state,
 					user: {
 						...state.user,
-						...(payload.default_time_range && { default_time_range: payload.default_time_range as TimeRange }),
+						...(payload.default_time_range && {
+							default_time_range: payload.default_time_range as TimeRange
+						}),
 						...(payload.theme && { theme: payload.theme as Theme }),
 						...(payload.time_format && { time_format: payload.time_format as User['time_format'] }),
-						...(payload.temperature_unit && { temperature_unit: payload.temperature_unit as User['temperature_unit'] }),
-						...(payload.network_unit && { network_unit: payload.network_unit as User['network_unit'] }),
+						...(payload.temperature_unit && {
+							temperature_unit: payload.temperature_unit as User['temperature_unit']
+						}),
+						...(payload.network_unit && {
+							network_unit: payload.network_unit as User['network_unit']
+						}),
 						...(payload.disk_unit && { disk_unit: payload.disk_unit as User['disk_unit'] }),
-						...(payload.gauge_warning_threshold !== undefined && { gauge_warning_threshold: payload.gauge_warning_threshold }),
-						...(payload.gauge_critical_threshold !== undefined && { gauge_critical_threshold: payload.gauge_critical_threshold })
+						...(payload.gauge_warning_threshold !== undefined && {
+							gauge_warning_threshold: payload.gauge_warning_threshold
+						}),
+						...(payload.gauge_critical_threshold !== undefined && {
+							gauge_critical_threshold: payload.gauge_critical_threshold
+						})
 					}
 				};
 			});
@@ -103,7 +113,7 @@ function createUserStore() {
 			try {
 				const res = await updatePreferences(payload);
 				// Sync store with server response to ensure consistency
-				update(state => ({ ...state, user: res.user }));
+				update((state) => ({ ...state, user: res.user }));
 				if (res.user.theme) {
 					themeStore.set(res.user.theme);
 					applyTheme(res.user.theme);
@@ -118,14 +128,14 @@ function createUserStore() {
 		async updateTheme(theme: Theme): Promise<void> {
 			applyTheme(theme);
 			themeStore.set(theme);
-			update(state => {
+			update((state) => {
 				if (state.user) return { ...state, user: { ...state.user, theme } };
 				return state;
 			});
 
 			try {
 				const res = await updatePreferences({ theme });
-				update(state => ({ ...state, user: res.user }));
+				update((state) => ({ ...state, user: res.user }));
 			} catch (err) {
 				logger.error('Failed to update theme:', err);
 			}
@@ -133,7 +143,7 @@ function createUserStore() {
 
 		// Update user in store directly (e.g. from API response)
 		setUser(user: User): void {
-			update(state => ({ ...state, user }));
+			update((state) => ({ ...state, user }));
 		},
 
 		// Clear user data (logout)
@@ -147,5 +157,5 @@ function createUserStore() {
 export const userStore = createUserStore();
 
 // Derived stores for convenience
-export const currentUser = derived(userStore, $store => $store.user);
-export const userLoading = derived(userStore, $store => $store.loading);
+export const currentUser = derived(userStore, ($store) => $store.user);
+export const userLoading = derived(userStore, ($store) => $store.loading);

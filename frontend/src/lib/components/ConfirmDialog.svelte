@@ -10,7 +10,7 @@
 		onClose,
 		confirmLabel = 'Confirm',
 		confirmVariant = 'primary',
-		children,
+		children
 	}: {
 		open: boolean;
 		title: string;
@@ -27,7 +27,10 @@
 	{@render children()}
 	<div class="flex gap-3 justify-end mt-6">
 		<Button variant="outline" onclick={onClose}>Cancel</Button>
-		<Button variant={confirmVariant === 'destructive' ? 'destructive' : 'default'} onclick={onConfirm}>
+		<Button
+			variant={confirmVariant === 'destructive' ? 'destructive' : 'default'}
+			onclick={onConfirm}
+		>
 			{confirmLabel}
 		</Button>
 	</div>

@@ -10,23 +10,27 @@ function createToastStore(): ToastStore {
 
 	return {
 		subscribe,
-		add: (message: string, type: ToastType = 'info', duration: number = TOAST_DEFAULT_DURATION): number => {
+		add: (
+			message: string,
+			type: ToastType = 'info',
+			duration: number = TOAST_DEFAULT_DURATION
+		): number => {
 			const id = nextId++;
 			const toast: Toast = { id, message, type };
 
-			update(toasts => [...toasts, toast]);
+			update((toasts) => [...toasts, toast]);
 
 			// Auto-remove after duration
 			if (duration > 0) {
 				setTimeout(() => {
-					update(toasts => toasts.filter(t => t.id !== id));
+					update((toasts) => toasts.filter((t) => t.id !== id));
 				}, duration);
 			}
 
 			return id;
 		},
 		remove: (id: number): void => {
-			update(toasts => toasts.filter(t => t.id !== id));
+			update((toasts) => toasts.filter((t) => t.id !== id));
 		},
 		clear: (): void => {
 			update(() => []);

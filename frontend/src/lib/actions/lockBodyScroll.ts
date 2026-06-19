@@ -17,6 +17,6 @@ export const lockBodyScroll: Action = () => {
 			if (lockCount === 0) {
 				document.body.style.overflow = previousOverflow;
 			}
-		},
+		}
 	};
 };

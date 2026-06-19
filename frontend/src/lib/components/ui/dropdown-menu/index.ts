@@ -1,7 +1,7 @@
-import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-import Content from "./dropdown-menu-content.svelte";
-import Item from "./dropdown-menu-item.svelte";
-import Separator from "./dropdown-menu-separator.svelte";
+import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+import Content from './dropdown-menu-content.svelte';
+import Item from './dropdown-menu-item.svelte';
+import Separator from './dropdown-menu-separator.svelte';
 
 const Root = DropdownMenuPrimitive.Root;
 const Trigger = DropdownMenuPrimitive.Trigger;
@@ -23,5 +23,5 @@ export {
 	Item as DropdownMenuItem,
 	Separator as DropdownMenuSeparator,
 	RadioGroup as DropdownMenuRadioGroup,
-	RadioItem as DropdownMenuRadioItem,
+	RadioItem as DropdownMenuRadioItem
 };

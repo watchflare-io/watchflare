@@ -25,25 +25,25 @@
 			label: '1 min',
 			stroke: 'var(--chart-4)',
 			width: 2,
-			value: (_u: uPlot, v: number | null) => v != null ? v.toFixed(2) : '—',
+			value: (_u: uPlot, v: number | null) => (v != null ? v.toFixed(2) : '—')
 		},
 		{
 			label: '5 min',
 			stroke: 'var(--chart-19)',
 			width: 2,
-			value: (_u: uPlot, v: number | null) => v != null ? v.toFixed(2) : '—',
+			value: (_u: uPlot, v: number | null) => (v != null ? v.toFixed(2) : '—')
 		},
 		{
 			label: '15 min',
 			stroke: 'var(--chart-6)',
 			width: 2,
-			value: (_u: uPlot, v: number | null) => v != null ? v.toFixed(2) : '—',
-		},
+			value: (_u: uPlot, v: number | null) => (v != null ? v.toFixed(2) : '—')
+		}
 	];
 
 	const axes: uPlot.Axis[] = [
 		{},
-		{ values: (_u: uPlot, ticks: number[]) => ticks.map(v => v.toFixed(1)) }
+		{ values: (_u: uPlot, ticks: number[]) => ticks.map((v) => v.toFixed(1)) }
 	];
 </script>
 

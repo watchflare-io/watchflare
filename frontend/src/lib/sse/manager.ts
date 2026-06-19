@@ -5,44 +5,49 @@ import { logger } from '../utils';
 /**
  * Connection states for SSE
  */
-export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
+export type ConnectionState =
+	| 'disconnected'
+	| 'connecting'
+	| 'connected'
+	| 'reconnecting'
+	| 'error';
 
 /**
  * Minified sensor reading format from backend SSE
  */
 interface MinifiedSensorReading {
-	k: string;  // sensor key
-	v: number;  // temperature_celsius
+	k: string; // sensor key
+	v: number; // temperature_celsius
 }
 
 /**
  * Minified metrics format from backend SSE
  */
 interface MinifiedMetrics {
-	h: string;       // host_id
-	t: number;       // timestamp (Unix epoch)
-	c: number;       // cpu_usage_percent
-	iw: number;      // cpu_iowait_percent (Linux only)
-	sl: number;      // cpu_steal_percent (Linux VMs only)
-	mu: number;      // memory_used_bytes
-	mt: number;      // memory_total_bytes
-	ma: number;      // memory_available_bytes
-	mb: number;      // memory_buffers_bytes (Linux only)
-	mc: number;      // memory_cached_bytes (Linux only)
-	st: number;      // swap_total_bytes
-	su: number;      // swap_used_bytes
-	du: number;      // disk_used_bytes
-	dt: number;      // disk_total_bytes
-	l1: number;      // load_avg_1min
-	l5: number;      // load_avg_5min
-	l15: number;     // load_avg_15min
-	dr: number;      // disk_read_bytes_per_sec
-	dw: number;      // disk_write_bytes_per_sec
-	nr: number;      // network_rx_bytes_per_sec
-	nt: number;      // network_tx_bytes_per_sec
-	tmp: number;     // cpu_temperature_celsius
-	u: number;       // uptime_seconds
-	pr: number;      // processes_count
+	h: string; // host_id
+	t: number; // timestamp (Unix epoch)
+	c: number; // cpu_usage_percent
+	iw: number; // cpu_iowait_percent (Linux only)
+	sl: number; // cpu_steal_percent (Linux VMs only)
+	mu: number; // memory_used_bytes
+	mt: number; // memory_total_bytes
+	ma: number; // memory_available_bytes
+	mb: number; // memory_buffers_bytes (Linux only)
+	mc: number; // memory_cached_bytes (Linux only)
+	st: number; // swap_total_bytes
+	su: number; // swap_used_bytes
+	du: number; // disk_used_bytes
+	dt: number; // disk_total_bytes
+	l1: number; // load_avg_1min
+	l5: number; // load_avg_5min
+	l15: number; // load_avg_15min
+	dr: number; // disk_read_bytes_per_sec
+	dw: number; // disk_write_bytes_per_sec
+	nr: number; // network_rx_bytes_per_sec
+	nt: number; // network_tx_bytes_per_sec
+	tmp: number; // cpu_temperature_celsius
+	u: number; // uptime_seconds
+	pr: number; // processes_count
 	sr?: MinifiedSensorReading[]; // all sensor readings
 }
 
@@ -50,33 +55,36 @@ interface MinifiedMetrics {
  * Minified container metrics format from backend SSE
  */
 interface MinifiedContainerMetric {
-	i: string;    // container_id
-	n: string;    // container_name
-	c: number;    // cpu_percent
-	mu: number;   // memory_used_bytes
-	ml: number;   // memory_limit_bytes
-	nr: number;   // network_rx_bytes_per_sec
-	nt: number;   // network_tx_bytes_per_sec
-	r?: string;   // runtime ("docker", "podman")
-	st?: string;  // status ("Up 2 hours")
-	hl?: string;  // health ("healthy", "unhealthy", "starting", "")
-	po?: string;  // ports ("8080:80/tcp, 443:443/tcp")
+	i: string; // container_id
+	n: string; // container_name
+	c: number; // cpu_percent
+	mu: number; // memory_used_bytes
+	ml: number; // memory_limit_bytes
+	nr: number; // network_rx_bytes_per_sec
+	nt: number; // network_tx_bytes_per_sec
+	r?: string; // runtime ("docker", "podman")
+	st?: string; // status ("Up 2 hours")
+	hl?: string; // health ("healthy", "unhealthy", "starting", "")
+	po?: string; // ports ("8080:80/tcp, 443:443/tcp")
 }
 
 interface MinifiedContainerMetricsUpdate {
-	h: string;   // host_id
-	t: number;   // timestamp (Unix epoch)
+	h: string; // host_id
+	t: number; // timestamp (Unix epoch)
 	m: MinifiedContainerMetric[];
 }
 
 /**
  * Decode minified container metrics to full format
  */
-function decodeMinifiedContainerMetrics(minified: MinifiedContainerMetricsUpdate): { host_id: string; metrics: ContainerMetric[] } {
+function decodeMinifiedContainerMetrics(minified: MinifiedContainerMetricsUpdate): {
+	host_id: string;
+	metrics: ContainerMetric[];
+} {
 	const timestamp = new Date(minified.t * 1000).toISOString();
 	return {
 		host_id: minified.h,
-		metrics: minified.m.map(cm => ({
+		metrics: minified.m.map((cm) => ({
 			id: '',
 			host_id: minified.h,
 			timestamp,
@@ -91,7 +99,7 @@ function decodeMinifiedContainerMetrics(minified: MinifiedContainerMetricsUpdate
 			runtime: cm.r ?? '',
 			status: cm.st ?? '',
 			health: cm.hl ?? '',
-			ports: cm.po ?? '',
+			ports: cm.po ?? ''
 		}))
 	};
 }
@@ -100,7 +108,7 @@ function decodeMinifiedContainerMetrics(minified: MinifiedContainerMetricsUpdate
  * Decode minified SSE metrics format to full format
  */
 export function decodeMinifiedMetrics(minified: MinifiedMetrics): Metric {
-	const sensorReadings: SensorReading[] | undefined = minified.sr?.map(sr => ({
+	const sensorReadings: SensorReading[] | undefined = minified.sr?.map((sr) => ({
 		key: sr.k,
 		temperature_celsius: sr.v
 	}));
@@ -171,7 +179,7 @@ export class SSEManager {
 		this.config = {
 			initialRetryDelay: config.initialRetryDelay ?? 1000,
 			maxRetryDelay: config.maxRetryDelay ?? 30000,
-			maxRetries: config.maxRetries ?? Infinity,
+			maxRetries: config.maxRetries ?? Infinity
 		};
 		this.retryDelay = this.config.initialRetryDelay;
 	}

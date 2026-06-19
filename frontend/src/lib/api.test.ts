@@ -108,7 +108,9 @@ describe('login', () => {
 	});
 
 	it('throws ApiError on invalid credentials', async () => {
-		mockFetch.mockReturnValueOnce(jsonResponse({ error: 'invalid credentials' }, 401, 'Unauthorized'));
+		mockFetch.mockReturnValueOnce(
+			jsonResponse({ error: 'invalid credentials' }, 401, 'Unauthorized')
+		);
 		const { login } = await import('./api');
 
 		try {
@@ -122,7 +124,9 @@ describe('login', () => {
 	});
 
 	it('does not redirect on 401 (skipAuthRedirect)', async () => {
-		mockFetch.mockReturnValueOnce(jsonResponse({ error: 'invalid credentials' }, 401, 'Unauthorized'));
+		mockFetch.mockReturnValueOnce(
+			jsonResponse({ error: 'invalid credentials' }, 401, 'Unauthorized')
+		);
 		const { login } = await import('./api');
 
 		await login('test@example.com', 'wrong').catch(() => {});
@@ -174,10 +178,7 @@ describe('listHosts', () => {
 
 		await listHosts({ page: 2, perPage: 10 });
 
-		expect(mockFetch).toHaveBeenCalledWith(
-			'/api/v1/hosts?page=2&per_page=10',
-			expect.anything()
-		);
+		expect(mockFetch).toHaveBeenCalledWith('/api/v1/hosts?page=2&per_page=10', expect.anything());
 	});
 });
 
@@ -192,7 +193,11 @@ describe('createHost', () => {
 			'/api/v1/hosts',
 			expect.objectContaining({
 				method: 'POST',
-				body: JSON.stringify({ display_name: 'web-01', configured_ip: '192.168.1.1', allow_any_ip: false })
+				body: JSON.stringify({
+					display_name: 'web-01',
+					configured_ip: '192.168.1.1',
+					allow_any_ip: false
+				})
 			})
 		);
 	});
@@ -272,7 +277,9 @@ describe('error handling (via login)', () => {
 	});
 
 	it('throws ApiError with server error message', async () => {
-		mockFetch.mockReturnValueOnce(jsonResponse({ error: 'rate limited' }, 429, 'Too Many Requests'));
+		mockFetch.mockReturnValueOnce(
+			jsonResponse({ error: 'rate limited' }, 429, 'Too Many Requests')
+		);
 		const { login } = await import('./api');
 
 		try {

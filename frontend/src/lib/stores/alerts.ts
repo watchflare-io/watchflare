@@ -15,28 +15,28 @@ function createAlertsStore() {
 		droppedMetrics: [],
 		activeIncidents: [],
 		loading: false,
-		error: null,
+		error: null
 	});
 
 	return {
 		subscribe,
 
 		async load(): Promise<void> {
-			update(state => ({ ...state, loading: true, error: null }));
+			update((state) => ({ ...state, loading: true, error: null }));
 			try {
 				const data = await getDroppedMetrics();
-				update(state => ({
+				update((state) => ({
 					...state,
 					droppedMetrics: data.dropped_metrics || [],
 					loading: false,
-					error: null,
+					error: null
 				}));
 			} catch (err) {
 				logger.error('Failed to load dropped metrics:', err);
-				update(state => ({
+				update((state) => ({
 					...state,
 					loading: false,
-					error: err instanceof Error ? err.message : 'Failed to load alerts',
+					error: err instanceof Error ? err.message : 'Failed to load alerts'
 				}));
 			}
 		},
@@ -44,7 +44,7 @@ function createAlertsStore() {
 		async loadIncidents(): Promise<void> {
 			try {
 				const data = await getActiveIncidents();
-				update(state => ({ ...state, activeIncidents: data.incidents }));
+				update((state) => ({ ...state, activeIncidents: data.incidents }));
 			} catch (err) {
 				logger.error('Failed to load active incidents:', err);
 			}
@@ -52,9 +52,9 @@ function createAlertsStore() {
 
 		clear(): void {
 			set({ droppedMetrics: [], activeIncidents: [], loading: false, error: null });
-		},
+		}
 	};
 }
 
 export const alertsStore = createAlertsStore();
-export const alertCount = derived(alertsStore, $s => $s.activeIncidents.length);
+export const alertCount = derived(alertsStore, ($s) => $s.activeIncidents.length);

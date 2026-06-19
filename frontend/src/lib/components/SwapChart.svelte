@@ -40,15 +40,15 @@
 			fill: 'var(--chart-17)',
 			width: 2,
 			fillTo: 0,
-			value: (_u: uPlot, v: number | null) => v != null ? formatBytes(v) : '—',
+			value: (_u: uPlot, v: number | null) => (v != null ? formatBytes(v) : '—')
 		}
 	];
 
 	const axes: uPlot.Axis[] = [
 		{},
 		{
-			values: (_u: uPlot, vals: number[]) => vals.map(v => formatBytes(v)),
-			size: 70,
+			values: (_u: uPlot, vals: number[]) => vals.map((v) => formatBytes(v)),
+			size: 70
 		}
 	];
 </script>

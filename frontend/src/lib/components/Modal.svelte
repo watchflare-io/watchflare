@@ -3,7 +3,11 @@
 	import { fade } from 'svelte/transition';
 	import { lockBodyScroll } from '$lib/actions/lockBodyScroll';
 
-	const { open, onClose, children }: {
+	const {
+		open,
+		onClose,
+		children
+	}: {
 		open: boolean;
 		onClose: () => void;
 		children: Snippet;

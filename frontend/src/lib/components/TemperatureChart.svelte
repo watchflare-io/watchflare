@@ -6,7 +6,11 @@
 	import type { Metric, SensorDataPoint, TimeRange } from '$lib/types';
 	import type uPlot from 'uplot';
 
-	let { data = [], hostId, timeRange }: {
+	let {
+		data = [],
+		hostId,
+		timeRange
+	}: {
 		data: Metric[];
 		hostId: string;
 		timeRange?: TimeRange;
@@ -16,17 +20,16 @@
 
 	function fmtTemp(v: number | null): string {
 		if (v == null) return '—';
-		if (tempUnit === 'fahrenheit') return `${(v * 9 / 5 + 32).toFixed(1)}°F`;
+		if (tempUnit === 'fahrenheit') return `${((v * 9) / 5 + 32).toFixed(1)}°F`;
 		return `${v.toFixed(1)}°C`;
 	}
-
 
 	// CPU-related sensor patterns (sorted first in the legend)
 	const CPU_PATTERNS = ['tdie', 'coretemp', 'k10temp', 'cpu', 'package', 'tctl'];
 
 	function isCPUKey(key: string): boolean {
 		const lower = key.toLowerCase();
-		return CPU_PATTERNS.some(p => lower.includes(p));
+		return CPU_PATTERNS.some((p) => lower.includes(p));
 	}
 
 	// For aggregated views (>1h), fetch sensor readings from the dedicated endpoint
@@ -37,11 +40,14 @@
 			fetchedSensorData = null;
 			return;
 		}
-		api.getSensorReadings(hostId, timeRange).then(res => {
-			fetchedSensorData = res.data ?? null;
-		}).catch(() => {
-			fetchedSensorData = null;
-		});
+		api
+			.getSensorReadings(hostId, timeRange)
+			.then((res) => {
+				fetchedSensorData = res.data ?? null;
+			})
+			.catch(() => {
+				fetchedSensorData = null;
+			});
 	});
 
 	// Active source: fetched data for >1h, inline sensor_readings for 1h
@@ -78,7 +84,7 @@
 			const seriesArrays: (number | null)[][] = sensorKeys.map(() => []);
 			for (const d of activeData) {
 				timestamps.push(new Date(d.timestamp).getTime() / 1000);
-				const readingMap = new Map(d.sensor_readings.map(sr => [sr.key, sr.temperature_celsius]));
+				const readingMap = new Map(d.sensor_readings.map((sr) => [sr.key, sr.temperature_celsius]));
 				for (let i = 0; i < sensorKeys.length; i++) {
 					const val = readingMap.get(sensorKeys[i]);
 					seriesArrays[i].push(val != null ? val : null);
@@ -96,14 +102,18 @@
 			for (const d of data) {
 				timestamps.push(new Date(d.timestamp).getTime() / 1000);
 				if (d.sensor_readings && d.sensor_readings.length > 0) {
-					const readingMap = new Map(d.sensor_readings.map(sr => [sr.key, sr.temperature_celsius]));
+					const readingMap = new Map(
+						d.sensor_readings.map((sr) => [sr.key, sr.temperature_celsius])
+					);
 					for (let i = 0; i < sensorKeys.length; i++) {
 						const val = readingMap.get(sensorKeys[i]);
 						seriesArrays[i].push(val != null ? val : null);
 					}
 				} else {
 					for (let i = 0; i < sensorKeys.length; i++) {
-						seriesArrays[i].push(i === 0 && d.cpu_temperature_celsius > 0 ? d.cpu_temperature_celsius : null);
+						seriesArrays[i].push(
+							i === 0 && d.cpu_temperature_celsius > 0 ? d.cpu_temperature_celsius : null
+						);
 					}
 				}
 			}
@@ -123,26 +133,30 @@
 
 	const series = $derived(
 		hasSensorReadings
-			? sensorKeys.map((key, i): uPlot.Series => ({
-				label: key,
-				stroke: dynamicChartColor(i, sensorKeys.length),
-				width: 2,
-				value: (_u: uPlot, v: number | null) => fmtTemp(v),
-			}))
-			: [{
-				label: 'CPU Temp',
-				stroke: dynamicChartColor(0, 1),
-				fill: dynamicChartColor(0, 1),
-				width: 2,
-				value: (_u: uPlot, v: number | null) => fmtTemp(v),
-			}] as uPlot.Series[]
+			? sensorKeys.map(
+					(key, i): uPlot.Series => ({
+						label: key,
+						stroke: dynamicChartColor(i, sensorKeys.length),
+						width: 2,
+						value: (_u: uPlot, v: number | null) => fmtTemp(v)
+					})
+				)
+			: ([
+					{
+						label: 'CPU Temp',
+						stroke: dynamicChartColor(0, 1),
+						fill: dynamicChartColor(0, 1),
+						width: 2,
+						value: (_u: uPlot, v: number | null) => fmtTemp(v)
+					}
+				] as uPlot.Series[])
 	);
 
 	const axes = $derived<uPlot.Axis[]>([
 		{},
 		{
 			size: 68,
-			values: (_u: uPlot, ticks: number[]) => ticks.map(v => fmtTemp(v)),
+			values: (_u: uPlot, ticks: number[]) => ticks.map((v) => fmtTemp(v))
 		}
 	]);
 

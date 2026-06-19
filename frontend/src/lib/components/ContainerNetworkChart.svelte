@@ -5,7 +5,11 @@
 	import type { TimeRange } from '$lib/types';
 	import type uPlot from 'uplot';
 
-	let { pivotedData = [], seriesKeys = [], timeRange }: {
+	let {
+		pivotedData = [],
+		seriesKeys = [],
+		timeRange
+	}: {
 		pivotedData: Record<string, unknown>[];
 		seriesKeys: string[];
 		timeRange?: TimeRange;
@@ -21,27 +25,29 @@
 			timestamps.push((row.date as Date).getTime() / 1000);
 			for (let i = 0; i < seriesKeys.length; i++) {
 				const val = row[seriesKeys[i]];
-				columns[i].push(val != null ? val as number : null);
+				columns[i].push(val != null ? (val as number) : null);
 			}
 		}
 		return [timestamps, ...columns] as uPlot.AlignedData;
 	});
 
 	let series = $derived(
-		seriesKeys.map((key, i): uPlot.Series => ({
-			label: key,
-			stroke: dynamicChartColor(i, seriesKeys.length, 240),
-			fill: dynamicChartColor(i, seriesKeys.length, 240),
-			width: 2,
-			value: (_u: uPlot, v: number | null) => v != null ? formatRate(v, networkUnit) : '—',
-		}))
+		seriesKeys.map(
+			(key, i): uPlot.Series => ({
+				label: key,
+				stroke: dynamicChartColor(i, seriesKeys.length, 240),
+				fill: dynamicChartColor(i, seriesKeys.length, 240),
+				width: 2,
+				value: (_u: uPlot, v: number | null) => (v != null ? formatRate(v, networkUnit) : '—')
+			})
+		)
 	);
 
 	const axes = $derived<uPlot.Axis[]>([
 		{},
 		{
-			values: (_u: uPlot, ticks: number[]) => ticks.map(v => formatRate(v, networkUnit)),
-			size: networkUnit === 'bits' ? 88 : 70,
+			values: (_u: uPlot, ticks: number[]) => ticks.map((v) => formatRate(v, networkUnit)),
+			size: networkUnit === 'bits' ? 88 : 70
 		}
 	]);
 </script>

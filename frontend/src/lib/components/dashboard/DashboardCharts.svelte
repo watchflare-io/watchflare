@@ -19,7 +19,7 @@
 	const {
 		aggregatedMetrics,
 		stats,
-		timeRange,
+		timeRange
 	}: {
 		aggregatedMetrics: AggregatedMetric[];
 		stats: Stats;
@@ -48,7 +48,9 @@
 			<h3 class="text-sm font-medium">Memory Usage</h3>
 			<span class="text-xs text-muted-foreground tabular-nums">
 				<span class="sm:hidden">{formatPercent(memoryPct)}</span>
-				<span class="hidden sm:inline">{formatBytes(stats.usedMemory)} / {formatBytes(stats.totalMemory)}</span>
+				<span class="hidden sm:inline"
+					>{formatBytes(stats.usedMemory)} / {formatBytes(stats.totalMemory)}</span
+				>
 			</span>
 		</div>
 		<MemoryChart data={aggregatedMetrics} {timeRange} />
@@ -67,7 +69,11 @@
 	<div class="rounded-lg border bg-card p-4">
 		<div class="mb-3 flex items-center justify-between">
 			<h3 class="text-sm font-medium">Load Average</h3>
-			<span class="text-xs text-muted-foreground tabular-nums">{stats.loadAvg.toFixed(2)} · {stats.loadAvg5.toFixed(2)} · {stats.loadAvg15.toFixed(2)}</span>
+			<span class="text-xs text-muted-foreground tabular-nums"
+				>{stats.loadAvg.toFixed(2)} · {stats.loadAvg5.toFixed(2)} · {stats.loadAvg15.toFixed(
+					2
+				)}</span
+			>
 		</div>
 		<LoadChart data={aggregatedMetrics} {timeRange} />
 	</div>

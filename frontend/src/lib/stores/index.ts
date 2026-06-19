@@ -24,19 +24,14 @@ export {
 	hosts,
 	onlineHosts,
 	offlineHosts,
-	hostsLoading,
+	hostsLoading
 } from './hosts';
 
 // Metrics store
 export { metricsStore, metricsData, latestMetrics } from './metrics';
 
 // Aggregated metrics store
-export {
-	aggregatedStore,
-	aggregatedMetrics,
-	currentTimeRange,
-	dashboardStats
-} from './aggregated';
+export { aggregatedStore, aggregatedMetrics, currentTimeRange, dashboardStats } from './aggregated';
 
 // Alerts store
 export { alertsStore, alertCount } from './alerts';

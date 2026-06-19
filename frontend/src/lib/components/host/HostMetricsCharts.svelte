@@ -21,7 +21,7 @@
 		hostId,
 		metrics,
 		containerMetrics = [],
-		timeRange = $bindable(),
+		timeRange = $bindable()
 	}: {
 		hostId: string;
 		metrics: Metric[];
@@ -36,42 +36,43 @@
 	const hasContainerData = $derived(containerMetrics.length > 0);
 
 	// Compute container names once
-	const containerNames = $derived(
-		[...new Set(containerMetrics.map((d) => d.container_name))]
-	);
+	const containerNames = $derived([...new Set(containerMetrics.map((d) => d.container_name))]);
 
 	// Pivot container data once, reused by all 3 charts
-	const containerPivots = $derived((() => {
-		if (containerMetrics.length === 0) return { cpu: [], memory: [], network: [], networkKeys: [] };
+	const containerPivots = $derived(
+		(() => {
+			if (containerMetrics.length === 0)
+				return { cpu: [], memory: [], network: [], networkKeys: [] };
 
-		const cpuByTs = new Map<string, Record<string, unknown>>();
-		const memByTs = new Map<string, Record<string, unknown>>();
-		const netByTs = new Map<string, Record<string, unknown>>();
+			const cpuByTs = new Map<string, Record<string, unknown>>();
+			const memByTs = new Map<string, Record<string, unknown>>();
+			const netByTs = new Map<string, Record<string, unknown>>();
 
-		for (const d of containerMetrics) {
-			const ts = d.timestamp;
+			for (const d of containerMetrics) {
+				const ts = d.timestamp;
 
-			if (!cpuByTs.has(ts)) cpuByTs.set(ts, { date: new Date(ts) });
-			cpuByTs.get(ts)![d.container_name] = d.cpu_percent;
+				if (!cpuByTs.has(ts)) cpuByTs.set(ts, { date: new Date(ts) });
+				cpuByTs.get(ts)![d.container_name] = d.cpu_percent;
 
-			if (!memByTs.has(ts)) memByTs.set(ts, { date: new Date(ts) });
-			memByTs.get(ts)![d.container_name] = d.memory_used_bytes;
+				if (!memByTs.has(ts)) memByTs.set(ts, { date: new Date(ts) });
+				memByTs.get(ts)![d.container_name] = d.memory_used_bytes;
 
-			if (!netByTs.has(ts)) netByTs.set(ts, { date: new Date(ts) });
-			netByTs.get(ts)![`${d.container_name} (RX)`] = d.network_rx_bytes_per_sec;
-			netByTs.get(ts)![`${d.container_name} (TX)`] = d.network_tx_bytes_per_sec;
-		}
+				if (!netByTs.has(ts)) netByTs.set(ts, { date: new Date(ts) });
+				netByTs.get(ts)![`${d.container_name} (RX)`] = d.network_rx_bytes_per_sec;
+				netByTs.get(ts)![`${d.container_name} (TX)`] = d.network_tx_bytes_per_sec;
+			}
 
-		const sortFn = (a: Record<string, unknown>, b: Record<string, unknown>) =>
-			(a.date as Date).getTime() - (b.date as Date).getTime();
+			const sortFn = (a: Record<string, unknown>, b: Record<string, unknown>) =>
+				(a.date as Date).getTime() - (b.date as Date).getTime();
 
-		return {
-			cpu: [...cpuByTs.values()].sort(sortFn),
-			memory: [...memByTs.values()].sort(sortFn),
-			network: [...netByTs.values()].sort(sortFn),
-			networkKeys: containerNames.flatMap((name) => [`${name} (RX)`, `${name} (TX)`]),
-		};
-	})());
+			return {
+				cpu: [...cpuByTs.values()].sort(sortFn),
+				memory: [...memByTs.values()].sort(sortFn),
+				network: [...netByTs.values()].sort(sortFn),
+				networkKeys: containerNames.flatMap((name) => [`${name} (RX)`, `${name} (TX)`])
+			};
+		})()
+	);
 </script>
 
 <div class="mb-6">
@@ -84,7 +85,9 @@
 			<div class="mb-3 flex items-center justify-between">
 				<h3 class="text-sm font-medium">CPU Usage</h3>
 				{#if latestMetric}
-					<span class="text-xs text-muted-foreground">{latestMetric.cpu_usage_percent.toFixed(1)}%</span>
+					<span class="text-xs text-muted-foreground"
+						>{latestMetric.cpu_usage_percent.toFixed(1)}%</span
+					>
 				{/if}
 			</div>
 			<CPUChart data={metrics} {timeRange} />
@@ -94,8 +97,22 @@
 				<h3 class="text-sm font-medium">Memory Usage</h3>
 				{#if latestMetric}
 					<span class="text-xs text-muted-foreground">
-						<span class="sm:hidden">{formatPercent(latestMetric.memory_total_bytes > 0 ? (latestMetric.memory_used_bytes / latestMetric.memory_total_bytes) * 100 : 0)}</span>
-						<span class="hidden sm:inline">{formatBytes(latestMetric.memory_used_bytes)} / {formatBytes(latestMetric.memory_total_bytes)} ({formatPercent(latestMetric.memory_total_bytes > 0 ? (latestMetric.memory_used_bytes / latestMetric.memory_total_bytes) * 100 : 0)})</span>
+						<span class="sm:hidden"
+							>{formatPercent(
+								latestMetric.memory_total_bytes > 0
+									? (latestMetric.memory_used_bytes / latestMetric.memory_total_bytes) * 100
+									: 0
+							)}</span
+						>
+						<span class="hidden sm:inline"
+							>{formatBytes(latestMetric.memory_used_bytes)} / {formatBytes(
+								latestMetric.memory_total_bytes
+							)} ({formatPercent(
+								latestMetric.memory_total_bytes > 0
+									? (latestMetric.memory_used_bytes / latestMetric.memory_total_bytes) * 100
+									: 0
+							)})</span
+						>
 					</span>
 				{/if}
 			</div>
@@ -106,8 +123,22 @@
 				<h3 class="text-sm font-medium">Disk Usage</h3>
 				{#if latestMetric}
 					<span class="text-xs text-muted-foreground">
-						<span class="sm:hidden">{formatPercent(latestMetric.disk_total_bytes > 0 ? (latestMetric.disk_used_bytes / latestMetric.disk_total_bytes) * 100 : 0)}</span>
-						<span class="hidden sm:inline">{formatBytes(latestMetric.disk_used_bytes)} / {formatBytes(latestMetric.disk_total_bytes)} ({formatPercent(latestMetric.disk_total_bytes > 0 ? (latestMetric.disk_used_bytes / latestMetric.disk_total_bytes) * 100 : 0)})</span>
+						<span class="sm:hidden"
+							>{formatPercent(
+								latestMetric.disk_total_bytes > 0
+									? (latestMetric.disk_used_bytes / latestMetric.disk_total_bytes) * 100
+									: 0
+							)}</span
+						>
+						<span class="hidden sm:inline"
+							>{formatBytes(latestMetric.disk_used_bytes)} / {formatBytes(
+								latestMetric.disk_total_bytes
+							)} ({formatPercent(
+								latestMetric.disk_total_bytes > 0
+									? (latestMetric.disk_used_bytes / latestMetric.disk_total_bytes) * 100
+									: 0
+							)})</span
+						>
 					</span>
 				{/if}
 			</div>
@@ -118,7 +149,9 @@
 				<h3 class="text-sm font-medium">Load Average</h3>
 				{#if latestMetric}
 					<span class="text-xs text-muted-foreground">
-						{latestMetric.load_avg_1min.toFixed(2)} / {latestMetric.load_avg_5min.toFixed(2)} / {latestMetric.load_avg_15min.toFixed(2)}
+						{latestMetric.load_avg_1min.toFixed(2)} / {latestMetric.load_avg_5min.toFixed(2)} / {latestMetric.load_avg_15min.toFixed(
+							2
+						)}
 					</span>
 				{/if}
 			</div>
@@ -129,8 +162,15 @@
 				<h3 class="text-sm font-medium">Disk I/O</h3>
 				{#if latestMetric}
 					<span class="text-xs text-muted-foreground">
-						<span class="sm:hidden">{formatRate(latestMetric.disk_read_bytes_per_sec, diskUnit)}</span>
-						<span class="hidden sm:inline">R: {formatRate(latestMetric.disk_read_bytes_per_sec, diskUnit)} / W: {formatRate(latestMetric.disk_write_bytes_per_sec, diskUnit)}</span>
+						<span class="sm:hidden"
+							>{formatRate(latestMetric.disk_read_bytes_per_sec, diskUnit)}</span
+						>
+						<span class="hidden sm:inline"
+							>R: {formatRate(latestMetric.disk_read_bytes_per_sec, diskUnit)} / W: {formatRate(
+								latestMetric.disk_write_bytes_per_sec,
+								diskUnit
+							)}</span
+						>
 					</span>
 				{/if}
 			</div>
@@ -141,8 +181,15 @@
 				<h3 class="text-sm font-medium">Network</h3>
 				{#if latestMetric}
 					<span class="text-xs text-muted-foreground">
-						<span class="sm:hidden">{formatRate(latestMetric.network_rx_bytes_per_sec, networkUnit)}</span>
-						<span class="hidden sm:inline">↓ {formatRate(latestMetric.network_rx_bytes_per_sec, networkUnit)} / ↑ {formatRate(latestMetric.network_tx_bytes_per_sec, networkUnit)}</span>
+						<span class="sm:hidden"
+							>{formatRate(latestMetric.network_rx_bytes_per_sec, networkUnit)}</span
+						>
+						<span class="hidden sm:inline"
+							>↓ {formatRate(latestMetric.network_rx_bytes_per_sec, networkUnit)} / ↑ {formatRate(
+								latestMetric.network_tx_bytes_per_sec,
+								networkUnit
+							)}</span
+						>
 					</span>
 				{/if}
 			</div>
@@ -153,8 +200,22 @@
 				<div class="mb-3 flex items-center justify-between">
 					<h3 class="text-sm font-medium">Swap Usage</h3>
 					<span class="text-xs text-muted-foreground">
-						<span class="sm:hidden">{formatPercent(latestMetric.swap_total_bytes > 0 ? (latestMetric.swap_used_bytes / latestMetric.swap_total_bytes) * 100 : 0)}</span>
-						<span class="hidden sm:inline">{formatBytes(latestMetric.swap_used_bytes)} / {formatBytes(latestMetric.swap_total_bytes)} ({formatPercent(latestMetric.swap_total_bytes > 0 ? (latestMetric.swap_used_bytes / latestMetric.swap_total_bytes) * 100 : 0)})</span>
+						<span class="sm:hidden"
+							>{formatPercent(
+								latestMetric.swap_total_bytes > 0
+									? (latestMetric.swap_used_bytes / latestMetric.swap_total_bytes) * 100
+									: 0
+							)}</span
+						>
+						<span class="hidden sm:inline"
+							>{formatBytes(latestMetric.swap_used_bytes)} / {formatBytes(
+								latestMetric.swap_total_bytes
+							)} ({formatPercent(
+								latestMetric.swap_total_bytes > 0
+									? (latestMetric.swap_used_bytes / latestMetric.swap_total_bytes) * 100
+									: 0
+							)})</span
+						>
 					</span>
 				</div>
 				<SwapChart data={metrics} {timeRange} />
@@ -193,7 +254,11 @@
 				<div class="mb-3">
 					<h3 class="text-sm font-medium">Container Network</h3>
 				</div>
-				<ContainerNetworkChart pivotedData={containerPivots.network} seriesKeys={containerPivots.networkKeys} {timeRange} />
+				<ContainerNetworkChart
+					pivotedData={containerPivots.network}
+					seriesKeys={containerPivots.networkKeys}
+					{timeRange}
+				/>
 			</div>
 		</div>
 		<div class="mt-4">

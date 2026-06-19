@@ -25,7 +25,7 @@ const baseMinified = {
 	nt: 256,
 	tmp: 65.0,
 	u: 3600,
-	pr: 142,
+	pr: 142
 };
 
 describe('decodeMinifiedMetrics', () => {
@@ -94,7 +94,7 @@ describe('decodeMinifiedMetrics', () => {
 			mc: undefined as unknown as number,
 			st: undefined as unknown as number,
 			su: undefined as unknown as number,
-			pr: undefined as unknown as number,
+			pr: undefined as unknown as number
 		});
 		expect(result.cpu_iowait_percent).toBe(0);
 		expect(result.cpu_steal_percent).toBe(0);
@@ -108,7 +108,7 @@ describe('decodeMinifiedMetrics', () => {
 	it('decodes sensor readings when present', () => {
 		const result = decodeMinifiedMetrics({
 			...baseMinified,
-			sr: [{ k: 'cpu', v: 72.0 }],
+			sr: [{ k: 'cpu', v: 72.0 }]
 		});
 		expect(result.sensor_readings).toHaveLength(1);
 		expect(result.sensor_readings![0].key).toBe('cpu');

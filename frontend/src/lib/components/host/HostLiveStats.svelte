@@ -27,7 +27,8 @@
 		<div class="flex shrink-0 items-center gap-2 rounded-lg border bg-card px-3 py-2">
 			<Cpu class="h-3.5 w-3.5 text-muted-foreground" />
 			<span class="text-xs text-muted-foreground">CPU</span>
-			<span class="text-sm font-medium text-foreground">{metric.cpu_usage_percent.toFixed(1)}%</span>
+			<span class="text-sm font-medium text-foreground">{metric.cpu_usage_percent.toFixed(1)}%</span
+			>
 		</div>
 		<div class="flex shrink-0 items-center gap-2 rounded-lg border bg-card px-3 py-2">
 			<MemoryStick class="h-3.5 w-3.5 text-muted-foreground" />
@@ -42,7 +43,12 @@
 		<div class="flex shrink-0 items-center gap-2 rounded-lg border bg-card px-3 py-2">
 			<Network class="h-3.5 w-3.5 text-muted-foreground" />
 			<span class="text-xs text-muted-foreground">Net</span>
-			<span class="text-sm font-medium text-foreground">↓ {formatRate(metric.network_rx_bytes_per_sec, networkUnit)} ↑ {formatRate(metric.network_tx_bytes_per_sec, networkUnit)}</span>
+			<span class="text-sm font-medium text-foreground"
+				>↓ {formatRate(metric.network_rx_bytes_per_sec, networkUnit)} ↑ {formatRate(
+					metric.network_tx_bytes_per_sec,
+					networkUnit
+				)}</span
+			>
 		</div>
 		<div class="flex shrink-0 items-center gap-2 rounded-lg border bg-card px-3 py-2">
 			<Clock class="h-3.5 w-3.5 text-muted-foreground" />

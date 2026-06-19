@@ -40,7 +40,7 @@ function makeHost(id: string, status: 'online' | 'offline' | 'pending' = 'online
 		ignore_ip_mismatch: false,
 		paused: false,
 		reactivated: false,
-		clock_desync: false,
+		clock_desync: false
 	};
 }
 

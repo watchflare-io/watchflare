@@ -34,7 +34,7 @@ function fakeMetric(hostId: string, cpu: number) {
 		swap_used_bytes: 0,
 		disk_total_bytes: 2000,
 		disk_used_bytes: 1000,
-		processes_count: 0,
+		processes_count: 0
 	};
 }
 

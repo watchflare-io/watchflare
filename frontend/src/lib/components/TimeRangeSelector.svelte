@@ -4,15 +4,17 @@
 	import * as Select from '$lib/components/ui/select';
 	import type { TimeRange } from '$lib/types';
 
-	let { value = $bindable<TimeRange>('24h'), onValueChange, class: className = '' }: {
+	let {
+		value = $bindable<TimeRange>('24h'),
+		onValueChange,
+		class: className = ''
+	}: {
 		value?: TimeRange;
 		onValueChange?: (value: TimeRange) => void;
 		class?: string;
 	} = $props();
 
-	let selectedLabel = $derived(
-		TIME_RANGES.find(r => r.value === value)?.label || value
-	);
+	let selectedLabel = $derived(TIME_RANGES.find((r) => r.value === value)?.label || value);
 
 	async function handleChange(newValue: TimeRange) {
 		value = newValue;
@@ -32,7 +34,7 @@
 </script>
 
 <Select.Root type="single" {value} onValueChange={handleChange}>
-	<Select.Trigger class={className} items={TIME_RANGES.map(r => r.label)}>
+	<Select.Trigger class={className} items={TIME_RANGES.map((r) => r.label)}>
 		<span>{selectedLabel}</span>
 	</Select.Trigger>
 	<Select.Content>

@@ -2,15 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 
 vi.mock('$lib/api', () => ({
-	getAggregatedMetrics: vi.fn(),
+	getAggregatedMetrics: vi.fn()
 }));
 
 vi.mock('$lib/utils', () => ({
-	logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() },
+	logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() }
 }));
 
 vi.mock('$lib/constants', () => ({
-	MAX_AGGREGATED_POINTS: 5,
+	MAX_AGGREGATED_POINTS: 5
 }));
 
 import { aggregatedStore, aggregatedMetrics, currentTimeRange, dashboardStats } from './aggregated';
@@ -29,7 +29,7 @@ function makeAggMetric(cpuPercent: number, overrides: Partial<Record<string, unk
 		disk_used_bytes: 50_000_000_000,
 		network_rx_bytes_per_sec: 0,
 		network_tx_bytes_per_sec: 0,
-		...overrides,
+		...overrides
 	} as any;
 }
 
@@ -126,7 +126,7 @@ describe('dashboardStats derived store', () => {
 		const stats = get(dashboardStats);
 		expect(stats.avgCPU).toBe(55);
 		expect(stats.avgMemory).toBe(50); // 4GB/8GB
-		expect(stats.avgDisk).toBe(50);   // 50GB/100GB
+		expect(stats.avgDisk).toBe(50); // 50GB/100GB
 	});
 
 	it('cpuTrend is 0 when no 24h baseline', () => {

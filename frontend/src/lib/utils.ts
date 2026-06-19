@@ -50,11 +50,11 @@ export function getTimeRangeTimestamps(timeRange: TimeRange): TimeRangeTimestamp
 
 export function getIntervalForTimeRange(timeRange: TimeRange): string {
 	const intervals: Record<TimeRange, string> = {
-		'1h': '',      // Raw data (every 30s) - 120 points
-		'12h': '10m',  // Continuous aggregate 10min - 72 points
-		'24h': '15m',  // Continuous aggregate 15min - 96 points
-		'7d': '2h',    // Continuous aggregate 2h - 84 points
-		'30d': '8h'    // Continuous aggregate 8h - 90 points
+		'1h': '', // Raw data (every 30s) - 120 points
+		'12h': '10m', // Continuous aggregate 10min - 72 points
+		'24h': '15m', // Continuous aggregate 15min - 96 points
+		'7d': '2h', // Continuous aggregate 2h - 84 points
+		'30d': '8h' // Continuous aggregate 8h - 90 points
 	};
 	return intervals[timeRange] || '';
 }
@@ -110,7 +110,11 @@ export function getStatusClass(status: string): string {
 }
 
 // Metric threshold class (CPU, memory, disk percentages)
-export function getMetricClass(percent: number, warningThreshold = 70, criticalThreshold = 90): string {
+export function getMetricClass(
+	percent: number,
+	warningThreshold = 70,
+	criticalThreshold = 90
+): string {
 	if (percent >= criticalThreshold) return 'text-danger font-semibold';
 	if (percent >= warningThreshold) return 'text-warning font-medium';
 	return 'text-foreground';
@@ -142,7 +146,10 @@ export function formatOfflineDuration(lastSeen: string | null | undefined, nowMs
 }
 
 // Format date as locale string
-export function formatDateTime(dateString: string | null | undefined, timeFormat: '12h' | '24h' = '24h'): string {
+export function formatDateTime(
+	dateString: string | null | undefined,
+	timeFormat: '12h' | '24h' = '24h'
+): string {
 	if (!dateString) return '-';
 	return new Date(dateString).toLocaleString('en-US', {
 		year: 'numeric',
@@ -150,7 +157,7 @@ export function formatDateTime(dateString: string | null | undefined, timeFormat
 		day: 'numeric',
 		hour: '2-digit',
 		minute: '2-digit',
-		hour12: timeFormat === '12h',
+		hour12: timeFormat === '12h'
 	});
 }
 
@@ -183,7 +190,7 @@ export const MANAGER_LABELS: Record<string, string> = {
 	pkgutil: 'macOS pkgutil',
 	macos_apps: 'macOS Apps',
 	nix: 'Nix',
-	cli_tools: 'CLI Tools',
+	cli_tools: 'CLI Tools'
 };
 
 export const MANAGER_COLORS: Record<string, string> = {
@@ -202,7 +209,7 @@ export const MANAGER_COLORS: Record<string, string> = {
 	poetry: 'bg-(--chart-4)/10 text-(--chart-4) border-(--chart-4)/20',
 	cargo: 'bg-(--chart-1)/10 text-(--chart-1) border-(--chart-1)/20',
 	gem: 'bg-(--chart-5)/10 text-(--chart-5) border-(--chart-5)/20',
-	cli_tools: 'bg-(--chart-2)/10 text-(--chart-2) border-(--chart-2)/20',
+	cli_tools: 'bg-(--chart-2)/10 text-(--chart-2) border-(--chart-2)/20'
 };
 
 export function getManagerLabel(manager: string): string {
@@ -212,8 +219,6 @@ export function getManagerLabel(manager: string): string {
 export function getManagerColor(manager: string): string {
 	return MANAGER_COLORS[manager] || 'bg-muted text-muted-foreground border-border';
 }
-
-
 
 // SSE reactivation toast (shared across pages)
 export function handleSSEReactivation(event: SSEEvent): void {
@@ -228,17 +233,29 @@ export function handleSSEReactivation(event: SSEEvent): void {
 
 // Dev-only logger (silenced in production builds)
 export const logger = {
-	error: (...args: unknown[]) => { if (import.meta.env.DEV) console.error(...args); },
-	warn: (...args: unknown[]) => { if (import.meta.env.DEV) console.warn(...args); },
-	log: (...args: unknown[]) => { if (import.meta.env.DEV) console.log(...args); },
+	error: (...args: unknown[]) => {
+		if (import.meta.env.DEV) console.error(...args);
+	},
+	warn: (...args: unknown[]) => {
+		if (import.meta.env.DEV) console.warn(...args);
+	},
+	log: (...args: unknown[]) => {
+		if (import.meta.env.DEV) console.log(...args);
+	}
 };
 
 // isAgentOutdated returns true if current < latest using semver comparison.
 // Returns false if either version is missing or unparseable.
-export function isAgentOutdated(current: string | null | undefined, latest: string | null | undefined): boolean {
+export function isAgentOutdated(
+	current: string | null | undefined,
+	latest: string | null | undefined
+): boolean {
 	if (!current || !latest || current === 'dev') return false;
 	const parse = (v: string): [number, number, number] => {
-		const parts = v.replace(/^v/, '').split('.').map(p => parseInt(p.split('-')[0], 10));
+		const parts = v
+			.replace(/^v/, '')
+			.split('.')
+			.map((p) => parseInt(p.split('-')[0], 10));
 		return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
 	};
 	const [cMaj, cMin, cPat] = parse(current);
@@ -253,7 +270,7 @@ export function isAgentOutdated(current: string | null | undefined, latest: stri
 // Returns: array of public port strings (or private port if no public binding)
 export function parsePortBadges(ports: string): string[] {
 	if (!ports) return [];
-	return ports.split(', ').map(p => {
+	return ports.split(', ').map((p) => {
 		const colonIdx = p.indexOf(':');
 		if (colonIdx !== -1) {
 			return p.substring(0, colonIdx);

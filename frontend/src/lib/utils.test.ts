@@ -11,7 +11,7 @@ import {
 	getIntervalForTimeRange,
 	getTimeRangeTimestamps,
 	parsePortBadges,
-	capitalizeFirst,
+	capitalizeFirst
 } from './utils';
 
 describe('capitalizeFirst', () => {

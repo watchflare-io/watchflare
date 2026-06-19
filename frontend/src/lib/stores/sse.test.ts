@@ -24,7 +24,7 @@ vi.mock('$lib/sse/manager', () => ({
 			},
 			onMessage: function (cb: (event: unknown) => void) {
 				capturedMessage = cb;
-			},
+			}
 		};
 	})
 }));

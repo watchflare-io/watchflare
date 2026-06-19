@@ -26,7 +26,7 @@ function createMetricsStore() {
 
 		// Load metrics for a specific host
 		async loadForHost(hostId: string, timeRange: string = '1h'): Promise<void> {
-			update(state => ({
+			update((state) => ({
 				...state,
 				loading: { ...state.loading, [hostId]: true },
 				error: null
@@ -36,22 +36,23 @@ function createMetricsStore() {
 				const data = await getHostMetrics(hostId, { time_range: timeRange });
 				const metricsArray = data.metrics || [];
 
-				update(state => {
+				update((state) => {
 					const lastPoint = metricsArray.length > 0 ? metricsArray[metricsArray.length - 1] : null;
 					return {
 						...state,
 						data: { ...state.data, [hostId]: metricsArray },
 						// Initialize latest if not yet set
-						latest: lastPoint && !state.latest[hostId]
-							? { ...state.latest, [hostId]: lastPoint }
-							: state.latest,
+						latest:
+							lastPoint && !state.latest[hostId]
+								? { ...state.latest, [hostId]: lastPoint }
+								: state.latest,
 						loading: { ...state.loading, [hostId]: false }
 					};
 				});
 			} catch (err) {
 				logger.error(`Failed to load metrics for host ${hostId}:`, err);
 
-				update(state => ({
+				update((state) => ({
 					...state,
 					data: { ...state.data, [hostId]: [] },
 					loading: { ...state.loading, [hostId]: false },
@@ -62,13 +63,13 @@ function createMetricsStore() {
 
 		// Load metrics for multiple hosts
 		async loadForHosts(hostIds: string[], timeRange: string = '1h'): Promise<void> {
-			const promises = hostIds.map(id => this.loadForHost(id, timeRange));
+			const promises = hostIds.map((id) => this.loadForHost(id, timeRange));
 			await Promise.all(promises);
 		},
 
 		// Update metrics for a host (add new metric point from SSE)
 		updateHostMetrics(hostId: string, metric: Metric): void {
-			update(state => {
+			update((state) => {
 				const existingMetrics = state.data[hostId] || [];
 				let updatedMetrics = [...existingMetrics, metric];
 
@@ -93,7 +94,7 @@ function createMetricsStore() {
 
 		// Clear metrics for a specific host
 		clearForHost(hostId: string): void {
-			update(state => {
+			update((state) => {
 				const newData = { ...state.data };
 				delete newData[hostId];
 				const newLoading = { ...state.loading };
@@ -117,7 +118,7 @@ function createMetricsStore() {
 export const metricsStore = createMetricsStore();
 
 // Derived store to get all metrics data (for charts, time-range dependent)
-export const metricsData = derived(metricsStore, $store => $store.data);
+export const metricsData = derived(metricsStore, ($store) => $store.data);
 
 // Derived store for latest real-time metric per host (for table display)
-export const latestMetrics = derived(metricsStore, $store => $store.latest);
+export const latestMetrics = derived(metricsStore, ($store) => $store.latest);

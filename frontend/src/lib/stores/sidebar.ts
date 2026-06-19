@@ -8,7 +8,7 @@ let transitionTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function toggleSidebarWithTransition() {
 	sidebarTransitioning.set(true);
-	sidebarCollapsed.update(val => !val);
+	sidebarCollapsed.update((val) => !val);
 	if (transitionTimeout) clearTimeout(transitionTimeout);
 	transitionTimeout = setTimeout(() => {
 		sidebarTransitioning.set(false);
