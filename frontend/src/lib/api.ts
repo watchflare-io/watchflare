@@ -38,6 +38,7 @@ import type {
   CreateNotificationChannelInput,
   UpdateNotificationChannelInput,
 } from "./types";
+import { capitalizeFirst } from "./utils";
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
@@ -66,7 +67,11 @@ export class ApiError extends Error {
     public statusText: string,
     public data?: { error?: string; message?: string },
   ) {
-    super(data?.error || data?.message || statusText || "API request failed");
+    super(
+      capitalizeFirst(
+        data?.error || data?.message || statusText || "API request failed",
+      ),
+    );
     this.name = "ApiError";
   }
 

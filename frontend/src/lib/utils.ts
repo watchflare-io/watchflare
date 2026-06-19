@@ -73,6 +73,13 @@ export function formatPercent(value: number): string {
 	return Math.round(value * 10) / 10 + '%';
 }
 
+// Capitalize the first character of a string. Used to render backend error
+// messages, which are lowercase by Go convention, with a leading capital.
+export function capitalizeFirst(s: string): string {
+	if (!s) return s;
+	return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 // Format uptime
 export function formatUptime(seconds: number): string {
 	const days = Math.floor(seconds / 86400);

@@ -11,7 +11,26 @@ import {
 	getIntervalForTimeRange,
 	getTimeRangeTimestamps,
 	parsePortBadges,
+	capitalizeFirst,
 } from './utils';
+
+describe('capitalizeFirst', () => {
+	it('capitalizes a lowercase backend message', () => {
+		expect(capitalizeFirst('invalid credentials')).toBe('Invalid credentials');
+	});
+
+	it('leaves an already-capitalized string unchanged', () => {
+		expect(capitalizeFirst('Save failed.')).toBe('Save failed.');
+	});
+
+	it('returns an empty string unchanged', () => {
+		expect(capitalizeFirst('')).toBe('');
+	});
+
+	it('only touches the first character', () => {
+		expect(capitalizeFirst('name is required')).toBe('Name is required');
+	});
+});
 
 describe('formatBytes', () => {
 	it('formats 0 bytes', () => {
