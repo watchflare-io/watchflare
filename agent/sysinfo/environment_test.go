@@ -39,6 +39,26 @@ func TestDetermineType_Physical(t *testing.T) {
 	}
 }
 
+// --- normalizeContainerRuntime ---
+
+func TestNormalizeContainerRuntime(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{"lxc\n", "lxc"},
+		{"  docker  ", "docker"},
+		{"Podman", "podman"},
+		{"", ""},
+		{"\n\t", ""},
+	}
+	for _, tt := range tests {
+		if got := normalizeContainerRuntime(tt.in); got != tt.want {
+			t.Errorf("normalizeContainerRuntime(%q) = %q, want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
 // --- Environment.String ---
 
 func TestEnvironmentString(t *testing.T) {

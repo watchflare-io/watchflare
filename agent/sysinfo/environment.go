@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	cgroupReadLimit = 64 * 1024 // 64 KB
-	dmiReadLimit    = 4 * 1024  // 4 KB — DMI values are always tiny
+	cgroupReadLimit  = 64 * 1024 // 64 KB
+	dmiReadLimit     = 4 * 1024  // 4 KB, DMI values are always tiny
+	systemdReadLimit = 256       // /run/systemd/container holds a short type name
 )
 
 // EnvironmentType represents the type of environment where the agent runs
@@ -103,6 +104,19 @@ func readCgroup() string {
 	return readFileLimited("/proc/1/cgroup", cgroupReadLimit)
 }
 
+// readSystemdContainer reads /run/systemd/container, written by systemd at boot
+// with the detected container type ("lxc", "docker", "podman", ...). Unlike
+// /proc/1/environ it is world-readable, so it works for the unprivileged agent.
+// Empty when not inside a container or when systemd is not the init system.
+func readSystemdContainer() string {
+	return normalizeContainerRuntime(readFileLimited("/run/systemd/container", systemdReadLimit))
+}
+
+// normalizeContainerRuntime trims and lowercases a raw container runtime name.
+func normalizeContainerRuntime(raw string) string {
+	return strings.ToLower(strings.TrimSpace(raw))
+}
+
 // isRunningInContainer detects if running inside a container
 func isRunningInContainer() bool {
 	// Method 1: Check for /.dockerenv file (Docker)
@@ -110,7 +124,14 @@ func isRunningInContainer() bool {
 		return true
 	}
 
-	// Method 2: Check cgroup for container indicators (cgroups v1)
+	// Method 2: systemd records the container type in /run/systemd/container
+	// (world-readable, so it works for the unprivileged agent). This catches
+	// Proxmox LXC on cgroups v2, where /proc/1/cgroup shows only "0::/...".
+	if readSystemdContainer() != "" {
+		return true
+	}
+
+	// Method 3: Check cgroup for container indicators (cgroups v1)
 	content := readCgroup()
 	if strings.Contains(content, "docker") ||
 		strings.Contains(content, "lxc") ||
@@ -119,8 +140,8 @@ func isRunningInContainer() bool {
 		return true
 	}
 
-	// Method 3: Check /proc/1/environ for container= (cgroups v2, Proxmox LXC)
-	// systemd sets container=lxc inside LXC containers regardless of cgroup version
+	// Method 4: Check /proc/1/environ for container= (only readable when the
+	// agent runs as root; kept as a fallback for that case).
 	if environ := readFileLimited("/proc/1/environ", cgroupReadLimit); environ != "" {
 		if strings.Contains(environ, "container=lxc") ||
 			strings.Contains(environ, "container=docker") ||
@@ -134,6 +155,12 @@ func isRunningInContainer() bool {
 
 // detectContainerRuntime identifies the container runtime
 func detectContainerRuntime() string {
+	// systemd reports the type directly ("lxc", "docker", "podman", ...) and is
+	// readable without privileges, unlike /proc/1/environ.
+	if rt := readSystemdContainer(); rt != "" {
+		return rt
+	}
+
 	if content := readCgroup(); content != "" {
 		if strings.Contains(content, "docker") {
 			return "docker"
