@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"testing"
 	"watchflare/backend/config"
 	"watchflare/backend/database"
@@ -35,7 +36,12 @@ func TestRegister(t *testing.T) {
 	assert.NotEmpty(t, token)
 	assert.Equal(t, "admin@example.com", user.Email)
 	assert.Equal(t, "admin", user.Username)
-	assert.Empty(t, user.Password) // Password field should not be exposed
+
+	// The bcrypt hash lives on the in-memory struct by design, but it must never
+	// be serialized into an API response (User.Password has the json:"-" tag).
+	data, err := json.Marshal(user)
+	assert.NoError(t, err)
+	assert.NotContains(t, string(data), user.Password)
 }
 
 func TestRegister_DeriveUsernameFromEmail(t *testing.T) {

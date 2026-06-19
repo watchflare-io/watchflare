@@ -30,7 +30,7 @@ cd backend
 go run .                                            # Dev
 go build -o watchflare-backend                      # Hub binary only (no frontend embedded)
 go build -tags embed_frontend -o watchflare-app     # Hub + embedded frontend (production)
-go test ./...                           # Tests (uses in-memory SQLite)
+go test -p 1 ./...                      # Tests (real PostgreSQL test DB shared across packages; -p 1 avoids cross-package interference)
 go test ./handlers -v                   # Single package
 go test -run TestCreateAgent ./services # Single test
 ```
@@ -103,7 +103,7 @@ Connection: `postgresql://watchflare:watchflare_dev@localhost:5432/watchflare` (
 ## Tests and vulnerability checks
 
 Before submitting any change, run:
-- `cd backend && go test ./... && govulncheck ./...`
+- `cd backend && go test -p 1 ./... && govulncheck ./...` (`-p 1`: backend tests share one PostgreSQL test DB, so packages must run serially)
 - `cd agent && go test ./... && govulncheck ./...`
 - `cd frontend && npm run test && npm audit --omit=dev`
 

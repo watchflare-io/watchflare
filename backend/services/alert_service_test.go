@@ -14,6 +14,13 @@ func teardownAlertRules() {
 	database.DB.Exec("DELETE FROM alert_rules")
 }
 
+// seedHost creates a parent host so host_alert_rules inserts satisfy the
+// host_id foreign key constraint. Cleaned up by teardownTestDB.
+func seedHost(t *testing.T, id string) {
+	t.Helper()
+	require.NoError(t, database.DB.Create(&models.Host{ID: id, DisplayName: id, Status: models.StatusOffline}).Error)
+}
+
 func seedGlobalRules(t *testing.T) {
 	t.Helper()
 	inputs := []AlertRuleInput{
@@ -140,6 +147,7 @@ func TestGetHostAlertRules_HostOverrideMerged(t *testing.T) {
 	seedGlobalRules(t)
 
 	hostID := "host-with-override"
+	seedHost(t, hostID)
 	require.NoError(t, UpsertHostAlertRule(hostID, models.MetricTypeCPUUsage, AlertRuleInput{
 		MetricType:      models.MetricTypeCPUUsage,
 		Enabled:         true,
@@ -177,6 +185,7 @@ func TestUpsertHostAlertRule_CreateAndUpdate(t *testing.T) {
 	seedGlobalRules(t)
 
 	hostID := "host-upsert"
+	seedHost(t, hostID)
 
 	// Create override.
 	require.NoError(t, UpsertHostAlertRule(hostID, models.MetricTypeCPUUsage, AlertRuleInput{
@@ -213,6 +222,7 @@ func TestDeleteHostAlertRule(t *testing.T) {
 	seedGlobalRules(t)
 
 	hostID := "host-delete"
+	seedHost(t, hostID)
 
 	// Create override.
 	require.NoError(t, UpsertHostAlertRule(hostID, models.MetricTypeCPUUsage, AlertRuleInput{

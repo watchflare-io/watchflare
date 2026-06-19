@@ -13,6 +13,7 @@ import (
 	"watchflare/backend/services"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,6 +50,13 @@ func seedGlobalAlertRules(t *testing.T) {
 		{MetricType: models.MetricTypeCPUUsage, Enabled: true, Threshold: 80.0, DurationMinutes: 5},
 		{MetricType: models.MetricTypeMemoryUsage, Enabled: false, Threshold: 90.0, DurationMinutes: 10},
 	}))
+}
+
+// seedHost creates a parent host so host_alert_rules / alert_incidents inserts
+// satisfy the host_id foreign key constraint.
+func seedHost(t *testing.T, id string) {
+	t.Helper()
+	require.NoError(t, database.DB.Create(&models.Host{ID: id, DisplayName: id, Status: models.StatusOffline}).Error)
 }
 
 func TestGetAlertRules(t *testing.T) {
@@ -182,6 +190,7 @@ func TestUpsertHostAlertRule(t *testing.T) {
 	cookie := registerAndGetCookie(t, "alerts4@test.com")
 
 	seedGlobalAlertRules(t)
+	seedHost(t, "host-abc")
 
 	tests := []struct {
 		name           string
@@ -250,6 +259,7 @@ func TestDeleteHostAlertRule(t *testing.T) {
 	cookie := registerAndGetCookie(t, "alerts5@test.com")
 
 	seedGlobalAlertRules(t)
+	seedHost(t, "host-del")
 
 	// Create an override first.
 	b, _ := json.Marshal(map[string]interface{}{"enabled": true, "threshold": 75.0, "duration_minutes": 2})
@@ -303,8 +313,10 @@ func TestGetActiveIncidents(t *testing.T) {
 	r := setupAlertsRouter()
 	cookie := registerAndGetCookie(t, "incidents@test.com")
 
-	// Seed a host and an active incident
-	host := models.Host{ID: "host-inc-1", DisplayName: "test-host", Status: "offline"}
+	// Seed a host and an active incident. Use a 36-char UUID to match the
+	// hosts.id CHAR(36) column: shorter IDs get space-padded on read and break
+	// the host_id equality assertion below. Production IDs are always UUIDs.
+	host := models.Host{ID: uuid.New().String(), DisplayName: "test-host", Status: models.StatusOffline}
 	require.NoError(t, database.DB.Create(&host).Error)
 
 	incident := models.AlertIncident{

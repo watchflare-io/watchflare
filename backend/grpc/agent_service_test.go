@@ -41,20 +41,16 @@ func setupGRPCTestDB(t *testing.T) {
 	}
 }
 
-// setupTestPKI creates a temporary PKI directory with a dummy CA cert.
+// setupTestPKI generates a real auto-mode PKI in a temporary directory and
+// initializes it so GetCACertificate returns a valid CA cert during tests.
 func setupTestPKI(t *testing.T) {
 	t.Helper()
-	dir := t.TempDir()
-	// Write a dummy CA cert (not a real cert — just needs to be readable)
-	caPath := dir + "/ca.pem"
-	err := os.WriteFile(caPath, []byte("-----BEGIN CERTIFICATE-----\ndummy\n-----END CERTIFICATE-----\n"), 0644)
-	require.NoError(t, err)
-
 	p, err := pki.New(&pki.Config{
 		Mode:   pki.ModeAuto,
-		PKIDir: dir,
+		PKIDir: t.TempDir(),
 	})
 	require.NoError(t, err)
+	require.NoError(t, p.Initialize())
 	SetPKI(p)
 }
 
