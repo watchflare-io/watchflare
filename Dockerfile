@@ -14,7 +14,7 @@ COPY backend/go.mod backend/go.sum ./backend/
 RUN cd backend && go mod download
 COPY backend/ ./backend/
 COPY --from=frontend-builder /app/frontend/build ./backend/frontend/dist
-RUN cd backend && CGO_ENABLED=0 go build -tags embed_frontend -o watchflare-app
+RUN cd backend && CGO_ENABLED=0 go build -tags embed_frontend -o watchflare-hub
 
 # Stage 3: Prepare data directories
 FROM alpine AS data-init
@@ -25,9 +25,9 @@ FROM scratch
 LABEL org.opencontainers.image.source="https://github.com/watchflare-io/watchflare"
 LABEL org.opencontainers.image.description="Watchflare Host Monitoring"
 COPY --from=backend-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=backend-builder /app/backend/watchflare-app /watchflare-app
+COPY --from=backend-builder /app/backend/watchflare-hub /watchflare-hub
 COPY --from=data-init /var/lib/watchflare /var/lib/watchflare
 USER 65532
 VOLUME ["/var/lib/watchflare"]
 EXPOSE 8080 50051
-ENTRYPOINT ["/watchflare-app"]
+ENTRYPOINT ["/watchflare-hub"]

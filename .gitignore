@@ -22,7 +22,7 @@ build/
 # Go binaries
 watchflare-agent*
 watchflare-backend*
-watchflare-app*
+watchflare-hub*
 *_linux
 test_env_*
 

@@ -26,7 +26,7 @@ builds:
   - id: app
     dir: backend
     main: .
-    binary: watchflare-app
+    binary: watchflare-hub
     tags:
       - embed_frontend
     ldflags:
@@ -49,7 +49,7 @@ archives:
   - id: app
     ids:
       - app
-    name_template: "watchflare-app_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "watchflare-hub_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
   name_template: "watchflare_checksums.txt"

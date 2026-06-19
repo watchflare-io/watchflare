@@ -29,7 +29,7 @@ Scope is optional: `feat(agent): description`, `fix(hub): description`.
 cd backend
 go run .                                            # Dev
 go build -o watchflare-backend                      # Hub binary only (no frontend embedded)
-go build -tags embed_frontend -o watchflare-app     # Hub + embedded frontend (production)
+go build -tags embed_frontend -o watchflare-hub     # Hub + embedded frontend (production)
 go test -p 1 ./...                      # Tests (real PostgreSQL test DB shared across packages; -p 1 avoids cross-package interference)
 go test ./handlers -v                   # Single package
 go test -run TestCreateAgent ./services # Single test
