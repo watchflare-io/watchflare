@@ -8,8 +8,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "prettier --write \"src/**/*.{svelte,ts,js,css}\"",
-    "format:check": "prettier --check \"src/**/*.{svelte,ts,js,css}\""
+    "format": "prettier --write \"src/**/*.{svelte,ts,js,css,html}\"",
+    "format:check": "prettier --check \"src/**/*.{svelte,ts,js,css,html}\""
   },
   "devDependencies": {
     "@internationalized/date": "^3.12.0",
