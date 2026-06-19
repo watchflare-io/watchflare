@@ -5,6 +5,7 @@
     import { Eye, EyeOff, Copy, Check, Shield, ShieldCheck } from "lucide-svelte";
     import TwoFactorSetupModal from '$lib/components/TwoFactorSetupModal.svelte';
     import { lockBodyScroll } from "$lib/actions/lockBodyScroll";
+    import { autofocus } from "$lib/actions/autofocus";
 
     // Username form state
     let usernameOverride = $state<string | null>(null);
@@ -513,8 +514,8 @@
                 bind:value={totpVerifyCode}
                 placeholder="000000"
                 maxlength={6}
-                autofocus
-                class="w-full rounded-lg border bg-background px-3 py-2 text-sm mb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary text-center tracking-widest text-lg"
+                use:autofocus
+                class="w-full rounded-lg border bg-background px-3 py-2 mb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary text-center tracking-widest text-lg"
             />
             {#if twoFAError}
                 <p class="text-xs text-destructive mb-3">{twoFAError}</p>
@@ -561,8 +562,8 @@
                     bind:value={totpVerifyCode}
                     placeholder="000000"
                     maxlength={6}
-                    autofocus
-                    class="w-full rounded-lg border bg-background px-3 py-2 text-sm mb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary text-center tracking-widest text-lg"
+                    use:autofocus
+                    class="w-full rounded-lg border bg-background px-3 py-2 mb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary text-center tracking-widest text-lg"
                 />
                 {#if twoFAError}
                     <p class="text-xs text-destructive mb-3">{twoFAError}</p>

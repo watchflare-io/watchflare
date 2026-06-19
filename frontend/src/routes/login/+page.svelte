@@ -3,6 +3,7 @@
     import { login, checkSetupRequired, updatePreferences, getCurrentUser, verifyTOTP } from "$lib/api";
     import { goto } from "$app/navigation";
     import { loginSchema, validateForm } from "$lib/validation";
+    import { autofocus } from "$lib/actions/autofocus";
     import { authTheme } from "$lib/stores/auth-theme";
     import AuthThemeToggle from "$lib/components/AuthThemeToggle.svelte";
     import Logo from "$lib/components/Logo.svelte";
@@ -184,10 +185,10 @@
                             bind:value={totpCode}
                             placeholder={useBackupCode ? "Enter backup code" : "000000"}
                             disabled={loading}
-                            autofocus
+                            use:autofocus
                             maxlength={useBackupCode ? 10 : 6}
                             oninput={() => { if (!useBackupCode && totpCode.length === 6) handleVerifyTOTP(); }}
-                            class="w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 tracking-widest text-center text-lg"
+                            class="w-full rounded-lg border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 tracking-widest text-center text-lg"
                         />
                     </div>
                     {#if error}

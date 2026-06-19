@@ -41,7 +41,7 @@
     tabindex="-1"
     class="fixed right-0 top-0 z-50 h-svh w-full sm:py-4 sm:pr-4 bg-transparent transition-transform duration-300
         {size === 'wide'
-        ? 'sm:w-[39rem] sm:max-w-[calc(100vw-1rem)]'
+        ? 'sm:w-156 sm:max-w-[calc(100vw-1rem)]'
         : 'sm:w-80 sm:max-w-[85vw]'}
         {open ? 'translate-x-0' : 'translate-x-[calc(100%+1.5rem)]'}"
 >

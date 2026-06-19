@@ -480,10 +480,14 @@
                                     >
                                         v{host.agent_version}
                                         {#if updatingHosts?.has(host.id)}
-                                            <Loader2
-                                                class="h-3.5 w-3.5 animate-spin text-warning"
+                                            <span
+                                                class="inline-flex"
                                                 title="Updating to v{latestAgentVersion}…"
-                                            />
+                                            >
+                                                <Loader2
+                                                    class="h-3.5 w-3.5 animate-spin text-warning"
+                                                />
+                                            </span>
                                         {:else if isAgentOutdated(host.agent_version, latestAgentVersion)}
                                             <span
                                                 class="text-warning font-medium"
@@ -835,10 +839,14 @@
                                         : "—"}
                                 </span>
                                 {#if updatingHosts?.has(host.id)}
-                                    <Loader2
-                                        class="h-3.5 w-3.5 animate-spin text-warning"
+                                    <span
+                                        class="inline-flex"
                                         title="Updating to v{latestAgentVersion}…"
-                                    />
+                                    >
+                                        <Loader2
+                                            class="h-3.5 w-3.5 animate-spin text-warning"
+                                        />
+                                    </span>
                                 {:else if isAgentOutdated(host.agent_version, latestAgentVersion)}
                                     <span
                                         class="inline-flex items-center rounded-full border border-warning/20 bg-warning/10 px-1.5 py-0.5 text-xs font-medium text-warning"

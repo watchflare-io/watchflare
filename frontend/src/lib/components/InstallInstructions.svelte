@@ -44,7 +44,7 @@
 	async function pollHostStatus() {
 		try {
 			const response = await api.getHost(host.id);
-			polledStatus = response.status;
+			polledStatus = response.host.status;
 
 			if (hostStatus === 'online') {
 				if (pollInterval) clearInterval(pollInterval);

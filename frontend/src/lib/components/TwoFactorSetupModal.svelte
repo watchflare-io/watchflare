@@ -1,6 +1,7 @@
 <script lang="ts">
     import { setupTOTP, enableTOTP } from "$lib/api";
     import { lockBodyScroll } from "$lib/actions/lockBodyScroll";
+    import { autofocus } from "$lib/actions/autofocus";
     import QRCode from "qrcode";
     import { Copy, Check } from "lucide-svelte";
 
@@ -73,7 +74,9 @@
     async function copySecret() {
         await navigator.clipboard.writeText(secret);
         secretCopied = true;
-        setTimeout(() => { secretCopied = false; }, 2000);
+        setTimeout(() => {
+            secretCopied = false;
+        }, 2000);
     }
 
     async function copyAll() {
@@ -97,7 +100,9 @@
         onkeydown={(e) => {
             if (e.key === "Escape") onClose();
         }}
-        onclick={() => { if (step !== "backup") onClose(); }}
+        onclick={() => {
+            if (step !== "backup") onClose();
+        }}
         use:lockBodyScroll
     >
         <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
@@ -138,7 +143,7 @@
                     <div class="flex justify-center mb-4">
                         {#if loading}
                             <div
-                                class="h-[200px] w-[200px] rounded bg-muted animate-pulse"
+                                class="h-50 w-50 rounded bg-muted animate-pulse"
                             ></div>
                         {:else}
                             <canvas bind:this={canvasEl} class="rounded border"
@@ -148,8 +153,12 @@
                     <p class="text-xs text-muted-foreground text-center mb-1">
                         Or enter the code manually:
                     </p>
-                    <div class="flex items-center gap-2 bg-muted rounded px-3 py-2 mb-6">
-                        <p class="text-xs font-mono text-foreground tracking-wider select-all flex-1 text-center">
+                    <div
+                        class="flex items-center gap-2 bg-muted rounded px-3 py-2 mb-6"
+                    >
+                        <p
+                            class="text-xs font-mono text-foreground tracking-wider select-all flex-1 text-center"
+                        >
                             {formatSecret(secret)}
                         </p>
                         <button
@@ -198,9 +207,9 @@
                                 bind:value={code}
                                 placeholder="000000"
                                 maxlength={6}
-                                autofocus
+                                use:autofocus
                                 disabled={loading}
-                                class="w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 tracking-widest text-center text-lg"
+                                class="w-full rounded-lg border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 tracking-widest text-center text-lg"
                             />
                         </div>
                         <div class="flex gap-2">
