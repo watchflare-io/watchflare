@@ -104,7 +104,7 @@ func EnableTOTPHandler(c *gin.Context) {
 	backupCodes, err := services.EnableTOTP(userID, req.Code)
 	if err != nil {
 		if err.Error() == "invalid code" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid code"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "invalid code"})
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
@@ -131,8 +131,10 @@ func DisableTOTPHandler(c *gin.Context) {
 	}
 	if err := services.DisableTOTP(userID, req.TOTPCode, req.BackupCode); err != nil {
 		switch err.Error() {
-		case "invalid code", "totp_code or backup_code required":
-			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		case "invalid code":
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		case "totp_code or backup_code required":
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to disable 2fa"})
 		}
@@ -156,7 +158,7 @@ func RegenerateBackupCodesHandler(c *gin.Context) {
 	codes, err := services.RegenerateBackupCodes(userID, req.Code)
 	if err != nil {
 		if err.Error() == "invalid code" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid code"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "invalid code"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to regenerate backup codes"})
 		}

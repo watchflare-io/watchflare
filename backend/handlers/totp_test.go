@@ -113,5 +113,46 @@ func TestDisableTOTPHandler_InvalidCode(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	// An invalid code on an authenticated endpoint must NOT return 401:
+	// the session is valid, so the frontend would otherwise log the user out.
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestEnableTOTPHandler_InvalidCode(t *testing.T) {
+	setupTestDB(t)
+	defer teardownTestDB()
+
+	user, _, _ := services.Register("totp-enable-invalid@example.com", "password123", "")
+	testTOTPUserID = user.ID
+	services.GenerateTOTPSecret(user.ID, user.Email)
+
+	r := setupTOTPRouter()
+	body, _ := json.Marshal(map[string]string{"code": "000000"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/2fa/enable", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestRegenerateBackupCodesHandler_InvalidCode(t *testing.T) {
+	setupTestDB(t)
+	defer teardownTestDB()
+
+	user, _, _ := services.Register("totp-regen-invalid@example.com", "password123", "")
+	testTOTPUserID = user.ID
+	_, secret, _ := services.GenerateTOTPSecret(user.ID, user.Email)
+	code, _ := totp.GenerateCode(secret, time.Now())
+	services.EnableTOTP(user.ID, code)
+
+	r := setupTOTPRouter()
+	body, _ := json.Marshal(map[string]string{"code": "000000"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/2fa/backup-codes/regenerate", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	// Reported bug: a wrong code here returned 401, logging the user out.
+	assert.Equal(t, http.StatusForbidden, w.Code)
 }
