@@ -53,7 +53,7 @@
         {/snippet}
     </DropdownMenu.Trigger>
 
-    <DropdownMenu.Content side="top" align="start" class="mb-1">
+    <DropdownMenu.Content side="top" align="start" preventScroll={false} class="mb-1">
         <a
             href="/user"
             onclick={() => {
