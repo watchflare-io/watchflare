@@ -16,7 +16,6 @@ Thanks for your interest in contributing. Watchflare is built for the self-hoste
 ```bash
 git clone https://github.com/watchflare-io/watchflare.git
 cd watchflare
-git checkout develop
 docker compose -f docker-compose-postgres.yml up -d
 
 cp .env.example .env
@@ -34,7 +33,7 @@ Architecture notes at [docs.watchflare.io/get-started/architecture/](https://doc
 
 ## Pull request guidelines
 
-- Branch from `develop` using `<type>/<short-description>` format (`feat/discord-alerts`, `fix/scrollbar-overflow`, `docs/contributing-update`), and target it in your PR.
+- Branch from `main` using `<type>/<short-description>` format (`feat/discord-alerts`, `fix/scrollbar-overflow`, `docs/contributing-update`), and target `main` in your PR.
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) in English.
 - Sign off every commit with `git commit -s` to certify the [Developer Certificate of Origin](DCO). This adds a `Signed-off-by` trailer and is required for all PRs.
 - Run `go test ./...` (backend, agent) and `npm run test` (frontend) before submitting.
