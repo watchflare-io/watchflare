@@ -127,7 +127,9 @@
 							<div class="flex-1 min-w-0">
 								<p class="text-xs font-medium mb-0.5">{incident.host_name}</p>
 								<p class="text-xs opacity-90">{formatMessage(incident)}</p>
-								<p class="text-xs opacity-60 mt-1">{formatRelativeTime(incident.started_at)}</p>
+								<p class="text-xs opacity-60 mt-1">
+									{formatRelativeTime(incident.started_at)}
+								</p>
 							</div>
 						</div>
 					</div>

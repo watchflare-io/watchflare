@@ -53,7 +53,9 @@
 		<div class="flex items-center gap-2 min-w-0">
 			{#if container}
 				<RuntimeIcon runtime={container.runtime} class="h-4 w-4 shrink-0 text-muted-foreground" />
-				<h2 class="text-base font-semibold text-foreground truncate">{container.container_name}</h2>
+				<h2 class="text-base font-semibold text-foreground truncate">
+					{container.container_name}
+				</h2>
 			{/if}
 		</div>
 		<button
@@ -89,7 +91,9 @@
 			<!-- Image -->
 			<div class="flex flex-col gap-1.5">
 				<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Image</p>
-				<p class="text-sm font-mono text-foreground break-all">{container.image || '—'}</p>
+				<p class="text-sm font-mono text-foreground break-all">
+					{container.image || '—'}
+				</p>
 			</div>
 
 			<!-- Ports -->

@@ -221,7 +221,9 @@
 					</p>
 				{/each}
 				{#if activeIncidents.length > 1}
-					<p class="text-muted-foreground">+{activeIncidents.length - 1} more</p>
+					<p class="text-muted-foreground">
+						+{activeIncidents.length - 1} more
+					</p>
 				{/if}
 			</div>
 		{:else}

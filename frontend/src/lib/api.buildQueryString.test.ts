@@ -20,7 +20,12 @@ describe('buildQueryString', () => {
 	});
 
 	it('filters out undefined and null values', () => {
-		const result = buildQueryString({ page: 1, status: undefined, search: null, sort: 'name' });
+		const result = buildQueryString({
+			page: 1,
+			status: undefined,
+			search: null,
+			sort: 'name'
+		});
 		expect(result).toBe('?page=1&sort=name');
 	});
 

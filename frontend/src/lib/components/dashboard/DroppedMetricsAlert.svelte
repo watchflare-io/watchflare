@@ -28,7 +28,8 @@
 		{#each alerts as alert}
 			<div class="mb-2 last:mb-0 rounded-md bg-background p-3">
 				<p class="text-sm font-medium">
-					<strong>{alert.hostname}</strong> dropped <strong>{alert.total_dropped} metrics</strong>
+					<strong>{alert.hostname}</strong> dropped
+					<strong>{alert.total_dropped} metrics</strong>
 				</p>
 				<p class="text-xs text-muted-foreground mt-1">
 					Backend unavailable for {formatDuration(alert.downtime_duration)}

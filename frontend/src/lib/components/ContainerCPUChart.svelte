@@ -42,7 +42,9 @@
 
 	const axes: uPlot.Axis[] = [
 		{},
-		{ values: (_u: uPlot, ticks: number[]) => ticks.map((v) => v.toFixed(0) + '%') }
+		{
+			values: (_u: uPlot, ticks: number[]) => ticks.map((v) => v.toFixed(0) + '%')
+		}
 	];
 </script>
 

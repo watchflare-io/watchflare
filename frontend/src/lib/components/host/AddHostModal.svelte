@@ -37,7 +37,11 @@
 		error = '';
 		fieldErrors = {};
 
-		const result = validateForm(createHostSchema, { name, configuredIP, allowAnyIP });
+		const result = validateForm(createHostSchema, {
+			name,
+			configuredIP,
+			allowAnyIP
+		});
 		if (!result.success) {
 			fieldErrors = result.errors;
 			return;

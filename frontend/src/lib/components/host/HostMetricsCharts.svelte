@@ -166,10 +166,8 @@
 							>{formatRate(latestMetric.disk_read_bytes_per_sec, diskUnit)}</span
 						>
 						<span class="hidden sm:inline"
-							>R: {formatRate(latestMetric.disk_read_bytes_per_sec, diskUnit)} / W: {formatRate(
-								latestMetric.disk_write_bytes_per_sec,
-								diskUnit
-							)}</span
+							>R: {formatRate(latestMetric.disk_read_bytes_per_sec, diskUnit)} / W:
+							{formatRate(latestMetric.disk_write_bytes_per_sec, diskUnit)}</span
 						>
 					</span>
 				{/if}

@@ -91,7 +91,12 @@
 				result = result.filter((c) => c.container_name.toLowerCase().includes(q));
 			}
 
-			const healthOrder: Record<string, number> = { healthy: 0, starting: 1, unhealthy: 2, '': 3 };
+			const healthOrder: Record<string, number> = {
+				healthy: 0,
+				starting: 1,
+				unhealthy: 2,
+				'': 3
+			};
 
 			return [...result].sort((a, b) => {
 				let cmp = 0;

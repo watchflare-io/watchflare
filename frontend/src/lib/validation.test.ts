@@ -10,7 +10,10 @@ import {
 
 describe('loginSchema', () => {
 	it('accepts valid credentials', () => {
-		const result = loginSchema.safeParse({ email: 'test@example.com', password: 'secret' });
+		const result = loginSchema.safeParse({
+			email: 'test@example.com',
+			password: 'secret'
+		});
 		expect(result.success).toBe(true);
 	});
 
@@ -21,13 +24,19 @@ describe('loginSchema', () => {
 	});
 
 	it('rejects invalid email', () => {
-		const result = validateForm(loginSchema, { email: 'not-an-email', password: 'secret' });
+		const result = validateForm(loginSchema, {
+			email: 'not-an-email',
+			password: 'secret'
+		});
 		expect(result.success).toBe(false);
 		if (!result.success) expect(result.errors.email).toBe('Invalid email address');
 	});
 
 	it('rejects empty password', () => {
-		const result = validateForm(loginSchema, { email: 'test@example.com', password: '' });
+		const result = validateForm(loginSchema, {
+			email: 'test@example.com',
+			password: ''
+		});
 		expect(result.success).toBe(false);
 		if (!result.success) expect(result.errors.password).toBe('Password is required');
 	});
@@ -192,7 +201,9 @@ describe('updateIPSchema', () => {
 	});
 
 	it('accepts valid IPv6', () => {
-		const result = updateIPSchema.safeParse({ newIP: '2001:0db8:85a3:0000:0000:8a2e:0370:7334' });
+		const result = updateIPSchema.safeParse({
+			newIP: '2001:0db8:85a3:0000:0000:8a2e:0370:7334'
+		});
 		expect(result.success).toBe(true);
 	});
 
@@ -226,7 +237,10 @@ describe('updateIPSchema', () => {
 
 describe('validateForm', () => {
 	it('returns success with data on valid input', () => {
-		const result = validateForm(loginSchema, { email: 'test@example.com', password: 'secret' });
+		const result = validateForm(loginSchema, {
+			email: 'test@example.com',
+			password: 'secret'
+		});
 		expect(result.success).toBe(true);
 		if (result.success) {
 			expect(result.data.email).toBe('test@example.com');

@@ -92,14 +92,18 @@ function createUserStore() {
 							default_time_range: payload.default_time_range as TimeRange
 						}),
 						...(payload.theme && { theme: payload.theme as Theme }),
-						...(payload.time_format && { time_format: payload.time_format as User['time_format'] }),
+						...(payload.time_format && {
+							time_format: payload.time_format as User['time_format']
+						}),
 						...(payload.temperature_unit && {
 							temperature_unit: payload.temperature_unit as User['temperature_unit']
 						}),
 						...(payload.network_unit && {
 							network_unit: payload.network_unit as User['network_unit']
 						}),
-						...(payload.disk_unit && { disk_unit: payload.disk_unit as User['disk_unit'] }),
+						...(payload.disk_unit && {
+							disk_unit: payload.disk_unit as User['disk_unit']
+						}),
 						...(payload.gauge_warning_threshold !== undefined && {
 							gauge_warning_threshold: payload.gauge_warning_threshold
 						}),

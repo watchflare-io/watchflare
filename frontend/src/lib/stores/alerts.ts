@@ -51,7 +51,12 @@ function createAlertsStore() {
 		},
 
 		clear(): void {
-			set({ droppedMetrics: [], activeIncidents: [], loading: false, error: null });
+			set({
+				droppedMetrics: [],
+				activeIncidents: [],
+				loading: false,
+				error: null
+			});
 		}
 	};
 }

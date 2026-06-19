@@ -9,7 +9,9 @@
 <div class="rounded-lg border bg-card {compact ? 'px-4 py-3' : 'p-6'}">
 	<div class="flex {compact ? 'items-center' : 'items-start'} justify-between gap-3">
 		<div class={compact ? 'flex items-center gap-3 flex-1 min-w-0' : 'block flex-1 min-w-0'}>
-			<p class="text-sm text-muted-foreground min-w-30 {compact ? '' : 'mb-1'}">{title}</p>
+			<p class="text-sm text-muted-foreground min-w-30 {compact ? '' : 'mb-1'}">
+				{title}
+			</p>
 			<p class="{compact ? 'text-lg' : 'text-2xl'} font-semibold text-foreground leading-tight">
 				{value}
 			</p>

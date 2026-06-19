@@ -585,7 +585,9 @@
 				: 'focus-visible:ring-primary'}"
 		/>
 		{#if fieldErrors.notificationEmail}
-			<p class="mt-1 text-xs text-destructive">{fieldErrors.notificationEmail}</p>
+			<p class="mt-1 text-xs text-destructive">
+				{fieldErrors.notificationEmail}
+			</p>
 		{/if}
 	</div>
 
@@ -694,7 +696,9 @@
 				</div>
 
 				<!-- Description -->
-				<p class="text-xs text-muted-foreground mt-1">{DESCRIPTIONS[rule.metric_type]}</p>
+				<p class="text-xs text-muted-foreground mt-1">
+					{DESCRIPTIONS[rule.metric_type]}
+				</p>
 
 				<!-- Controls -->
 				{#if rule.enabled}

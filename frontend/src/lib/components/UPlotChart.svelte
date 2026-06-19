@@ -621,7 +621,10 @@
 			const browserNow = Math.floor(Date.now() / 1000);
 			const lastDataTs = data?.[0]?.length > 0 ? data[0][data[0].length - 1] : browserNow;
 			const now = Math.max(browserNow, lastDataTs);
-			chart.setScale('x', { min: now - TIME_RANGE_SECONDS[timeRange!], max: now });
+			chart.setScale('x', {
+				min: now - TIME_RANGE_SECONDS[timeRange!],
+				max: now
+			});
 		}, tickMs);
 		return () => clearInterval(id);
 	});

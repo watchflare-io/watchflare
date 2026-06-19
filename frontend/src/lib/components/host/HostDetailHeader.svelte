@@ -63,7 +63,11 @@
 		[
 			host.hostname ? { icon: ServerIcon, text: host.hostname, type: 'hostname' } : null,
 			host.ip_address_v4 || host.configured_ip
-				? { icon: Network, text: (host.ip_address_v4 || host.configured_ip)!, type: 'ip' }
+				? {
+						icon: Network,
+						text: (host.ip_address_v4 || host.configured_ip)!,
+						type: 'ip'
+					}
 				: null,
 			host.platform
 				? {
@@ -76,15 +80,31 @@
 				: null,
 			host.kernel_arch ? { icon: Cpu, text: host.kernel_arch, type: 'kernel_arch' } : null,
 			metric && metric.memory_total_bytes > 0
-				? { icon: MemoryStick, text: formatBytes(metric.memory_total_bytes), type: 'memory' }
+				? {
+						icon: MemoryStick,
+						text: formatBytes(metric.memory_total_bytes),
+						type: 'memory'
+					}
 				: null,
 			metric && metric.uptime_seconds > 0
-				? { icon: ClockArrowUp, text: formatUptime(metric.uptime_seconds), type: 'uptime' }
+				? {
+						icon: ClockArrowUp,
+						text: formatUptime(metric.uptime_seconds),
+						type: 'uptime'
+					}
 				: null,
 			host.agent_version
-				? { icon: Tag, text: `Agent v${host.agent_version}`, type: 'agent_version' }
+				? {
+						icon: Tag,
+						text: `Agent v${host.agent_version}`,
+						type: 'agent_version'
+					}
 				: null
-		].filter(Boolean) as { icon: typeof ServerIcon; text: string; type: string }[]
+		].filter(Boolean) as {
+			icon: typeof ServerIcon;
+			text: string;
+			type: string;
+		}[]
 	);
 </script>
 

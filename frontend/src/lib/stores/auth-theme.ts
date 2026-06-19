@@ -27,7 +27,11 @@ export function initAuthTheme(): void {
 }
 
 export function cycleAuthTheme(): void {
-	const next: Record<Theme, Theme> = { light: 'dark', dark: 'system', system: 'light' };
+	const next: Record<Theme, Theme> = {
+		light: 'dark',
+		dark: 'system',
+		system: 'light'
+	};
 	authTheme.update((current) => {
 		const theme = next[current];
 		localStorage.setItem(STORAGE_KEY, theme);

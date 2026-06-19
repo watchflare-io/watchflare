@@ -263,7 +263,10 @@ export async function disableTOTP(
 	const body: Record<string, string> = {};
 	if (totpCode) body.totp_code = totpCode;
 	if (backupCode) body.backup_code = backupCode;
-	return apiRequest<{ message: string }>('/2fa', { method: 'DELETE', body: JSON.stringify(body) });
+	return apiRequest<{ message: string }>('/2fa', {
+		method: 'DELETE',
+		body: JSON.stringify(body)
+	});
 }
 
 export async function regenerateBackupCodes(code: string): Promise<TOTPRegenerateResponse> {
@@ -693,7 +696,9 @@ export async function updateNotificationChannel(
 }
 
 export async function deleteNotificationChannel(id: string): Promise<void> {
-	return apiRequest<void>(`/notifications/channels/${id}`, { method: 'DELETE' });
+	return apiRequest<void>(`/notifications/channels/${id}`, {
+		method: 'DELETE'
+	});
 }
 
 export async function testNotificationChannel(id: string): Promise<{ message: string }> {

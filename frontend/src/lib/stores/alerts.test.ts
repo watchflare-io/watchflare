@@ -62,7 +62,9 @@ describe('alertsStore', () => {
 	});
 
 	it('load sets loading flag, then resolves with dropped metrics', async () => {
-		mockGetDroppedMetrics.mockResolvedValueOnce({ dropped_metrics: [makeDroppedMetric('h1')] });
+		mockGetDroppedMetrics.mockResolvedValueOnce({
+			dropped_metrics: [makeDroppedMetric('h1')]
+		});
 		const promise = alertsStore.load();
 		expect(get(alertsStore).loading).toBe(true);
 		await promise;
@@ -81,13 +83,17 @@ describe('alertsStore', () => {
 	});
 
 	it('load handles null dropped_metrics', async () => {
-		mockGetDroppedMetrics.mockResolvedValueOnce({ dropped_metrics: null as unknown as [] });
+		mockGetDroppedMetrics.mockResolvedValueOnce({
+			dropped_metrics: null as unknown as []
+		});
 		await alertsStore.load();
 		expect(get(alertsStore).droppedMetrics).toEqual([]);
 	});
 
 	it('loadIncidents populates active incidents', async () => {
-		mockGetActiveIncidents.mockResolvedValueOnce({ incidents: [makeIncident('i1')] });
+		mockGetActiveIncidents.mockResolvedValueOnce({
+			incidents: [makeIncident('i1')]
+		});
 		await alertsStore.loadIncidents();
 		expect(get(alertsStore).activeIncidents).toHaveLength(1);
 		expect(get(alertsStore).activeIncidents[0].id).toBe('i1');

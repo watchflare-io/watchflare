@@ -19,7 +19,10 @@ function createUIStore() {
 		},
 
 		toggleRightSidebar(): void {
-			update((state) => ({ ...state, rightSidebarOpen: !state.rightSidebarOpen }));
+			update((state) => ({
+				...state,
+				rightSidebarOpen: !state.rightSidebarOpen
+			}));
 		},
 
 		setRightSidebar(open: boolean): void {

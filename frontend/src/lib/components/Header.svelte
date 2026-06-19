@@ -3,7 +3,7 @@
 		mobileMenuOpen,
 		sidebarCollapsed,
 		toggleSidebarWithTransition,
-		sidebarTransitioning,
+		sidebarTransitioning
 	} from '$lib/stores/sidebar';
 	import { uiStore, alertCount } from '$lib/stores';
 	import { userStore, themeStore } from '$lib/stores/user';
@@ -35,15 +35,13 @@
 		}
 	}
 
-	const isMac =
-		typeof navigator !== 'undefined' && navigator.platform?.includes('Mac');
+	const isMac = typeof navigator !== 'undefined' && navigator.platform?.includes('Mac');
 
 	const THEME_CYCLE: Theme[] = ['light', 'dark', 'system'];
 
 	function cycleTheme() {
 		const current = $themeStore;
-		const next =
-			THEME_CYCLE[(THEME_CYCLE.indexOf(current) + 1) % THEME_CYCLE.length];
+		const next = THEME_CYCLE[(THEME_CYCLE.indexOf(current) + 1) % THEME_CYCLE.length];
 		userStore.updateTheme(next);
 	}
 </script>
@@ -53,13 +51,9 @@
 <header
 	class="fixed left-0 right-0 top-0 z-30 h-fit pt-4 px-2 sm:px-4 bg-transparent {$sidebarCollapsed
 		? 'lg:left-20'
-		: 'lg:left-64'} {$sidebarTransitioning
-		? 'transition-[left] duration-300 ease-in-out'
-		: ''}"
+		: 'lg:left-64'} {$sidebarTransitioning ? 'transition-[left] duration-300 ease-in-out' : ''}"
 >
-	<div
-		class="flex h-16 items-center gap-3 px-4 py-3 bg-surface rounded-lg border"
-	>
+	<div class="flex h-16 items-center gap-3 px-4 py-3 bg-surface rounded-lg border">
 		<!-- Left: Mobile burger + Desktop left sidebar toggle -->
 		<div class="flex items-center gap-2 shrink-0">
 			<!-- Burger button (mobile only) -->
@@ -70,12 +64,7 @@
 				aria-label="Toggle menu"
 			>
 				{#if $mobileMenuOpen}
-					<svg
-						class="h-5 w-5"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -84,12 +73,7 @@
 						/>
 					</svg>
 				{:else}
-					<svg
-						class="h-5 w-5"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -107,13 +91,7 @@
 				class="hidden lg:flex h-9.5 w-9.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 				aria-label={$sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
 			>
-				<svg
-					class="h-5 w-5"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-				>
+				<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 					<rect x="3" y="3" width="18" height="18" rx="2" />
 					<path d="M9 3v18" />
 				</svg>
@@ -136,11 +114,7 @@
 		</button>
 
 		<!-- Logo (mobile/tablet only, centered absolutely) -->
-		<a
-			href="/"
-			class="absolute left-1/2 -translate-x-1/2 lg:hidden"
-			aria-label="Watchflare"
-		>
+		<a href="/" class="absolute left-1/2 -translate-x-1/2 lg:hidden" aria-label="Watchflare">
 			<Logo class="h-10 w-10" />
 		</a>
 
@@ -152,11 +126,7 @@
 				onclick={cycleTheme}
 				class="flex h-9.5 w-9.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 				aria-label="Toggle theme"
-				title={$themeStore === 'light'
-					? 'Light'
-					: $themeStore === 'dark'
-						? 'Dark'
-						: 'System'}
+				title={$themeStore === 'light' ? 'Light' : $themeStore === 'dark' ? 'Dark' : 'System'}
 			>
 				{#if $themeStore === 'light'}
 					<Sun class="h-4 w-4" />
@@ -174,13 +144,7 @@
 				class="relative flex h-9.5 w-9.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 				aria-label="Toggle alerts"
 			>
-				<svg
-					class="h-5 w-5"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-				>
+				<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
@@ -188,9 +152,7 @@
 					/>
 				</svg>
 				{#if $alertCount > 0}
-					<span
-						class="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-destructive"
-					></span>
+					<span class="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-destructive"></span>
 				{/if}
 			</button>
 		</div>

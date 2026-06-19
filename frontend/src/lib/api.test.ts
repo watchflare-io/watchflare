@@ -93,7 +93,10 @@ describe('login', () => {
 			'/api/v1/auth/login',
 			expect.objectContaining({
 				method: 'POST',
-				body: JSON.stringify({ email: 'test@example.com', password: 'password123' }),
+				body: JSON.stringify({
+					email: 'test@example.com',
+					password: 'password123'
+				}),
 				credentials: 'include'
 			})
 		);
@@ -145,7 +148,11 @@ describe('register', () => {
 			'/api/v1/auth/register',
 			expect.objectContaining({
 				method: 'POST',
-				body: JSON.stringify({ email: 'new@example.com', password: 'longpassword12', username: '' })
+				body: JSON.stringify({
+					email: 'new@example.com',
+					password: 'longpassword12',
+					username: ''
+				})
 			})
 		);
 	});
@@ -228,7 +235,10 @@ describe('changePassword', () => {
 			'/api/v1/auth/change-password',
 			expect.objectContaining({
 				method: 'PUT',
-				body: JSON.stringify({ current_password: 'oldpass', new_password: 'newpass12345' })
+				body: JSON.stringify({
+					current_password: 'oldpass',
+					new_password: 'newpass12345'
+				})
 			})
 		);
 	});
