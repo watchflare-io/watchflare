@@ -43,6 +43,10 @@ backend/data/
 # Documentation (kept locally, published on docs.watchflare.io)
 docs/
 
+# draw.io (sources kept locally, PNG exports are committed)
+*.drawio
+*.drawio.bkp
+
 # IDE
 .vscode/
 .idea/

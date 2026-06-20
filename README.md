@@ -17,17 +17,9 @@ Self-hosted server monitoring. Real-time metrics, package inventory, and alerts.
 
 Watchflare collects system metrics in real time, maintains a full package inventory across your servers, and sends alerts when thresholds are exceeded or a host goes offline. Self-hosted: the Hub and database run on infrastructure you choose.
 
-```
-  your-server-1          your-server-2          your-server-3
-  [ Agent ]              [ Agent ]              [ Agent ]
-      |                      |                      |
-      └──────────────────────┴──────────────────────┘
-                             |
-                         gRPC / TLS 1.3
-                             |
-                          [ Hub ]
-                    dashboard + TimescaleDB
-```
+<p align="center">
+  <img alt="Watchflare architecture: agents buffer metrics in a local WAL and stream them over gRPC/TLS 1.3 to the Hub, which stores history in PostgreSQL/TimescaleDB and serves the embedded dashboard" src=".github/assets/architecture.png" width="720">
+</p>
 
 ---
 
