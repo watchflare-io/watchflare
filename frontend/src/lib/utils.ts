@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import type { SSEEvent, TimeRange } from './types';
+import type { Host, SSEEvent, TimeRange } from './types';
 import { toasts } from './stores/toasts';
 import { TOAST_LONG_DURATION } from './constants';
 
@@ -265,6 +265,14 @@ export function isAgentOutdated(
 	if (lMaj !== cMaj) return lMaj > cMaj;
 	if (lMin !== cMin) return lMin > cMin;
 	return lPat > cPat;
+}
+
+// isSystemContainer reports whether the host is a system container (LXC), whose
+// disk I/O, load average and temperature reflect the host node, not the container.
+export function isSystemContainer(
+	host: Pick<Host, 'environment_type' | 'container_runtime'>
+): boolean {
+	return host.environment_type === 'container' && host.container_runtime === 'lxc';
 }
 
 // parsePortBadges extracts public port numbers from agent port strings.

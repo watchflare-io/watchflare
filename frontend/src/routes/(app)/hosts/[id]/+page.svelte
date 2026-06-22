@@ -2,8 +2,8 @@
 	import { onMount, onDestroy, getContext } from 'svelte';
 	import { page } from '$app/stores';
 	import * as api from '$lib/api.js';
-	import { logger, TIME_RANGES } from '$lib/utils';
-	import type { Metric, ContainerMetric, SSEEvent, TimeRange } from '$lib/types';
+	import { logger, TIME_RANGES, isSystemContainer } from '$lib/utils';
+	import type { Host, Metric, ContainerMetric, SSEEvent, TimeRange } from '$lib/types';
 	import HostMetricsCharts from '$lib/components/host/HostMetricsCharts.svelte';
 
 	function rangeSeconds(range: TimeRange): number {
@@ -23,11 +23,14 @@
 		timeRange: TimeRange;
 	};
 	const ctx = getContext<{
+		host: Host | null;
 		overviewCache: OverviewCache | null;
 		setOverviewCache: (data: OverviewCache) => void;
 		setLatestMetric: (m: Metric | null) => void;
 		subscribeToSSE: (cb: (event: SSEEvent) => void) => () => void;
 	}>('hostDetail');
+
+	const systemContainer = $derived(ctx.host ? isSystemContainer(ctx.host) : false);
 
 	const cached = ctx.overviewCache;
 	let metrics: Metric[] = $state(cached?.metrics ?? []);
@@ -152,5 +155,11 @@
 		<p class="text-sm text-destructive">{metricsError}</p>
 	</div>
 {:else}
-	<HostMetricsCharts {hostId} {metrics} {containerMetrics} bind:timeRange />
+	<HostMetricsCharts
+		{hostId}
+		{metrics}
+		{containerMetrics}
+		bind:timeRange
+		isSystemContainer={systemContainer}
+	/>
 {/if}
