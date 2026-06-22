@@ -76,20 +76,34 @@ func GetMetricsConfig(env *Environment, containerMetrics bool) *MetricsConfig {
 		config.CollectTemperature = false
 
 	case EnvContainer:
-		// Container: collect limited metrics
-		// Only what's relevant to the container itself
-		config.CollectCPU = true // Container CPU usage
-		config.CollectMemory = true // Container memory usage
-		config.CollectDisk = false // Disk is shared with host - don't report
-		config.CollectDiskIO = false // I/O is shared
-		config.CollectNetwork = false // Network is complex in containers
-		config.CollectSwap = false
-		config.CollectLoadAvg = true // Load avg might be relevant
-		config.CollectTemperature = false
-
-		// Mark as container metrics
-		config.CollectContainerCPU = true
-		config.CollectContainerMemory = true
+		if isSystemContainer(env.ContainerRuntime) {
+			// System container (LXC): shares the host kernel but has its own
+			// rootfs and network namespace, so it is monitored like a
+			// full host. CPU, memory, swap, disk usage and network are isolated
+			// per container; disk I/O, load average and temperature come from the
+			// shared host kernel/hardware but are still surfaced for visibility.
+			config.CollectCPU = true
+			config.CollectMemory = true
+			config.CollectDisk = true
+			config.CollectDiskIO = true
+			config.CollectNetwork = true
+			config.CollectSwap = true
+			config.CollectLoadAvg = true
+			config.CollectTemperature = true
+		} else {
+			// Application container (Docker, Podman, Kubernetes): disk, I/O and
+			// network are shared with the host or not meaningful for the container.
+			config.CollectCPU = true
+			config.CollectMemory = true
+			config.CollectDisk = false
+			config.CollectDiskIO = false
+			config.CollectNetwork = false
+			config.CollectSwap = false
+			config.CollectLoadAvg = true
+			config.CollectTemperature = false
+			config.CollectContainerCPU = true
+			config.CollectContainerMemory = true
+		}
 	}
 
 	// Container runtime metrics (Docker, Podman, etc.) are opt-in via config flag.

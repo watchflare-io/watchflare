@@ -117,6 +117,12 @@ func normalizeContainerRuntime(raw string) string {
 	return strings.ToLower(strings.TrimSpace(raw))
 }
 
+// isSystemContainer reports whether the runtime is a system container (own rootfs
+// and network namespace, monitored like a full host). Currently LXC only.
+func isSystemContainer(runtime string) bool {
+	return runtime == "lxc"
+}
+
 // isRunningInContainer detects if running inside a container
 func isRunningInContainer() bool {
 	// Method 1: Check for /.dockerenv file (Docker)
