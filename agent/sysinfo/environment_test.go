@@ -59,6 +59,27 @@ func TestNormalizeContainerRuntime(t *testing.T) {
 	}
 }
 
+// --- isSystemContainer ---
+
+func TestIsSystemContainer(t *testing.T) {
+	tests := []struct {
+		runtime string
+		want    bool
+	}{
+		{"lxc", true},
+		{"systemd-nspawn", false},
+		{"docker", false},
+		{"podman", false},
+		{"unknown", false},
+		{"", false},
+	}
+	for _, tt := range tests {
+		if got := isSystemContainer(tt.runtime); got != tt.want {
+			t.Errorf("isSystemContainer(%q) = %v, want %v", tt.runtime, got, tt.want)
+		}
+	}
+}
+
 // --- Environment.String ---
 
 func TestEnvironmentString(t *testing.T) {

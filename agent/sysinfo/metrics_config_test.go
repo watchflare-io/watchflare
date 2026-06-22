@@ -76,3 +76,12 @@ func TestGetMetricsConfig_Container(t *testing.T) {
 		t.Error("container: container-specific metrics must be enabled")
 	}
 }
+
+func TestGetMetricsConfig_SystemContainer(t *testing.T) {
+	cfg := GetMetricsConfig(&Environment{Type: EnvContainer, ContainerRuntime: "lxc"}, false)
+
+	if !cfg.CollectCPU || !cfg.CollectMemory || !cfg.CollectDisk || !cfg.CollectDiskIO ||
+		!cfg.CollectNetwork || !cfg.CollectSwap || !cfg.CollectLoadAvg || !cfg.CollectTemperature {
+		t.Error("lxc: system container must collect the full host metric set")
+	}
+}

@@ -44,7 +44,12 @@ export interface ChangePasswordRequest {
 // ===== Host =====
 
 export type HostStatus = 'online' | 'offline' | 'pending' | 'paused' | 'ip_mismatch';
-export type EnvironmentType = 'physical' | 'physical_with_containers' | 'vm' | 'vm_with_containers';
+export type EnvironmentType =
+	| 'physical'
+	| 'physical_with_containers'
+	| 'vm'
+	| 'vm_with_containers'
+	| 'container';
 
 export interface Host {
 	id: string;

@@ -11,7 +11,8 @@ import {
 	getIntervalForTimeRange,
 	getTimeRangeTimestamps,
 	parsePortBadges,
-	capitalizeFirst
+	capitalizeFirst,
+	isSystemContainer
 } from './utils';
 
 describe('capitalizeFirst', () => {
@@ -267,5 +268,29 @@ describe('parsePortBadges', () => {
 
 	it('handles mixed published and exposed-only ports', () => {
 		expect(parsePortBadges('8080:80/tcp, 9000/tcp')).toEqual(['8080', '9000']);
+	});
+});
+
+describe('isSystemContainer', () => {
+	it('returns true for LXC containers', () => {
+		expect(isSystemContainer({ environment_type: 'container', container_runtime: 'lxc' })).toBe(
+			true
+		);
+	});
+
+	it('returns false for other container runtimes (docker, systemd-nspawn)', () => {
+		expect(isSystemContainer({ environment_type: 'container', container_runtime: 'docker' })).toBe(
+			false
+		);
+		expect(
+			isSystemContainer({ environment_type: 'container', container_runtime: 'systemd-nspawn' })
+		).toBe(false);
+	});
+
+	it('returns false for non-container environments', () => {
+		expect(isSystemContainer({ environment_type: 'vm', container_runtime: null })).toBe(false);
+		expect(isSystemContainer({ environment_type: 'physical', container_runtime: null })).toBe(
+			false
+		);
 	});
 });

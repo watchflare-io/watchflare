@@ -15,18 +15,21 @@
 	import ContainerNetworkChart from '$lib/components/ContainerNetworkChart.svelte';
 	import ContainersTable from '$lib/components/host/ContainersTable.svelte';
 	import TimeRangeSelector from '$lib/components/TimeRangeSelector.svelte';
+	import { Info } from 'lucide-svelte';
 	import type { Metric, ContainerMetric, TimeRange } from '$lib/types';
 
 	let {
 		hostId,
 		metrics,
 		containerMetrics = [],
-		timeRange = $bindable()
+		timeRange = $bindable(),
+		isSystemContainer = false
 	}: {
 		hostId: string;
 		metrics: Metric[];
 		containerMetrics?: ContainerMetric[];
 		timeRange: TimeRange;
+		isSystemContainer?: boolean;
 	} = $props();
 
 	const latestMetric = $derived(metrics.length > 0 ? metrics[metrics.length - 1] : null);
@@ -79,6 +82,26 @@
 	<div class="mb-3 flex flex-col sm:flex-row sm:justify-end">
 		<TimeRangeSelector bind:value={timeRange} class="w-full sm:w-auto" />
 	</div>
+
+	{#snippet hostLevelHint()}
+		{#if isSystemContainer}
+			<span class="group/hint relative inline-flex">
+				<button
+					type="button"
+					class="inline-flex rounded text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					aria-label="Host-level metric: reflects the host node, not the container (shared kernel)."
+				>
+					<Info class="size-3.5" />
+				</button>
+				<span
+					role="tooltip"
+					class="pointer-events-none absolute left-0 top-full z-50 mt-1.5 w-52 rounded-md border bg-popover px-3 py-1.5 text-xs font-normal text-popover-foreground opacity-0 shadow-sm transition-opacity duration-150 group-hover/hint:opacity-100 group-focus-within/hint:opacity-100"
+				>
+					Host-level metric: reflects the host node, not the container (shared kernel).
+				</span>
+			</span>
+		{/if}
+	{/snippet}
 
 	<div class="grid gap-4 2xl:grid-cols-2">
 		<div class="rounded-lg border bg-card p-4">
@@ -146,7 +169,10 @@
 		</div>
 		<div class="rounded-lg border bg-card p-4">
 			<div class="mb-3 flex items-center justify-between">
-				<h3 class="text-sm font-medium">Load Average</h3>
+				<h3 class="flex items-center gap-1.5 text-sm font-medium">
+					Load Average
+					{@render hostLevelHint()}
+				</h3>
 				{#if latestMetric}
 					<span class="text-xs text-muted-foreground">
 						{latestMetric.load_avg_1min.toFixed(2)} / {latestMetric.load_avg_5min.toFixed(2)} / {latestMetric.load_avg_15min.toFixed(
@@ -159,7 +185,10 @@
 		</div>
 		<div class="rounded-lg border bg-card p-4">
 			<div class="mb-3 flex items-center justify-between">
-				<h3 class="text-sm font-medium">Disk I/O</h3>
+				<h3 class="flex items-center gap-1.5 text-sm font-medium">
+					Disk I/O
+					{@render hostLevelHint()}
+				</h3>
 				{#if latestMetric}
 					<span class="text-xs text-muted-foreground">
 						<span class="sm:hidden"
@@ -222,7 +251,10 @@
 		{#if latestMetric && (latestMetric.cpu_temperature_celsius > 0 || (latestMetric.sensor_readings && latestMetric.sensor_readings.length > 0))}
 			<div class="rounded-lg border bg-card p-4">
 				<div class="mb-3 flex items-center justify-between">
-					<h3 class="text-sm font-medium">CPU Temperature</h3>
+					<h3 class="flex items-center gap-1.5 text-sm font-medium">
+						CPU Temperature
+						{@render hostLevelHint()}
+					</h3>
 					<span class="text-xs text-muted-foreground">
 						{formatTemperature(latestMetric.cpu_temperature_celsius, tempUnit)}
 					</span>
