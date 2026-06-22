@@ -38,14 +38,17 @@ function createMetricsStore() {
 
 				update((state) => {
 					const lastPoint = metricsArray.length > 0 ? metricsArray[metricsArray.length - 1] : null;
+					const existing = state.latest[hostId];
+					// Refresh latest when the loaded point is newer than (or as recent as) the cached one.
+					// Keeps the table in sync with current data, while preventing coarse aggregate points
+					// (from long time ranges) from clobbering a fresher live SSE value.
+					const refreshLatest =
+						lastPoint &&
+						(!existing || new Date(lastPoint.timestamp) >= new Date(existing.timestamp));
 					return {
 						...state,
 						data: { ...state.data, [hostId]: metricsArray },
-						// Initialize latest if not yet set
-						latest:
-							lastPoint && !state.latest[hostId]
-								? { ...state.latest, [hostId]: lastPoint }
-								: state.latest,
+						latest: refreshLatest ? { ...state.latest, [hostId]: lastPoint } : state.latest,
 						loading: { ...state.loading, [hostId]: false }
 					};
 				});

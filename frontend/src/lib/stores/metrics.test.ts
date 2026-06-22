@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
+import { getHostMetrics } from '$lib/api';
 
 // Mock the api module before importing the store
 vi.mock('$lib/api', () => ({
@@ -16,13 +17,16 @@ vi.mock('$lib/utils', () => ({
 	logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() }
 }));
 
-import { metricsStore, metricsData } from './metrics';
+import { metricsStore, metricsData, latestMetrics } from './metrics';
 
-function fakeMetric(hostId: string, cpu: number) {
+const mockGetHostMetrics = vi.mocked(getHostMetrics);
+
+function fakeMetric(hostId: string, cpu: number, overrides: Record<string, unknown> = {}) {
 	return {
 		host_id: hostId,
 		timestamp: new Date().toISOString(),
 		cpu_usage_percent: cpu,
+		cpu_temperature_celsius: 0,
 		cpu_iowait_percent: 0,
 		cpu_steal_percent: 0,
 		memory_total_bytes: 1000,
@@ -34,13 +38,15 @@ function fakeMetric(hostId: string, cpu: number) {
 		swap_used_bytes: 0,
 		disk_total_bytes: 2000,
 		disk_used_bytes: 1000,
-		processes_count: 0
+		processes_count: 0,
+		...overrides
 	};
 }
 
 describe('metricsStore', () => {
 	beforeEach(() => {
 		metricsStore.clear();
+		mockGetHostMetrics.mockReset();
 	});
 
 	it('starts with empty data', () => {
@@ -98,5 +104,45 @@ describe('metricsStore', () => {
 
 	it('getForHost returns empty array for unknown host', () => {
 		expect(metricsStore.getForHost('unknown')).toEqual([]);
+	});
+
+	it('refreshes latest with a newer loaded point (stale temperature clears)', async () => {
+		// Cached value from before the agent stopped reporting temperature.
+		const stale = fakeMetric('s1', 10, {
+			timestamp: '2026-06-20T10:00:00.000Z',
+			cpu_temperature_celsius: 55
+		});
+		metricsStore.updateHostMetrics('s1', stale);
+		expect(get(latestMetrics)['s1'].cpu_temperature_celsius).toBe(55);
+
+		// A reload now returns recent points with no temperature.
+		const recent = fakeMetric('s1', 12, {
+			timestamp: '2026-06-21T10:00:00.000Z',
+			cpu_temperature_celsius: 0
+		});
+		mockGetHostMetrics.mockResolvedValue({ metrics: [recent] });
+		await metricsStore.loadForHost('s1', '1h');
+
+		expect(get(latestMetrics)['s1'].cpu_temperature_celsius).toBe(0);
+	});
+
+	it('does not let an older loaded point clobber a fresher live value', async () => {
+		// Fresh live value pushed via SSE.
+		const live = fakeMetric('s1', 20, {
+			timestamp: '2026-06-21T10:00:00.000Z',
+			cpu_temperature_celsius: 48
+		});
+		metricsStore.updateHostMetrics('s1', live);
+
+		// Loading a long time range returns an older coarse aggregate point.
+		const oldBucket = fakeMetric('s1', 18, {
+			timestamp: '2026-06-21T02:00:00.000Z',
+			cpu_temperature_celsius: 40
+		});
+		mockGetHostMetrics.mockResolvedValue({ metrics: [oldBucket] });
+		await metricsStore.loadForHost('s1', '30d');
+
+		expect(get(latestMetrics)['s1'].cpu_temperature_celsius).toBe(48);
+		expect(get(latestMetrics)['s1'].cpu_usage_percent).toBe(20);
 	});
 });
