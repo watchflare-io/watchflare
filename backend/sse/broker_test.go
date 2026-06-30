@@ -471,3 +471,24 @@ func TestFormatSSE_MarshalError(t *testing.T) {
 		t.Errorf("expected empty string on marshal error, got %q", result)
 	}
 }
+
+// --- BroadcastServiceHealthUpdate ---
+
+func TestBroadcastServiceHealthUpdate(t *testing.T) {
+	b := newTestBroker()
+	c := b.AddClientWithHostFilter("c1", "svc-host")
+
+	b.BroadcastServiceHealthUpdate(ServiceHealthUpdate{
+		HostID:   "svc-host",
+		Services: []ServiceHealthPayload{{Name: "nginx.service", ActiveState: "failed", SubState: "failed"}},
+	})
+
+	select {
+	case ev := <-c.Channel:
+		if ev.Type != EventTypeServiceHealthUpdate {
+			t.Fatalf("got type %q, want %q", ev.Type, EventTypeServiceHealthUpdate)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("no event received")
+	}
+}
