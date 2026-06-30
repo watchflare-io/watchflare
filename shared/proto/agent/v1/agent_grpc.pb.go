@@ -24,6 +24,8 @@ const (
 	AgentService_SendMetrics_FullMethodName          = "/agent.v1.AgentService/SendMetrics"
 	AgentService_ReportDroppedMetrics_FullMethodName = "/agent.v1.AgentService/ReportDroppedMetrics"
 	AgentService_SendPackageInventory_FullMethodName = "/agent.v1.AgentService/SendPackageInventory"
+	AgentService_SendServiceInventory_FullMethodName = "/agent.v1.AgentService/SendServiceInventory"
+	AgentService_ReportServiceHealth_FullMethodName  = "/agent.v1.AgentService/ReportServiceHealth"
 )
 
 // AgentServiceClient is the client API for AgentService service.
@@ -42,6 +44,10 @@ type AgentServiceClient interface {
 	ReportDroppedMetrics(ctx context.Context, in *ReportDroppedMetricsRequest, opts ...grpc.CallOption) (*ReportDroppedMetricsResponse, error)
 	// SendPackageInventory sends package inventory to the backend
 	SendPackageInventory(ctx context.Context, in *SendPackageInventoryRequest, opts ...grpc.CallOption) (*SendPackageInventoryResponse, error)
+	// SendServiceInventory sends the list of systemd services to the backend
+	SendServiceInventory(ctx context.Context, in *SendServiceInventoryRequest, opts ...grpc.CallOption) (*SendServiceInventoryResponse, error)
+	// ReportServiceHealth reports current health state of monitored services
+	ReportServiceHealth(ctx context.Context, in *ReportServiceHealthRequest, opts ...grpc.CallOption) (*ReportServiceHealthResponse, error)
 }
 
 type agentServiceClient struct {
@@ -102,6 +108,26 @@ func (c *agentServiceClient) SendPackageInventory(ctx context.Context, in *SendP
 	return out, nil
 }
 
+func (c *agentServiceClient) SendServiceInventory(ctx context.Context, in *SendServiceInventoryRequest, opts ...grpc.CallOption) (*SendServiceInventoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendServiceInventoryResponse)
+	err := c.cc.Invoke(ctx, AgentService_SendServiceInventory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) ReportServiceHealth(ctx context.Context, in *ReportServiceHealthRequest, opts ...grpc.CallOption) (*ReportServiceHealthResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReportServiceHealthResponse)
+	err := c.cc.Invoke(ctx, AgentService_ReportServiceHealth_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AgentServiceServer is the server API for AgentService service.
 // All implementations must embed UnimplementedAgentServiceServer
 // for forward compatibility.
@@ -118,6 +144,10 @@ type AgentServiceServer interface {
 	ReportDroppedMetrics(context.Context, *ReportDroppedMetricsRequest) (*ReportDroppedMetricsResponse, error)
 	// SendPackageInventory sends package inventory to the backend
 	SendPackageInventory(context.Context, *SendPackageInventoryRequest) (*SendPackageInventoryResponse, error)
+	// SendServiceInventory sends the list of systemd services to the backend
+	SendServiceInventory(context.Context, *SendServiceInventoryRequest) (*SendServiceInventoryResponse, error)
+	// ReportServiceHealth reports current health state of monitored services
+	ReportServiceHealth(context.Context, *ReportServiceHealthRequest) (*ReportServiceHealthResponse, error)
 	mustEmbedUnimplementedAgentServiceServer()
 }
 
@@ -142,6 +172,12 @@ func (UnimplementedAgentServiceServer) ReportDroppedMetrics(context.Context, *Re
 }
 func (UnimplementedAgentServiceServer) SendPackageInventory(context.Context, *SendPackageInventoryRequest) (*SendPackageInventoryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SendPackageInventory not implemented")
+}
+func (UnimplementedAgentServiceServer) SendServiceInventory(context.Context, *SendServiceInventoryRequest) (*SendServiceInventoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendServiceInventory not implemented")
+}
+func (UnimplementedAgentServiceServer) ReportServiceHealth(context.Context, *ReportServiceHealthRequest) (*ReportServiceHealthResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReportServiceHealth not implemented")
 }
 func (UnimplementedAgentServiceServer) mustEmbedUnimplementedAgentServiceServer() {}
 func (UnimplementedAgentServiceServer) testEmbeddedByValue()                      {}
@@ -254,6 +290,42 @@ func _AgentService_SendPackageInventory_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AgentService_SendServiceInventory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendServiceInventoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).SendServiceInventory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_SendServiceInventory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).SendServiceInventory(ctx, req.(*SendServiceInventoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_ReportServiceHealth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReportServiceHealthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).ReportServiceHealth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_ReportServiceHealth_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).ReportServiceHealth(ctx, req.(*ReportServiceHealthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AgentService_ServiceDesc is the grpc.ServiceDesc for AgentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -280,6 +352,14 @@ var AgentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendPackageInventory",
 			Handler:    _AgentService_SendPackageInventory_Handler,
+		},
+		{
+			MethodName: "SendServiceInventory",
+			Handler:    _AgentService_SendServiceInventory_Handler,
+		},
+		{
+			MethodName: "ReportServiceHealth",
+			Handler:    _AgentService_ReportServiceHealth_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

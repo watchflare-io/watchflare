@@ -20,6 +20,12 @@ service AgentService {
 
   // SendPackageInventory sends package inventory to the backend
   rpc SendPackageInventory(SendPackageInventoryRequest) returns (SendPackageInventoryResponse);
+
+  // SendServiceInventory sends the list of systemd services to the backend
+  rpc SendServiceInventory(SendServiceInventoryRequest) returns (SendServiceInventoryResponse);
+
+  // ReportServiceHealth reports current health state of monitored services
+  rpc ReportServiceHealth(ReportServiceHealthRequest) returns (ReportServiceHealthResponse);
 }
 
 // RegisterHostRequest contains information sent during initial registration
@@ -260,4 +266,45 @@ message SendPackageInventoryResponse {
   string message = 2;
   int32 packages_processed = 3;      // Number of packages processed
   int32 changes_detected = 4;        // Number of changes detected (added+removed+updated)
+}
+
+// Service Inventory & Health Messages
+
+message Service {
+  string name = 1;
+  string description = 2;
+  string enabled_state = 3;
+  string active_state = 4;
+  string sub_state = 5;
+}
+
+message SendServiceInventoryRequest {
+  string agent_id = 1;
+  string agent_key = 2;
+  int64 timestamp = 3;
+  repeated Service services = 4;
+}
+
+message SendServiceInventoryResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ServiceHealth {
+  string name = 1;
+  string active_state = 2;
+  string sub_state = 3;
+}
+
+message ReportServiceHealthRequest {
+  string agent_id = 1;
+  string agent_key = 2;
+  int64 timestamp = 3;
+  repeated ServiceHealth services = 4;
+  int64 collected_at = 5;
+}
+
+message ReportServiceHealthResponse {
+  bool success = 1;
+  string message = 2;
 }
