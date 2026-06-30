@@ -689,3 +689,56 @@ func TestProcessPackageInventory_DeltaInventory(t *testing.T) {
 	assert.Equal(t, 2, processed) // TotalPackageCount
 	assert.Equal(t, 3, changes)   // 1 added + 1 removed + 1 updated
 }
+
+func cleanupServices(t *testing.T) {
+	t.Helper()
+	database.DB.Exec("DELETE FROM services")
+}
+
+func TestSendServiceInventory_ReplaceAll(t *testing.T) {
+	setupGRPCTestDB(t)
+	defer cleanupServices(t)
+
+	host := &models.Host{
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
+		DisplayName: "service-inv-host",
+		Status:      models.StatusOnline,
+		AgentKey:    "service-inv-key-abc123",
+	}
+	require.NoError(t, database.DB.Create(host).Error)
+	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
+
+	s := NewAgentServer()
+	ctx := context.Background()
+
+	_, err := s.SendServiceInventory(ctx, &pb.SendServiceInventoryRequest{
+		AgentId:  host.AgentID,
+		AgentKey: host.AgentKey,
+		Services: []*pb.Service{
+			{Name: "a.service", ActiveState: "active", SubState: "running", EnabledState: "enabled"},
+			{Name: "b.service", ActiveState: "failed", SubState: "failed", EnabledState: "enabled"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("first inventory: %v", err)
+	}
+
+	// Second inventory with a different set must fully replace the first.
+	_, err = s.SendServiceInventory(ctx, &pb.SendServiceInventoryRequest{
+		AgentId:  host.AgentID,
+		AgentKey: host.AgentKey,
+		Services: []*pb.Service{
+			{Name: "c.service", ActiveState: "active", SubState: "running", EnabledState: "enabled"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("second inventory: %v", err)
+	}
+
+	var rows []models.Service
+	database.DB.Where("host_id = ?", host.ID).Order("name").Find(&rows)
+	if len(rows) != 1 || rows[0].Name != "c.service" {
+		t.Fatalf("expected only c.service, got %+v", rows)
+	}
+}

@@ -827,6 +827,59 @@ func processPackageInventory(hostID string, req *pb.SendPackageInventoryRequest)
 	return packagesProcessed, changesDetected, nil
 }
 
+// SendServiceInventory handles systemd service inventory updates from agents (replace-all)
+func (s *AgentServer) SendServiceInventory(ctx context.Context, req *pb.SendServiceInventoryRequest) (*pb.SendServiceInventoryResponse, error) {
+	var host models.Host
+	result := database.DB.Where("agent_id = ? AND agent_key = ?", req.AgentId, req.AgentKey).First(&host)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return &pb.SendServiceInventoryResponse{Success: false, Message: "Invalid agent credentials"}, nil
+		}
+		return nil, result.Error
+	}
+	if host.Status == models.StatusPaused {
+		slog.Info("service inventory discarded for paused host", "name", host.DisplayName, "host_id", host.ID)
+		return &pb.SendServiceInventoryResponse{Success: true, Message: "Host is paused, inventory discarded"}, nil
+	}
+
+	count, err := processServiceInventory(host.ID, req)
+	if err != nil {
+		slog.Error("failed to process service inventory", "host_id", host.ID, "error", err)
+		return &pb.SendServiceInventoryResponse{Success: false, Message: fmt.Sprintf("Failed to process service inventory: %v", err)}, nil
+	}
+	slog.Info("service inventory processed", "host_id", host.ID, "services", count)
+	return &pb.SendServiceInventoryResponse{Success: true, Message: "OK"}, nil
+}
+
+func processServiceInventory(hostID string, req *pb.SendServiceInventoryRequest) (int, error) {
+	now := time.Now()
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("host_id = ?", hostID).Delete(&models.Service{}).Error; err != nil {
+			return err
+		}
+		if len(req.Services) == 0 {
+			return nil
+		}
+		rows := make([]models.Service, 0, len(req.Services))
+		for _, sv := range req.Services {
+			rows = append(rows, models.Service{
+				HostID:       hostID,
+				Name:         sv.Name,
+				Description:  sv.Description,
+				EnabledState: sv.EnabledState,
+				ActiveState:  sv.ActiveState,
+				SubState:     sv.SubState,
+				CollectedAt:  now,
+			})
+		}
+		return tx.Create(&rows).Error
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(req.Services), nil
+}
+
 // convertTimestamp converts Unix timestamp to *time.Time (nil if 0)
 func convertTimestamp(ts int64) *time.Time {
 	if ts == 0 {
