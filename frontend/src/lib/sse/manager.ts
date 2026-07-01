@@ -289,6 +289,11 @@ export class SSEManager {
 			this.bufferEvent({ type: 'package_inventory_update', data });
 		});
 
+		this.eventSource.addEventListener('service_health_update', (e: MessageEvent) => {
+			const data = JSON.parse(e.data);
+			this.bufferEvent({ type: 'service_health_update', data });
+		});
+
 		this.eventSource.addEventListener('incidents_changed', () => {
 			this.bufferEvent({ type: 'incidents_changed', data: {} });
 		});
