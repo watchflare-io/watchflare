@@ -11,6 +11,7 @@ import (
 	"watchflare/backend/database"
 	"watchflare/backend/models"
 	"watchflare/backend/pki"
+	"watchflare/backend/sse"
 	pb "watchflare/shared/proto/agent/v1"
 
 	"github.com/google/uuid"
@@ -693,6 +694,75 @@ func TestProcessPackageInventory_DeltaInventory(t *testing.T) {
 func cleanupServices(t *testing.T) {
 	t.Helper()
 	database.DB.Exec("DELETE FROM services")
+}
+
+func TestReportServiceHealth_UpdatesStateAndIgnoresUnknown(t *testing.T) {
+	setupGRPCTestDB(t)
+	defer cleanupServices(t)
+
+	host := &models.Host{
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
+		DisplayName: "service-health-host",
+		Status:      models.StatusOnline,
+		AgentKey:    "service-health-key-abc123",
+	}
+	require.NoError(t, database.DB.Create(host).Error)
+	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
+
+	database.DB.Create(&models.Service{HostID: host.ID, Name: "x.service", ActiveState: "active", SubState: "running", CollectedAt: time.Unix(0, 0)})
+
+	sseClient := sse.GetBroker().AddClientWithHostFilter("test-report-service-health", host.ID)
+	defer sse.GetBroker().RemoveClient("test-report-service-health")
+
+	s := NewAgentServer()
+	_, err := s.ReportServiceHealth(context.Background(), &pb.ReportServiceHealthRequest{
+		AgentId:     host.AgentID,
+		AgentKey:    host.AgentKey,
+		CollectedAt: time.Now().Unix(),
+		Services: []*pb.ServiceHealth{
+			{Name: "x.service", ActiveState: "failed", SubState: "failed"},
+			{Name: "ghost.service", ActiveState: "failed", SubState: "failed"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("report: %v", err)
+	}
+
+	select {
+	case ev := <-sseClient.Channel:
+		if ev.Type != sse.EventTypeServiceHealthUpdate {
+			t.Fatalf("unexpected SSE event type: %s", ev.Type)
+		}
+		update, ok := ev.Data.(sse.ServiceHealthUpdate)
+		if !ok {
+			t.Fatalf("unexpected SSE event data type: %T", ev.Data)
+		}
+		broadcastNames := make(map[string]bool, len(update.Services))
+		for _, p := range update.Services {
+			broadcastNames[p.Name] = true
+		}
+		if !broadcastNames["x.service"] {
+			t.Fatalf("expected x.service in SSE payload, got %+v", update.Services)
+		}
+		if broadcastNames["ghost.service"] {
+			t.Fatalf("ghost.service (unknown) must not be in SSE payload, got %+v", update.Services)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("no service_health_update broadcast received")
+	}
+
+	var rows []models.Service
+	database.DB.Where("host_id = ?", host.ID).Find(&rows)
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 row (ghost ignored), got %d", len(rows))
+	}
+	if rows[0].ActiveState != "failed" || rows[0].SubState != "failed" {
+		t.Fatalf("state not updated: %+v", rows[0])
+	}
+	if !rows[0].CollectedAt.After(time.Unix(1, 0)) {
+		t.Fatalf("collected_at not refreshed: %v", rows[0].CollectedAt)
+	}
 }
 
 func TestSendServiceInventory_ReplaceAll(t *testing.T) {

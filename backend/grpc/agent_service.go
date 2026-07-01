@@ -880,6 +880,43 @@ func processServiceInventory(hostID string, req *pb.SendServiceInventoryRequest)
 	return len(req.Services), nil
 }
 
+// ReportServiceHealth handles live service state updates from agents.
+func (s *AgentServer) ReportServiceHealth(ctx context.Context, req *pb.ReportServiceHealthRequest) (*pb.ReportServiceHealthResponse, error) {
+	var host models.Host
+	result := database.DB.Where("agent_id = ? AND agent_key = ?", req.AgentId, req.AgentKey).First(&host)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return &pb.ReportServiceHealthResponse{Success: false, Message: "Invalid agent credentials"}, nil
+		}
+		return nil, result.Error
+	}
+	if host.Status == models.StatusPaused {
+		return &pb.ReportServiceHealthResponse{Success: true, Message: "Host is paused"}, nil
+	}
+
+	collectedAt := time.Unix(req.CollectedAt, 0)
+	payload := make([]sse.ServiceHealthPayload, 0, len(req.Services))
+	for _, h := range req.Services {
+		res := database.DB.Model(&models.Service{}).
+			Where("host_id = ? AND name = ?", host.ID, h.Name).
+			Updates(map[string]interface{}{
+				"active_state": h.ActiveState,
+				"sub_state":    h.SubState,
+				"collected_at": collectedAt,
+			})
+		if res.Error != nil {
+			return nil, fmt.Errorf("update service %s: %w", h.Name, res.Error)
+		}
+		if res.RowsAffected == 0 {
+			continue
+		}
+		payload = append(payload, sse.ServiceHealthPayload{Name: h.Name, ActiveState: h.ActiveState, SubState: h.SubState})
+	}
+	sse.GetBroker().BroadcastServiceHealthUpdate(sse.ServiceHealthUpdate{HostID: host.ID, Services: payload})
+
+	return &pb.ReportServiceHealthResponse{Success: true, Message: "OK"}, nil
+}
+
 // convertTimestamp converts Unix timestamp to *time.Time (nil if 0)
 func convertTimestamp(ts int64) *time.Time {
 	if ts == 0 {
