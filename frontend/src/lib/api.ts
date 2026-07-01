@@ -36,7 +36,8 @@ import type {
 	ListNotificationChannelsResponse,
 	NotificationChannelResponse,
 	CreateNotificationChannelInput,
-	UpdateNotificationChannelInput
+	UpdateNotificationChannelInput,
+	GetServicesResponse
 } from './types';
 import { capitalizeFirst } from './utils';
 
@@ -578,6 +579,10 @@ export async function triggerAgentUpdate(
 	return apiRequest<{ message: string; command_id: string }>(`/hosts/${hostId}/agent/update`, {
 		method: 'POST'
 	});
+}
+
+export async function getHostServices(hostId: string): Promise<GetServicesResponse> {
+	return apiRequest<GetServicesResponse>(`/hosts/${hostId}/services`);
 }
 
 // Settings API calls

@@ -657,3 +657,26 @@ export interface UpdateNotificationChannelInput {
 	categories?: NotificationCategory[];
 	enabled?: boolean;
 }
+
+// ===== Services =====
+
+export interface Service {
+	id: number;
+	host_id: string;
+	name: string;
+	description: string;
+	enabled_state: string;
+	active_state: string;
+	sub_state: string;
+	collected_at: string;
+}
+
+export interface ServiceHealthUpdate {
+	host_id: string;
+	services: { name: string; active_state: string; sub_state: string }[];
+}
+
+export interface GetServicesResponse {
+	services: Service[];
+	summary: { total: number; failed: number };
+}
