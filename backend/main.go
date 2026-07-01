@@ -298,6 +298,7 @@ func setupRouter() *gin.Engine {
 		hostGroup.PUT("/:id/resume", handlers.ResumeHost)
 		hostGroup.POST("/:id/regenerate-token", handlers.RegenerateToken)
 		hostGroup.DELETE("/:id", handlers.DeleteHost)
+		hostGroup.GET("/:id/services", handlers.GetHostServices)
 		hostGroup.GET("/:id/packages", handlers.GetHostPackages)
 		hostGroup.GET("/:id/packages/history", handlers.GetHostPackageHistory)
 		hostGroup.GET("/:id/packages/collections", handlers.GetHostPackageCollections)
