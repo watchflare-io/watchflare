@@ -69,6 +69,18 @@ func TestMergeServices_ExcludesNonServiceUnitFiles(t *testing.T) {
 	}
 }
 
+func TestMergeServices_TemplateInstanceInheritsEnabled(t *testing.T) {
+	units := []rawUnit{
+		{Name: "systemd-fsck@dev-BOOT.service", Description: "File System Check", ActiveState: "active", SubState: "exited"},
+	}
+	files := []rawUnitFile{{Name: "systemd-fsck@.service", State: "static"}}
+
+	got := mergeServices(units, files)
+	if len(got) != 1 || got[0].EnabledState != "static" {
+		t.Fatalf("instance should inherit template state 'static', got %v", got)
+	}
+}
+
 func TestIsAvailable_NonLinux(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		if New().IsAvailable() {

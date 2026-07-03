@@ -58,7 +58,13 @@ func mergeServices(units []rawUnit, files []rawUnitFile) []*Service {
 
 	result := make([]*Service, 0, len(keep))
 	for name := range keep {
-		svc := &Service{Name: name, EnabledState: enabled[name]}
+		enabledState := enabled[name]
+		if enabledState == "" {
+			if tmpl := templateName(name); tmpl != "" {
+				enabledState = enabled[tmpl]
+			}
+		}
+		svc := &Service{Name: name, EnabledState: enabledState}
 		if u, ok := unitByName[name]; ok {
 			svc.Description = u.Description
 			svc.ActiveState = u.ActiveState
@@ -71,4 +77,15 @@ func mergeServices(units []rawUnit, files []rawUnitFile) []*Service {
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Name < result[j].Name })
 	return result
+}
+
+// templateName returns the template name for an instance unit
+// (e.g. "systemd-fsck@dev-BOOT.service" -> "systemd-fsck@.service"), or "".
+func templateName(name string) string {
+	at := strings.Index(name, "@")
+	dot := strings.LastIndex(name, ".")
+	if at < 0 || dot <= at+1 {
+		return ""
+	}
+	return name[:at+1] + name[dot:]
 }
