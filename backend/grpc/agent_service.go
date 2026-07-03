@@ -893,6 +893,9 @@ func (s *AgentServer) ReportServiceHealth(ctx context.Context, req *pb.ReportSer
 	if host.Status == models.StatusPaused {
 		return &pb.ReportServiceHealthResponse{Success: true, Message: "Host is paused"}, nil
 	}
+	if len(req.Services) == 0 {
+		return &pb.ReportServiceHealthResponse{Success: true, Message: "OK"}, nil
+	}
 
 	collectedAt := time.Unix(req.CollectedAt, 0)
 	names := make([]string, 0, len(req.Services))

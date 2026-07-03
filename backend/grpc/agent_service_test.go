@@ -802,6 +802,40 @@ func TestReportServiceHealth_PrunesDroppedServices(t *testing.T) {
 	}
 }
 
+func TestReportServiceHealth_EmptyReportDoesNotWipe(t *testing.T) {
+	setupGRPCTestDB(t)
+	defer cleanupServices(t)
+
+	host := &models.Host{
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
+		DisplayName: "service-empty-host",
+		Status:      models.StatusOnline,
+		AgentKey:    "service-empty-key-abc123",
+	}
+	require.NoError(t, database.DB.Create(host).Error)
+	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
+
+	database.DB.Create(&models.Service{HostID: host.ID, Name: "a.service", ActiveState: "active", SubState: "running"})
+
+	s := NewAgentServer()
+	_, err := s.ReportServiceHealth(context.Background(), &pb.ReportServiceHealthRequest{
+		AgentId:     host.AgentID,
+		AgentKey:    host.AgentKey,
+		CollectedAt: time.Now().Unix(),
+		Services:    nil,
+	})
+	if err != nil {
+		t.Fatalf("report: %v", err)
+	}
+
+	var count int64
+	database.DB.Model(&models.Service{}).Where("host_id = ?", host.ID).Count(&count)
+	if count != 1 {
+		t.Fatalf("empty report must not delete existing rows, got %d", count)
+	}
+}
+
 func TestSendServiceInventory_ReplaceAll(t *testing.T) {
 	setupGRPCTestDB(t)
 	defer cleanupServices(t)
