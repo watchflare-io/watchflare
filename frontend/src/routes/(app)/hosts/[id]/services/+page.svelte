@@ -448,7 +448,7 @@
 						</tr>
 					{:else}
 						<tr>
-							<td colspan="6" class="py-16 text-center">
+							<td colspan={visibleColumns.size} class="py-16 text-center">
 								<p class="text-sm text-muted-foreground">
 									{searchTerm.trim() ? 'No services match your search' : 'No services found'}
 								</p>
