@@ -895,8 +895,10 @@ func (s *AgentServer) ReportServiceHealth(ctx context.Context, req *pb.ReportSer
 	}
 
 	collectedAt := time.Unix(req.CollectedAt, 0)
+	names := make([]string, 0, len(req.Services))
 	payload := make([]sse.ServiceHealthPayload, 0, len(req.Services))
 	for _, h := range req.Services {
+		names = append(names, h.Name)
 		res := database.DB.Model(&models.Service{}).
 			Where("host_id = ? AND name = ?", host.ID, h.Name).
 			Updates(map[string]interface{}{
@@ -912,6 +914,15 @@ func (s *AgentServer) ReportServiceHealth(ctx context.Context, req *pb.ReportSer
 		}
 		payload = append(payload, sse.ServiceHealthPayload{Name: h.Name, ActiveState: h.ActiveState, SubState: h.SubState})
 	}
+
+	prune := database.DB.Where("host_id = ?", host.ID)
+	if len(names) > 0 {
+		prune = prune.Where("name NOT IN ?", names)
+	}
+	if err := prune.Delete(&models.Service{}).Error; err != nil {
+		return nil, fmt.Errorf("prune services: %w", err)
+	}
+
 	sse.GetBroker().BroadcastServiceHealthUpdate(sse.ServiceHealthUpdate{HostID: host.ID, Services: payload})
 
 	return &pb.ReportServiceHealthResponse{Success: true, Message: "OK"}, nil

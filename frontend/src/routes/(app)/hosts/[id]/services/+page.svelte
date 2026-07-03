@@ -80,13 +80,16 @@
 		if (u.host_id !== hostId) return;
 		const now = new Date().toISOString();
 		const byName = new Map(u.services.map((s) => [s.name, s]));
-		services = services.map((s) => {
-			const h = byName.get(s.name);
-			return h
-				? { ...s, active_state: h.active_state, sub_state: h.sub_state, collected_at: now }
-				: s;
-		});
-		summary = { ...summary, failed: services.filter((s) => s.active_state === 'failed').length };
+		services = services
+			.filter((s) => byName.has(s.name))
+			.map((s) => {
+				const h = byName.get(s.name)!;
+				return { ...s, active_state: h.active_state, sub_state: h.sub_state, collected_at: now };
+			});
+		summary = {
+			total: services.length,
+			failed: services.filter((s) => s.active_state === 'failed').length
+		};
 	}
 
 	type SortColumn = 'name' | 'enabled' | 'state' | 'substate' | 'updated';

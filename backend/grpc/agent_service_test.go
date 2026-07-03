@@ -765,6 +765,43 @@ func TestReportServiceHealth_UpdatesStateAndIgnoresUnknown(t *testing.T) {
 	}
 }
 
+func TestReportServiceHealth_PrunesDroppedServices(t *testing.T) {
+	setupGRPCTestDB(t)
+	defer cleanupServices(t)
+
+	host := &models.Host{
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
+		DisplayName: "service-prune-host",
+		Status:      models.StatusOnline,
+		AgentKey:    "service-prune-key-abc123",
+	}
+	require.NoError(t, database.DB.Create(host).Error)
+	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
+
+	database.DB.Create(&models.Service{HostID: host.ID, Name: "a.service", ActiveState: "active", SubState: "running"})
+	database.DB.Create(&models.Service{HostID: host.ID, Name: "b.service", ActiveState: "active", SubState: "running"})
+
+	s := NewAgentServer()
+	_, err := s.ReportServiceHealth(context.Background(), &pb.ReportServiceHealthRequest{
+		AgentId:     host.AgentID,
+		AgentKey:    host.AgentKey,
+		CollectedAt: time.Now().Unix(),
+		Services: []*pb.ServiceHealth{
+			{Name: "a.service", ActiveState: "active", SubState: "running"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("report: %v", err)
+	}
+
+	var rows []models.Service
+	database.DB.Where("host_id = ?", host.ID).Find(&rows)
+	if len(rows) != 1 || rows[0].Name != "a.service" {
+		t.Fatalf("expected only a.service to remain (b.service pruned), got %+v", rows)
+	}
+}
+
 func TestSendServiceInventory_ReplaceAll(t *testing.T) {
 	setupGRPCTestDB(t)
 	defer cleanupServices(t)
