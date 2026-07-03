@@ -453,8 +453,10 @@ func collectAndSendPackages(ctx context.Context, grpcClient *client.Client, cfg 
 	}
 }
 
-// runServiceCollector collects and sends the systemd service inventory once at startup
-// (after 60s) then daily at 03:00.
+const serviceInventoryInterval = 15 * time.Minute
+
+// runServiceCollector collects and sends the systemd service inventory once at
+// startup (after 60s), then every serviceInventoryInterval.
 func runServiceCollector(ctx context.Context, grpcClient *client.Client, cfg *config.Config, col *services.Collector) {
 	slog.Info("service collector started")
 
@@ -467,24 +469,13 @@ func runServiceCollector(ctx context.Context, grpcClient *client.Client, cfg *co
 		return
 	}
 
-	now := time.Now()
-	next3AM := time.Date(now.Year(), now.Month(), now.Day(), 3, 0, 0, 0, now.Location())
-	if now.Hour() >= 3 {
-		next3AM = next3AM.Add(24 * time.Hour)
-	}
-	timeUntil3AM := time.Until(next3AM)
-	slog.Info("next service collection scheduled",
-		"at", next3AM.Format("2006-01-02 15:04:05"),
-		"in", timeUntil3AM.Round(time.Minute).String())
-
-	timer := time.NewTimer(timeUntil3AM)
-	defer timer.Stop()
+	ticker := time.NewTicker(serviceInventoryInterval)
+	defer ticker.Stop()
 
 	for {
 		select {
-		case <-timer.C:
+		case <-ticker.C:
 			collectAndSendServiceInventory(ctx, grpcClient, cfg, col)
-			timer.Reset(24 * time.Hour)
 		case <-ctx.Done():
 			slog.Info("service collector stopped")
 			return
