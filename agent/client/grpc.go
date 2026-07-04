@@ -14,6 +14,7 @@ import (
 
 	"watchflare-agent/metrics"
 	"watchflare-agent/security"
+	"watchflare-agent/services"
 	pb "watchflare/shared/proto/agent/v1"
 
 	"google.golang.org/grpc"
@@ -394,6 +395,93 @@ func (c *Client) SendPackageInventory(agentID, agentKey string, data *PackageInv
 
 	if !resp.Success {
 		return fmt.Errorf("package inventory rejected: %s", resp.Message)
+	}
+
+	return nil
+}
+
+// SendServiceInventory sends service inventory to the backend
+func (c *Client) SendServiceInventory(agentID, agentKey string, svcs []*services.Service) error {
+	timestamp := time.Now().Unix()
+
+	pbServices := make([]*pb.Service, 0, len(svcs))
+	for _, s := range svcs {
+		pbServices = append(pbServices, &pb.Service{
+			Name:         s.Name,
+			Description:  s.Description,
+			EnabledState: s.EnabledState,
+			ActiveState:  s.ActiveState,
+			SubState:     s.SubState,
+		})
+	}
+
+	req := &pb.SendServiceInventoryRequest{
+		AgentId:   agentID,
+		AgentKey:  agentKey,
+		Timestamp: timestamp,
+		Services:  pbServices,
+	}
+
+	// Attach HMAC authentication metadata
+	ctx := context.Background()
+	ctx, err := security.AttachAuthMetadata(ctx, agentID, agentKey, timestamp, req)
+	if err != nil {
+		return fmt.Errorf("failed to attach auth metadata: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	resp, err := c.client.SendServiceInventory(ctx, req)
+	if err != nil {
+		return fmt.Errorf("send service inventory failed: %w", err)
+	}
+
+	if !resp.Success {
+		return fmt.Errorf("service inventory rejected: %s", resp.Message)
+	}
+
+	return nil
+}
+
+// ReportServiceHealth sends service health status to the backend
+func (c *Client) ReportServiceHealth(agentID, agentKey string, health []*services.ServiceHealth, collectedAt time.Time) error {
+	timestamp := time.Now().Unix()
+
+	pbHealth := make([]*pb.ServiceHealth, 0, len(health))
+	for _, h := range health {
+		pbHealth = append(pbHealth, &pb.ServiceHealth{
+			Name:        h.Name,
+			ActiveState: h.ActiveState,
+			SubState:    h.SubState,
+		})
+	}
+
+	req := &pb.ReportServiceHealthRequest{
+		AgentId:     agentID,
+		AgentKey:    agentKey,
+		Timestamp:   timestamp,
+		Services:    pbHealth,
+		CollectedAt: collectedAt.Unix(),
+	}
+
+	// Attach HMAC authentication metadata
+	ctx := context.Background()
+	ctx, err := security.AttachAuthMetadata(ctx, agentID, agentKey, timestamp, req)
+	if err != nil {
+		return fmt.Errorf("failed to attach auth metadata: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	resp, err := c.client.ReportServiceHealth(ctx, req)
+	if err != nil {
+		return fmt.Errorf("report service health failed: %w", err)
+	}
+
+	if !resp.Success {
+		return fmt.Errorf("service health rejected: %s", resp.Message)
 	}
 
 	return nil

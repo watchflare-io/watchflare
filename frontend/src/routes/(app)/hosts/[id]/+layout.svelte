@@ -141,7 +141,7 @@
 		)
 	);
 
-	function isActiveTab(tab: 'overview' | 'packages' | 'incidents'): boolean {
+	function isActiveTab(tab: 'overview' | 'packages' | 'services' | 'incidents'): boolean {
 		const base = `/hosts/${hostId}`;
 		if (tab === 'overview') return currentPath === base;
 		return currentPath.startsWith(`${base}/${tab}`);
@@ -420,11 +420,11 @@
 	</div>
 	<!-- Tabs (static, no skeleton needed) -->
 	<div class="mb-6 flex gap-1 border-b overflow-x-auto overflow-y-clip no-scrollbar">
-		{#each [['overview', 'Overview', `/hosts/${hostId}`], ['packages', 'Packages', `/hosts/${hostId}/packages`], ['incidents', 'Incidents', `/hosts/${hostId}/incidents`]] as [tab, label, href]}
+		{#each [['overview', 'Overview', `/hosts/${hostId}`], ['packages', 'Packages', `/hosts/${hostId}/packages`], ['services', 'Services', `/hosts/${hostId}/services`], ['incidents', 'Incidents', `/hosts/${hostId}/incidents`]] as [tab, label, href]}
 			<a
 				{href}
 				class="shrink-0 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px {isActiveTab(
-					tab as 'overview' | 'packages' | 'incidents'
+					tab as 'overview' | 'packages' | 'services' | 'incidents'
 				)
 					? 'border-primary text-foreground'
 					: 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -542,6 +542,16 @@
 				: 'border-transparent text-muted-foreground hover:text-foreground'}"
 		>
 			Packages
+		</a>
+		<a
+			href="/hosts/{hostId}/services"
+			class="shrink-0 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px {isActiveTab(
+				'services'
+			)
+				? 'border-primary text-foreground'
+				: 'border-transparent text-muted-foreground hover:text-foreground'}"
+		>
+			Services
 		</a>
 		<a
 			href="/hosts/{hostId}/incidents"

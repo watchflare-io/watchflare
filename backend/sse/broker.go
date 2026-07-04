@@ -16,6 +16,7 @@ const (
 	EventTypeContainerMetricsUpdate  = "container_metrics_update"
 	EventTypePackageInventoryUpdate  = "package_inventory_update"
 	EventTypeIncidentsChanged        = "incidents_changed"
+	EventTypeServiceHealthUpdate     = "service_health_update"
 )
 
 // Event represents a host event.
@@ -287,6 +288,23 @@ func (b *Broker) BroadcastContainerMetricsUpdate(update ContainerMetricsUpdate) 
 
 func (b *Broker) BroadcastPackageInventoryUpdate(update PackageInventoryUpdate) {
 	b.Broadcast(Event{Type: EventTypePackageInventoryUpdate, Data: update, HostID: update.HostID})
+}
+
+// ServiceHealthPayload is one service's live state in a ServiceHealthUpdate.
+type ServiceHealthPayload struct {
+	Name        string `json:"name"`
+	ActiveState string `json:"active_state"`
+	SubState    string `json:"sub_state"`
+}
+
+// ServiceHealthUpdate is the input struct for BroadcastServiceHealthUpdate.
+type ServiceHealthUpdate struct {
+	HostID   string                 `json:"host_id"`
+	Services []ServiceHealthPayload `json:"services"`
+}
+
+func (b *Broker) BroadcastServiceHealthUpdate(u ServiceHealthUpdate) {
+	b.Broadcast(Event{Type: EventTypeServiceHealthUpdate, Data: u, HostID: u.HostID})
 }
 
 // BroadcastIncidentsChanged signals connected clients that the active-incident

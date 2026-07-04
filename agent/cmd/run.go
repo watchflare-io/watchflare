@@ -17,6 +17,7 @@ import (
 	"watchflare-agent/logger"
 	"watchflare-agent/metrics"
 	"watchflare-agent/packages"
+	"watchflare-agent/services"
 	"watchflare-agent/sysinfo"
 	"watchflare-agent/update"
 	"watchflare-agent/wal"
@@ -121,6 +122,15 @@ func Run() {
 
 	// Start package collector in background
 	go runPackageCollector(ctx, grpcClient, cfg, forceCollectCh)
+
+	// Start service collector in background (systemd only)
+	svcCollector := services.New()
+	if svcCollector.IsAvailable() {
+		go runServiceCollector(ctx, grpcClient, cfg, svcCollector)
+		go runServiceHealthReporter(ctx, grpcClient, cfg, svcCollector)
+	} else {
+		slog.Info("systemd service collector unavailable, skipping")
+	}
 
 	// Start update checker in background
 	go runUpdateChecker(ctx, forceUpdateCh)
@@ -440,6 +450,75 @@ func collectAndSendPackages(ctx context.Context, grpcClient *client.Client, cfg 
 
 	if err := state.Save(statePath); err != nil {
 		slog.Warn("failed to save package state", "error", err)
+	}
+}
+
+const serviceInventoryInterval = 15 * time.Minute
+
+// runServiceCollector collects and sends the systemd service inventory once at
+// startup (after 60s), then every serviceInventoryInterval.
+func runServiceCollector(ctx context.Context, grpcClient *client.Client, cfg *config.Config, col *services.Collector) {
+	slog.Info("service collector started")
+
+	slog.Info("waiting before initial service collection", "delay_sec", 60)
+	select {
+	case <-time.After(60 * time.Second):
+		collectAndSendServiceInventory(ctx, grpcClient, cfg, col)
+	case <-ctx.Done():
+		slog.Info("service collector stopped before initial collection")
+		return
+	}
+
+	ticker := time.NewTicker(serviceInventoryInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			collectAndSendServiceInventory(ctx, grpcClient, cfg, col)
+		case <-ctx.Done():
+			slog.Info("service collector stopped")
+			return
+		}
+	}
+}
+
+// collectAndSendServiceInventory collects the current service inventory and sends it to the backend.
+func collectAndSendServiceInventory(ctx context.Context, grpcClient *client.Client, cfg *config.Config, col *services.Collector) {
+	svcs, err := col.CollectInventory(ctx)
+	if err != nil {
+		slog.Warn("service inventory collection failed", "error", err)
+		return
+	}
+	if err := grpcClient.SendServiceInventory(cfg.AgentID, cfg.AgentKey, svcs); err != nil {
+		slog.Warn("failed to send service inventory", "error", err)
+		return
+	}
+	slog.Info("service inventory sent", "count", len(svcs))
+}
+
+// runServiceHealthReporter reports systemd service health every 30 seconds.
+func runServiceHealthReporter(ctx context.Context, grpcClient *client.Client, cfg *config.Config, col *services.Collector) {
+	slog.Info("service health reporter started")
+	defer col.Close()
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			health, err := col.CollectHealth(ctx)
+			if err != nil {
+				slog.Warn("service health collection failed", "error", err)
+				continue
+			}
+			if err := grpcClient.ReportServiceHealth(cfg.AgentID, cfg.AgentKey, health, time.Now()); err != nil {
+				slog.Warn("failed to report service health", "error", err)
+			}
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 

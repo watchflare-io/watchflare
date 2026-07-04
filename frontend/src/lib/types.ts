@@ -265,6 +265,7 @@ export type SSEEventType =
 	| 'aggregated_metrics_update'
 	| 'container_metrics_update'
 	| 'package_inventory_update'
+	| 'service_health_update'
 	| 'incidents_changed';
 
 export interface SSEEvent {
@@ -656,4 +657,27 @@ export interface UpdateNotificationChannelInput {
 	url?: string;
 	categories?: NotificationCategory[];
 	enabled?: boolean;
+}
+
+// ===== Services =====
+
+export interface Service {
+	id: number;
+	host_id: string;
+	name: string;
+	description: string;
+	enabled_state: string;
+	active_state: string;
+	sub_state: string;
+	collected_at: string;
+}
+
+export interface ServiceHealthUpdate {
+	host_id: string;
+	services: { name: string; active_state: string; sub_state: string }[];
+}
+
+export interface GetServicesResponse {
+	services: Service[];
+	summary: { total: number; failed: number };
 }

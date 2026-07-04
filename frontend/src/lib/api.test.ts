@@ -258,6 +258,17 @@ describe('getHostMetrics', () => {
 	});
 });
 
+describe('getHostServices', () => {
+	it('fetches host services', async () => {
+		const payload = { services: [], summary: { total: 0, failed: 0 } };
+		mockFetch.mockReturnValueOnce(jsonResponse(payload));
+		const { getHostServices } = await import('./api');
+
+		const res = await getHostServices('host-1');
+		expect(res.summary.total).toBe(0);
+	});
+});
+
 describe('error handling (via login)', () => {
 	it('throws ApiError on network error', async () => {
 		mockFetch.mockReturnValueOnce(networkError('Network failure'));

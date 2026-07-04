@@ -11,6 +11,7 @@ import (
 	"watchflare/backend/database"
 	"watchflare/backend/models"
 	"watchflare/backend/pki"
+	"watchflare/backend/sse"
 	pb "watchflare/shared/proto/agent/v1"
 
 	"github.com/google/uuid"
@@ -688,4 +689,197 @@ func TestProcessPackageInventory_DeltaInventory(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, processed) // TotalPackageCount
 	assert.Equal(t, 3, changes)   // 1 added + 1 removed + 1 updated
+}
+
+func cleanupServices(t *testing.T) {
+	t.Helper()
+	database.DB.Exec("DELETE FROM services")
+}
+
+func TestReportServiceHealth_UpdatesStateAndIgnoresUnknown(t *testing.T) {
+	setupGRPCTestDB(t)
+	defer cleanupServices(t)
+
+	host := &models.Host{
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
+		DisplayName: "service-health-host",
+		Status:      models.StatusOnline,
+		AgentKey:    "service-health-key-abc123",
+	}
+	require.NoError(t, database.DB.Create(host).Error)
+	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
+
+	database.DB.Create(&models.Service{HostID: host.ID, Name: "x.service", ActiveState: "active", SubState: "running", CollectedAt: time.Unix(0, 0)})
+
+	sseClient := sse.GetBroker().AddClientWithHostFilter("test-report-service-health", host.ID)
+	defer sse.GetBroker().RemoveClient("test-report-service-health")
+
+	s := NewAgentServer()
+	_, err := s.ReportServiceHealth(context.Background(), &pb.ReportServiceHealthRequest{
+		AgentId:     host.AgentID,
+		AgentKey:    host.AgentKey,
+		CollectedAt: time.Now().Unix(),
+		Services: []*pb.ServiceHealth{
+			{Name: "x.service", ActiveState: "failed", SubState: "failed"},
+			{Name: "ghost.service", ActiveState: "failed", SubState: "failed"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("report: %v", err)
+	}
+
+	select {
+	case ev := <-sseClient.Channel:
+		if ev.Type != sse.EventTypeServiceHealthUpdate {
+			t.Fatalf("unexpected SSE event type: %s", ev.Type)
+		}
+		update, ok := ev.Data.(sse.ServiceHealthUpdate)
+		if !ok {
+			t.Fatalf("unexpected SSE event data type: %T", ev.Data)
+		}
+		broadcastNames := make(map[string]bool, len(update.Services))
+		for _, p := range update.Services {
+			broadcastNames[p.Name] = true
+		}
+		if !broadcastNames["x.service"] {
+			t.Fatalf("expected x.service in SSE payload, got %+v", update.Services)
+		}
+		if broadcastNames["ghost.service"] {
+			t.Fatalf("ghost.service (unknown) must not be in SSE payload, got %+v", update.Services)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("no service_health_update broadcast received")
+	}
+
+	var rows []models.Service
+	database.DB.Where("host_id = ?", host.ID).Find(&rows)
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 row (ghost ignored), got %d", len(rows))
+	}
+	if rows[0].ActiveState != "failed" || rows[0].SubState != "failed" {
+		t.Fatalf("state not updated: %+v", rows[0])
+	}
+	if !rows[0].CollectedAt.After(time.Unix(1, 0)) {
+		t.Fatalf("collected_at not refreshed: %v", rows[0].CollectedAt)
+	}
+}
+
+func TestReportServiceHealth_PrunesDroppedServices(t *testing.T) {
+	setupGRPCTestDB(t)
+	defer cleanupServices(t)
+
+	host := &models.Host{
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
+		DisplayName: "service-prune-host",
+		Status:      models.StatusOnline,
+		AgentKey:    "service-prune-key-abc123",
+	}
+	require.NoError(t, database.DB.Create(host).Error)
+	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
+
+	database.DB.Create(&models.Service{HostID: host.ID, Name: "a.service", ActiveState: "active", SubState: "running"})
+	database.DB.Create(&models.Service{HostID: host.ID, Name: "b.service", ActiveState: "active", SubState: "running"})
+
+	s := NewAgentServer()
+	_, err := s.ReportServiceHealth(context.Background(), &pb.ReportServiceHealthRequest{
+		AgentId:     host.AgentID,
+		AgentKey:    host.AgentKey,
+		CollectedAt: time.Now().Unix(),
+		Services: []*pb.ServiceHealth{
+			{Name: "a.service", ActiveState: "active", SubState: "running"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("report: %v", err)
+	}
+
+	var rows []models.Service
+	database.DB.Where("host_id = ?", host.ID).Find(&rows)
+	if len(rows) != 1 || rows[0].Name != "a.service" {
+		t.Fatalf("expected only a.service to remain (b.service pruned), got %+v", rows)
+	}
+}
+
+func TestReportServiceHealth_EmptyReportDoesNotWipe(t *testing.T) {
+	setupGRPCTestDB(t)
+	defer cleanupServices(t)
+
+	host := &models.Host{
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
+		DisplayName: "service-empty-host",
+		Status:      models.StatusOnline,
+		AgentKey:    "service-empty-key-abc123",
+	}
+	require.NoError(t, database.DB.Create(host).Error)
+	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
+
+	database.DB.Create(&models.Service{HostID: host.ID, Name: "a.service", ActiveState: "active", SubState: "running"})
+
+	s := NewAgentServer()
+	_, err := s.ReportServiceHealth(context.Background(), &pb.ReportServiceHealthRequest{
+		AgentId:     host.AgentID,
+		AgentKey:    host.AgentKey,
+		CollectedAt: time.Now().Unix(),
+		Services:    nil,
+	})
+	if err != nil {
+		t.Fatalf("report: %v", err)
+	}
+
+	var count int64
+	database.DB.Model(&models.Service{}).Where("host_id = ?", host.ID).Count(&count)
+	if count != 1 {
+		t.Fatalf("empty report must not delete existing rows, got %d", count)
+	}
+}
+
+func TestSendServiceInventory_ReplaceAll(t *testing.T) {
+	setupGRPCTestDB(t)
+	defer cleanupServices(t)
+
+	host := &models.Host{
+		ID:          uuid.New().String(),
+		AgentID:     uuid.New().String(),
+		DisplayName: "service-inv-host",
+		Status:      models.StatusOnline,
+		AgentKey:    "service-inv-key-abc123",
+	}
+	require.NoError(t, database.DB.Create(host).Error)
+	t.Cleanup(func() { database.DB.Unscoped().Delete(host) })
+
+	s := NewAgentServer()
+	ctx := context.Background()
+
+	_, err := s.SendServiceInventory(ctx, &pb.SendServiceInventoryRequest{
+		AgentId:  host.AgentID,
+		AgentKey: host.AgentKey,
+		Services: []*pb.Service{
+			{Name: "a.service", ActiveState: "active", SubState: "running", EnabledState: "enabled"},
+			{Name: "b.service", ActiveState: "failed", SubState: "failed", EnabledState: "enabled"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("first inventory: %v", err)
+	}
+
+	// Second inventory with a different set must fully replace the first.
+	_, err = s.SendServiceInventory(ctx, &pb.SendServiceInventoryRequest{
+		AgentId:  host.AgentID,
+		AgentKey: host.AgentKey,
+		Services: []*pb.Service{
+			{Name: "c.service", ActiveState: "active", SubState: "running", EnabledState: "enabled"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("second inventory: %v", err)
+	}
+
+	var rows []models.Service
+	database.DB.Where("host_id = ?", host.ID).Order("name").Find(&rows)
+	if len(rows) != 1 || rows[0].Name != "c.service" {
+		t.Fatalf("expected only c.service, got %+v", rows)
+	}
 }
