@@ -54,6 +54,7 @@
 	let error = $state('');
 	let searchTerm = $state('');
 	let visibleColumns = $state<Set<ColumnKey>>(new Set(loadStoredColumns()));
+	let now = $state(Date.now());
 
 	const col = $derived((key: ColumnKey) => visibleColumns.has(key));
 	const extraColumnsCount = $derived(
@@ -62,8 +63,17 @@
 
 	const STALE_MS = 90_000;
 
-	function isStale(s: Service): boolean {
-		return Date.now() - new Date(s.collected_at).getTime() > STALE_MS;
+	function isFresh(s: Service): boolean {
+		return now - new Date(s.collected_at).getTime() <= STALE_MS;
+	}
+
+	function formatTime(dateString: string): string {
+		return new Date(dateString).toLocaleTimeString('en-US', {
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			hour12: timeFormat === '12h'
+		});
 	}
 
 	function toggleColumn(key: ColumnKey) {
@@ -168,6 +178,7 @@
 	}
 
 	let unsub: (() => void) | undefined;
+	let nowTimer: ReturnType<typeof setInterval>;
 
 	onMount(() => {
 		load();
@@ -176,9 +187,13 @@
 				applyHealth(event.data as ServiceHealthUpdate);
 			}
 		});
+		nowTimer = setInterval(() => (now = Date.now()), 30_000);
 	});
 
-	onDestroy(() => unsub?.());
+	onDestroy(() => {
+		unsub?.();
+		clearInterval(nowTimer);
+	});
 </script>
 
 <svelte:head>
@@ -289,6 +304,17 @@
 			<path d="M6 10l4-5H2z" />
 		</svg>
 	{/if}
+{/snippet}
+
+{#snippet updatedCell(s: Service)}
+	{@const fresh = isFresh(s)}
+	<span
+		class="inline-flex items-center gap-1.5 {fresh ? 'text-muted-foreground' : 'text-warning'}"
+		title={formatDateTime(s.collected_at, timeFormat)}
+	>
+		<span class="h-1.5 w-1.5 rounded-full {fresh ? 'bg-success' : 'bg-warning'}"></span>
+		{formatTime(s.collected_at)}
+	</span>
 {/snippet}
 
 <!-- Table / Cards -->
@@ -438,11 +464,8 @@
 								>
 							{/if}
 							{#if col('updated')}
-								<td
-									class="w-px whitespace-nowrap px-4 py-3 text-left text-sm text-muted-foreground"
-								>
-									{formatDateTime(s.collected_at, timeFormat)}
-									{#if isStale(s)}<span class="ml-1 text-warning">(stale)</span>{/if}
+								<td class="w-px whitespace-nowrap px-4 py-3 text-left text-sm">
+									{@render updatedCell(s)}
 								</td>
 							{/if}
 						</tr>
@@ -474,10 +497,7 @@
 						{#if s.sub_state}
 							<span class="text-xs text-muted-foreground">{s.sub_state}</span>
 						{/if}
-						<span class="text-xs text-muted-foreground">
-							{formatDateTime(s.collected_at, timeFormat)}
-							{#if isStale(s)}<span class="text-warning">(stale)</span>{/if}
-						</span>
+						<span class="text-xs">{@render updatedCell(s)}</span>
 					</div>
 				</div>
 			{:else}
