@@ -271,6 +271,13 @@ func setupRouter() *gin.Engine {
 		packagesGroup.GET("", handlers.ListAllPackages)
 	}
 
+	// Containers routes (protected) — global view across all hosts
+	containersGroup := api.Group("/containers")
+	containersGroup.Use(middleware.AuthMiddleware())
+	{
+		containersGroup.GET("", handlers.ListAllContainers)
+	}
+
 	// Host routes (protected)
 	hostGroup := api.Group("/hosts")
 	hostGroup.Use(middleware.AuthMiddleware())
