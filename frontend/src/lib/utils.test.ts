@@ -12,7 +12,11 @@ import {
 	getTimeRangeTimestamps,
 	parsePortBadges,
 	capitalizeFirst,
-	isSystemContainer
+	isSystemContainer,
+	cpuBarClass,
+	memBarClass,
+	healthBadgeClass,
+	memoryPercent
 } from './utils';
 
 describe('capitalizeFirst', () => {
@@ -292,5 +296,40 @@ describe('isSystemContainer', () => {
 		expect(isSystemContainer({ environment_type: 'physical', container_runtime: null })).toBe(
 			false
 		);
+	});
+});
+
+describe('cpuBarClass', () => {
+	it('maps cpu load to color tiers', () => {
+		expect(cpuBarClass(90)).toBe('bg-danger');
+		expect(cpuBarClass(60)).toBe('bg-warning');
+		expect(cpuBarClass(10)).toBe('bg-success');
+	});
+});
+
+describe('memBarClass', () => {
+	it('maps memory percent to color tiers', () => {
+		expect(memBarClass(95)).toBe('bg-danger');
+		expect(memBarClass(75)).toBe('bg-warning');
+		expect(memBarClass(20)).toBe('bg-primary');
+	});
+});
+
+describe('healthBadgeClass', () => {
+	it('returns healthy/unhealthy/starting/fallback classes', () => {
+		expect(healthBadgeClass('healthy')).toContain('text-success');
+		expect(healthBadgeClass('unhealthy')).toContain('text-destructive');
+		expect(healthBadgeClass('starting')).toContain('text-warning');
+		expect(healthBadgeClass('')).toContain('text-muted-foreground');
+	});
+});
+
+describe('memoryPercent', () => {
+	it('returns 0 when limit is 0', () => {
+		expect(memoryPercent(100, 0)).toBe(0);
+	});
+	it('clamps to 100 and computes ratio', () => {
+		expect(memoryPercent(50, 100)).toBe(50);
+		expect(memoryPercent(200, 100)).toBe(100);
 	});
 });

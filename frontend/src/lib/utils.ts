@@ -289,3 +289,28 @@ export function parsePortBadges(ports: string): string[] {
 		return slashIdx !== -1 ? p.substring(0, slashIdx) : p;
 	});
 }
+
+// Container display helpers (shared between per-host ContainersTable and global /containers page)
+export function cpuBarClass(cpu: number): string {
+	if (cpu >= 80) return 'bg-danger';
+	if (cpu >= 50) return 'bg-warning';
+	return 'bg-success';
+}
+
+export function memBarClass(pct: number): string {
+	if (pct >= 90) return 'bg-danger';
+	if (pct >= 70) return 'bg-warning';
+	return 'bg-primary';
+}
+
+export function healthBadgeClass(health: string): string {
+	if (health === 'healthy') return 'bg-success/10 text-success border-success/20';
+	if (health === 'unhealthy') return 'bg-destructive/10 text-destructive border-destructive/20';
+	if (health === 'starting') return 'bg-warning/10 text-warning border-warning/20';
+	return 'bg-muted text-muted-foreground border-border';
+}
+
+export function memoryPercent(used: number, limit: number): number {
+	if (!limit || limit === 0) return 0;
+	return Math.min(100, (used / limit) * 100);
+}

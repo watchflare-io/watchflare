@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
-	import { formatBytes } from '$lib/utils';
+	import { formatBytes, cpuBarClass, memBarClass, healthBadgeClass, memoryPercent } from '$lib/utils';
 	import { formatRate } from '$lib/chart-utils';
 	import { userStore } from '$lib/stores/user';
 	import type { ContainerMetric } from '$lib/types';
@@ -20,31 +20,10 @@
 	const networkUnit = $derived($userStore.user?.network_unit ?? 'bytes');
 
 	const memPct = $derived(
-		container && container.memory_limit_bytes > 0
-			? Math.min(100, (container.memory_used_bytes / container.memory_limit_bytes) * 100)
-			: 0
+		container ? memoryPercent(container.memory_used_bytes, container.memory_limit_bytes) : 0
 	);
 
 	const portList = $derived(container?.ports ? container.ports.split(', ').filter(Boolean) : []);
-
-	function cpuBarClass(cpu: number): string {
-		if (cpu >= 80) return 'bg-danger';
-		if (cpu >= 50) return 'bg-warning';
-		return 'bg-success';
-	}
-
-	function memBarClass(pct: number): string {
-		if (pct >= 90) return 'bg-danger';
-		if (pct >= 70) return 'bg-warning';
-		return 'bg-primary';
-	}
-
-	function healthBadgeClass(health: string): string {
-		if (health === 'healthy') return 'bg-success/10 text-success border-success/20';
-		if (health === 'unhealthy') return 'bg-destructive/10 text-destructive border-destructive/20';
-		if (health === 'starting') return 'bg-warning/10 text-warning border-warning/20';
-		return 'bg-muted text-muted-foreground border-border';
-	}
 </script>
 
 <RightSidebar {open} {onClose} size="wide">
