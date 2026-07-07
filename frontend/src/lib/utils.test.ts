@@ -16,8 +16,11 @@ import {
 	cpuBarClass,
 	memBarClass,
 	healthBadgeClass,
-	memoryPercent
+	memoryPercent,
+	containerIsLive,
+	filterContainers
 } from './utils';
+import type { GlobalContainer } from './types';
 
 describe('capitalizeFirst', () => {
 	it('capitalizes a lowercase backend message', () => {
@@ -331,5 +334,59 @@ describe('memoryPercent', () => {
 	it('clamps to 100 and computes ratio', () => {
 		expect(memoryPercent(50, 100)).toBe(50);
 		expect(memoryPercent(200, 100)).toBe(100);
+	});
+});
+
+function makeContainer(over: Partial<GlobalContainer> = {}): GlobalContainer {
+	return {
+		host_id: 'h1',
+		host_name: 'host-1',
+		host_status: 'online',
+		container_id: 'c1',
+		container_name: 'web',
+		image: 'nginx:latest',
+		cpu_percent: 0,
+		memory_used_bytes: 0,
+		memory_limit_bytes: 0,
+		network_rx_bytes_per_sec: 0,
+		network_tx_bytes_per_sec: 0,
+		runtime: 'docker',
+		status: 'Up 2 hours',
+		health: 'healthy',
+		ports: '',
+		updated_at: new Date().toISOString(),
+		...over
+	};
+}
+
+describe('containerIsLive', () => {
+	it('is live only when host is online', () => {
+		expect(containerIsLive('online')).toBe(true);
+		expect(containerIsLive('offline')).toBe(false);
+		expect(containerIsLive('paused')).toBe(false);
+	});
+});
+
+describe('filterContainers', () => {
+	const list = [
+		makeContainer({ container_id: 'c1', container_name: 'web', image: 'nginx', host_id: 'h1', runtime: 'docker', host_status: 'online' }),
+		makeContainer({ container_id: 'c2', container_name: 'db', image: 'postgres', host_id: 'h2', runtime: 'podman', host_status: 'offline' })
+	];
+	const base = { search: '', host: '', runtime: '', liveness: 'all' as const };
+
+	it('returns all with empty filters', () => {
+		expect(filterContainers(list, base)).toHaveLength(2);
+	});
+	it('search matches name or image, case-insensitive', () => {
+		expect(filterContainers(list, { ...base, search: 'WEB' })).toHaveLength(1);
+		expect(filterContainers(list, { ...base, search: 'postgres' })[0].container_id).toBe('c2');
+	});
+	it('filters by host and runtime', () => {
+		expect(filterContainers(list, { ...base, host: 'h2' })[0].container_id).toBe('c2');
+		expect(filterContainers(list, { ...base, runtime: 'docker' })[0].container_id).toBe('c1');
+	});
+	it('filters by liveness', () => {
+		expect(filterContainers(list, { ...base, liveness: 'live' })[0].container_id).toBe('c1');
+		expect(filterContainers(list, { ...base, liveness: 'stale' })[0].container_id).toBe('c2');
 	});
 });

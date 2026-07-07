@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import type { Host, SSEEvent, TimeRange } from './types';
+import type { Host, SSEEvent, TimeRange, GlobalContainer, ContainerLiveness } from './types';
 import { toasts } from './stores/toasts';
 import { TOAST_LONG_DURATION } from './constants';
 
@@ -313,4 +313,26 @@ export function healthBadgeClass(health: string): string {
 export function memoryPercent(used: number, limit: number): number {
 	if (!limit || limit === 0) return 0;
 	return Math.min(100, (used / limit) * 100);
+}
+
+// Container filtering helpers
+export function containerIsLive(hostStatus: string): boolean {
+	return hostStatus === 'online';
+}
+
+export function filterContainers(
+	containers: GlobalContainer[],
+	opts: { search: string; host: string; runtime: string; liveness: ContainerLiveness }
+): GlobalContainer[] {
+	const q = opts.search.trim().toLowerCase();
+	return containers.filter((c) => {
+		if (q && !c.container_name.toLowerCase().includes(q) && !c.image.toLowerCase().includes(q)) {
+			return false;
+		}
+		if (opts.host && c.host_id !== opts.host) return false;
+		if (opts.runtime && c.runtime !== opts.runtime) return false;
+		if (opts.liveness === 'live' && !containerIsLive(c.host_status)) return false;
+		if (opts.liveness === 'stale' && containerIsLive(c.host_status)) return false;
+		return true;
+	});
 }

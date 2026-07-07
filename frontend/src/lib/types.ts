@@ -681,3 +681,26 @@ export interface GetServicesResponse {
 	services: Service[];
 	summary: { total: number; failed: number };
 }
+
+// ===== Global Containers =====
+
+export type ContainerLiveness = 'all' | 'live' | 'stale';
+
+export interface GlobalContainer {
+	host_id: string;
+	host_name: string;
+	host_status: string;
+	container_id: string;
+	container_name: string;
+	image: string;
+	cpu_percent: number;
+	memory_used_bytes: number;
+	memory_limit_bytes: number;
+	network_rx_bytes_per_sec: number;
+	network_tx_bytes_per_sec: number;
+	runtime: string;
+	status: string;
+	health: string;
+	ports: string;
+	updated_at: string;
+}
