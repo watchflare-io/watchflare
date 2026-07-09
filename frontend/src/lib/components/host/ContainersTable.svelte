@@ -37,7 +37,7 @@
 	}
 
 	// Derive the latest metric per container, preserving static fields
-	// (image, runtime, ports) from any non-empty record — these are absent
+	// (image, runtime, ports) from any non-empty record, these are absent
 	// from SSE updates which only carry live metrics.
 	const latestContainers = $derived(
 		(() => {
@@ -225,7 +225,7 @@
 					{/if}
 					<div class="flex items-baseline gap-2">
 						<span class="w-16 shrink-0 text-xs text-muted-foreground">Status</span>
-						<span class="text-sm">{container.status || '—'}</span>
+						<span class="text-sm">{container.status || '-'}</span>
 					</div>
 					<div class="flex items-center gap-2">
 						<span class="w-16 shrink-0 text-xs text-muted-foreground">Health</span>
@@ -345,7 +345,7 @@
 							</div>
 						</td>
 						<td class="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
-							{container.status || '—'}
+							{container.status || '-'}
 						</td>
 						<td class="px-4 py-3 whitespace-nowrap">
 							<span
@@ -358,7 +358,7 @@
 						</td>
 						<td class="px-4 py-3 max-w-xs">
 							<span class="text-sm text-muted-foreground truncate block" title={container.image}>
-								{container.image ? truncateImage(container.image) : '—'}
+								{container.image ? truncateImage(container.image) : '-'}
 							</span>
 						</td>
 						<td class="px-4 py-3 text-center">
@@ -407,7 +407,7 @@
 									{/if}
 								</div>
 							{:else}
-								<span class="text-sm text-muted-foreground">—</span>
+								<span class="text-sm text-muted-foreground">-</span>
 							{/if}
 						</td>
 					</tr>

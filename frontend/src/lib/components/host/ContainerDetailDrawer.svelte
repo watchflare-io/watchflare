@@ -76,7 +76,7 @@
 			<div class="flex flex-col gap-1.5">
 				<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
 				<div class="flex items-center gap-2 flex-wrap">
-					<span class="text-sm text-foreground">{container.status || '—'}</span>
+					<span class="text-sm text-foreground">{container.status || '-'}</span>
 					{#if container.health}
 						<span
 							class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border {healthBadgeClass(
@@ -93,7 +93,7 @@
 			<div class="flex flex-col gap-1.5">
 				<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Image</p>
 				<p class="text-sm font-mono text-foreground break-all">
-					{container.image || '—'}
+					{container.image || '-'}
 				</p>
 			</div>
 
