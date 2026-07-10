@@ -14,17 +14,18 @@ const defaultSMTPPort = 587
 
 // UpdateSMTPSettingsRequest is the body for PUT /settings/smtp.
 type UpdateSMTPSettingsRequest struct {
-	Host              string `json:"host"`
-	Port              int    `json:"port"`
-	Username          string `json:"username"`
-	Password          string `json:"password"` // empty = keep existing password
-	FromAddress       string `json:"from_address"`
-	FromName          string `json:"from_name"`
-	TLSMode           string `json:"tls_mode"`
-	AuthType          string `json:"auth_type"`
-	HeloName          string `json:"helo_name"`
-	NotificationEmail string `json:"notification_email"`
-	Enabled           bool   `json:"enabled"`
+	Host              string   `json:"host"`
+	Port              int      `json:"port"`
+	Username          string   `json:"username"`
+	Password          string   `json:"password"` // empty = keep existing password
+	FromAddress       string   `json:"from_address"`
+	FromName          string   `json:"from_name"`
+	TLSMode           string   `json:"tls_mode"`
+	AuthType          string   `json:"auth_type"`
+	HeloName          string   `json:"helo_name"`
+	NotificationEmail string   `json:"notification_email"`
+	Enabled           bool     `json:"enabled"`
+	Categories        []string `json:"categories"`
 }
 
 // TestSMTPRequest is the body for POST /settings/smtp/test.
@@ -119,6 +120,7 @@ func UpdateSMTPSettings(c *gin.Context) {
 		HeloName:          req.HeloName,
 		NotificationEmail: req.NotificationEmail,
 		Enabled:           req.Enabled,
+		Categories:        defaultCategories(req.Categories),
 	}); err != nil {
 		slog.Error("failed to save SMTP settings", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save SMTP settings"})
