@@ -3,8 +3,9 @@
 	import { fly } from 'svelte/transition';
 	import { userStore } from '$lib/stores/user';
 	import { Check, Send, TriangleAlert, X } from 'lucide-svelte';
-	import type { SmtpTLSMode, SmtpAuthType, AlertRule, AlertMetricType } from '$lib/types';
+	import type { SmtpTLSMode, SmtpAuthType, AlertRule, AlertMetricType, NotificationCategory } from '$lib/types';
 	import { ALERT_METRIC_TYPES, ALERT_METRIC_LABELS } from '$lib/types';
+	import CategorySelector from '$lib/components/CategorySelector.svelte';
 	import {
 		getSmtpSettings,
 		updateSmtpSettings,
@@ -22,6 +23,7 @@
 	let loaded = $state(false);
 	let loadError = $state(false);
 	let smtpEnabled = $state(false);
+	let smtpCategories = $state<NotificationCategory[]>(['alerts']);
 	let smtpHost = $state('');
 	let smtpPort = $state(587);
 	let smtpTLSMode = $state<SmtpTLSMode>('starttls');
@@ -161,6 +163,7 @@
 			const res = await getSmtpSettings();
 			const s = res.smtp;
 			smtpEnabled = s.enabled;
+			smtpCategories = s.categories ?? ['alerts'];
 			smtpHost = s.host;
 			smtpPort = s.port;
 			smtpTLSMode = s.tls_mode;
@@ -324,7 +327,8 @@
 				auth_type: smtpAuthType,
 				helo_name: smtpHeloName,
 				notification_email: smtpNotificationEmail.trim(),
-				enabled: smtpEnabled
+				enabled: smtpEnabled,
+				categories: smtpCategories
 			});
 			if (smtpPassword) {
 				smtpPasswordSet = true;
@@ -589,6 +593,20 @@
 				{fieldErrors.notificationEmail}
 			</p>
 		{/if}
+	</div>
+
+	<!-- Categories -->
+	<div class="mb-6 flex flex-col gap-1.5">
+		<span class="text-sm font-medium text-foreground">Categories</span>
+		<p class="text-xs text-muted-foreground">
+			Choose what this SMTP server sends. Uncheck Alerts to stop alert emails while keeping SMTP
+			available.
+		</p>
+		<CategorySelector
+			categories={smtpCategories}
+			onChange={(next) => (smtpCategories = next)}
+			idPrefix="smtp-cat"
+		/>
 	</div>
 
 	<!-- TLS / port mismatch warning -->

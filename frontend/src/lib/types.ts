@@ -465,6 +465,7 @@ export interface SmtpSettings {
 	helo_name: string;
 	notification_email: string;
 	enabled: boolean;
+	categories: NotificationCategory[];
 }
 
 export interface UpdateSMTPSettingsRequest {
@@ -479,6 +480,7 @@ export interface UpdateSMTPSettingsRequest {
 	helo_name: string;
 	notification_email: string;
 	enabled: boolean;
+	categories: NotificationCategory[];
 }
 
 export interface GetSMTPSettingsResponse {
