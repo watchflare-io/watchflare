@@ -12,8 +12,10 @@ import {
 	getTimeRangeTimestamps,
 	parsePortBadges,
 	capitalizeFirst,
-	isSystemContainer
+	isSystemContainer,
+	toggleCategory
 } from './utils';
+import type { NotificationCategory } from './types';
 
 describe('capitalizeFirst', () => {
 	it('capitalizes a lowercase backend message', () => {
@@ -292,5 +294,25 @@ describe('isSystemContainer', () => {
 		expect(isSystemContainer({ environment_type: 'physical', container_runtime: null })).toBe(
 			false
 		);
+	});
+});
+
+describe('toggleCategory', () => {
+	it('adds a category when absent', () => {
+		expect(toggleCategory(['alerts'], 'transactional')).toEqual(['alerts', 'transactional']);
+	});
+
+	it('removes a category when present', () => {
+		expect(toggleCategory(['alerts', 'transactional'], 'alerts')).toEqual(['transactional']);
+	});
+
+	it('can empty the list', () => {
+		expect(toggleCategory(['alerts'], 'alerts')).toEqual([]);
+	});
+
+	it('does not mutate the input', () => {
+		const input: NotificationCategory[] = ['alerts'];
+		toggleCategory(input, 'transactional');
+		expect(input).toEqual(['alerts']);
 	});
 });

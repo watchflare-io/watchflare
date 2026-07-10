@@ -627,6 +627,15 @@ export interface HostTableProps {
 
 export type NotificationCategory = 'alerts' | 'transactional';
 
+export const NOTIFICATION_CATEGORIES: {
+	value: NotificationCategory;
+	label: string;
+	hint: string;
+}[] = [
+	{ value: 'alerts', label: 'Alerts', hint: 'Monitoring alerts and resolutions' },
+	{ value: 'transactional', label: 'Transactional', hint: 'Account and security emails (not sent yet)' }
+];
+
 export interface NotificationChannel {
 	id: string;
 	name: string;

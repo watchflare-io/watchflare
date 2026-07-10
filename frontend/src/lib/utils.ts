@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import type { Host, SSEEvent, TimeRange } from './types';
+import type { Host, NotificationCategory, SSEEvent, TimeRange } from './types';
 import { toasts } from './stores/toasts';
 import { TOAST_LONG_DURATION } from './constants';
 
@@ -288,4 +288,13 @@ export function parsePortBadges(ports: string): string[] {
 		const slashIdx = p.indexOf('/');
 		return slashIdx !== -1 ? p.substring(0, slashIdx) : p;
 	});
+}
+
+export function toggleCategory(
+	categories: NotificationCategory[],
+	value: NotificationCategory
+): NotificationCategory[] {
+	return categories.includes(value)
+		? categories.filter((c) => c !== value)
+		: [...categories, value];
 }
