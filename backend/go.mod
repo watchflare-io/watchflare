@@ -1,6 +1,6 @@
 module watchflare/backend
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/gin-contrib/cors v1.7.7
@@ -15,7 +15,7 @@ require (
 	github.com/pressly/goose/v3 v3.27.0
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
-	golang.org/x/crypto v0.51.0
+	golang.org/x/crypto v0.52.0
 	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.11
 	gorm.io/driver/postgres v1.6.0

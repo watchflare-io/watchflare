@@ -1,50 +1,41 @@
 <script lang="ts">
-	import { X } from 'lucide-svelte';
-	import { formatBytes } from '$lib/utils';
+	import { X, ExternalLink } from 'lucide-svelte';
+	import {
+		formatBytes,
+		cpuBarClass,
+		memBarClass,
+		healthBadgeClass,
+		memoryPercent
+	} from '$lib/utils';
 	import { formatRate } from '$lib/chart-utils';
 	import { userStore } from '$lib/stores/user';
-	import type { ContainerMetric } from '$lib/types';
+	import type { ContainerMetric, GlobalContainer } from '$lib/types';
 	import RightSidebar from '$lib/components/RightSidebar.svelte';
-	import RuntimeIcon from '$lib/components/icons/RuntimeIcon.svelte';
+	import HostStatusDot from '$lib/components/HostStatusDot.svelte';
 
 	const {
 		container,
 		open,
-		onClose
+		onClose,
+		hostHref = undefined,
+		hostName = undefined,
+		hostStatus = undefined
 	}: {
-		container: ContainerMetric | null;
+		container: ContainerMetric | GlobalContainer | null;
 		open: boolean;
 		onClose: () => void;
+		hostHref?: string;
+		hostName?: string;
+		hostStatus?: string;
 	} = $props();
 
 	const networkUnit = $derived($userStore.user?.network_unit ?? 'bytes');
 
 	const memPct = $derived(
-		container && container.memory_limit_bytes > 0
-			? Math.min(100, (container.memory_used_bytes / container.memory_limit_bytes) * 100)
-			: 0
+		container ? memoryPercent(container.memory_used_bytes, container.memory_limit_bytes) : 0
 	);
 
 	const portList = $derived(container?.ports ? container.ports.split(', ').filter(Boolean) : []);
-
-	function cpuBarClass(cpu: number): string {
-		if (cpu >= 80) return 'bg-danger';
-		if (cpu >= 50) return 'bg-warning';
-		return 'bg-success';
-	}
-
-	function memBarClass(pct: number): string {
-		if (pct >= 90) return 'bg-danger';
-		if (pct >= 70) return 'bg-warning';
-		return 'bg-primary';
-	}
-
-	function healthBadgeClass(health: string): string {
-		if (health === 'healthy') return 'bg-success/10 text-success border-success/20';
-		if (health === 'unhealthy') return 'bg-destructive/10 text-destructive border-destructive/20';
-		if (health === 'starting') return 'bg-warning/10 text-warning border-warning/20';
-		return 'bg-muted text-muted-foreground border-border';
-	}
 </script>
 
 <RightSidebar {open} {onClose} size="wide">
@@ -52,7 +43,6 @@
 	<div class="flex items-center justify-between border-b px-6 py-4 shrink-0 gap-3 min-w-0">
 		<div class="flex items-center gap-2 min-w-0">
 			{#if container}
-				<RuntimeIcon runtime={container.runtime} class="h-4 w-4 shrink-0 text-muted-foreground" />
 				<h2 class="text-base font-semibold text-foreground truncate">
 					{container.container_name}
 				</h2>
@@ -71,11 +61,28 @@
 	<!-- Content -->
 	{#if container}
 		<div class="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
+			{#if hostHref}
+				<div class="flex flex-col gap-1.5">
+					<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Host</p>
+					<div class="flex items-center gap-2">
+						{#if hostStatus}
+							<HostStatusDot status={hostStatus} title={hostStatus} />
+						{/if}
+						<a
+							href={hostHref}
+							class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline focus-visible:ring-2 focus-visible:ring-primary/50 rounded w-fit"
+						>
+							{hostName ?? 'View host'}
+							<ExternalLink class="h-3.5 w-3.5 shrink-0" />
+						</a>
+					</div>
+				</div>
+			{/if}
 			<!-- Status & Health -->
 			<div class="flex flex-col gap-1.5">
 				<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
 				<div class="flex items-center gap-2 flex-wrap">
-					<span class="text-sm text-foreground">{container.status || '—'}</span>
+					<span class="text-sm text-foreground">{container.status || '-'}</span>
 					{#if container.health}
 						<span
 							class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border {healthBadgeClass(
@@ -92,7 +99,7 @@
 			<div class="flex flex-col gap-1.5">
 				<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Image</p>
 				<p class="text-sm font-mono text-foreground break-all">
-					{container.image || '—'}
+					{container.image || '-'}
 				</p>
 			</div>
 

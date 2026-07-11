@@ -533,6 +533,35 @@ func (s *AgentServer) SendMetrics(ctx context.Context, req *pb.SendMetricsReques
 		if err := database.DB.Create(&containerModels).Error; err != nil {
 			slog.Warn("failed to save container metrics", "host_id", host.ID, "error", err)
 		}
+
+		containerStates := make([]models.ContainerState, 0, len(req.ContainerMetrics))
+		for _, cm := range req.ContainerMetrics {
+			containerStates = append(containerStates, models.ContainerState{
+				HostID:               host.ID,
+				ContainerID:          cm.ContainerId,
+				ContainerName:        cm.ContainerName,
+				Image:                cm.Image,
+				CPUPercent:           cm.CpuPercent,
+				MemoryUsedBytes:      cm.MemoryUsedBytes,
+				MemoryLimitBytes:     cm.MemoryLimitBytes,
+				NetworkRxBytesPerSec: cm.NetworkRxBytesPerSec,
+				NetworkTxBytesPerSec: cm.NetworkTxBytesPerSec,
+				Runtime:              cm.ContainerRuntime,
+				Status:               cm.Status,
+				Health:               cm.Health,
+				Ports:                cm.Ports,
+				UpdatedAt:            time.Now(),
+			})
+		}
+
+		if err := database.DB.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Where("host_id = ?", host.ID).Delete(&models.ContainerState{}).Error; err != nil {
+				return err
+			}
+			return tx.Create(&containerStates).Error
+		}); err != nil {
+			slog.Warn("failed to replace container states", "host_id", host.ID, "error", err)
+		}
 	}
 
 	// Persist system metric to DB (after SSE for lower latency)
