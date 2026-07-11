@@ -369,8 +369,22 @@ describe('containerIsLive', () => {
 
 describe('filterContainers', () => {
 	const list = [
-		makeContainer({ container_id: 'c1', container_name: 'web', image: 'nginx', host_id: 'h1', runtime: 'docker', host_status: 'online' }),
-		makeContainer({ container_id: 'c2', container_name: 'db', image: 'postgres', host_id: 'h2', runtime: 'podman', host_status: 'offline' })
+		makeContainer({
+			container_id: 'c1',
+			container_name: 'web',
+			image: 'nginx',
+			host_id: 'h1',
+			runtime: 'docker',
+			host_status: 'online'
+		}),
+		makeContainer({
+			container_id: 'c2',
+			container_name: 'db',
+			image: 'postgres',
+			host_id: 'h2',
+			runtime: 'podman',
+			host_status: 'offline'
+		})
 	];
 	const base = { search: '', host: '', runtime: '', liveness: 'all' as const };
 

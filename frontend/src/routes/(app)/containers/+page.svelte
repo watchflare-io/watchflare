@@ -133,7 +133,9 @@
 <!-- Stat cards -->
 <div class="mb-6 grid grid-cols-3 gap-3 lg:gap-4">
 	<div class="flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2.5">
-		<div class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0">
+		<div
+			class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0"
+		>
 			<Box class="h-4 w-4" />
 		</div>
 		<div class="min-w-0">
@@ -142,7 +144,9 @@
 		</div>
 	</div>
 	<div class="flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2.5">
-		<div class="flex items-center justify-center rounded-md bg-success/10 text-success h-8 w-8 shrink-0">
+		<div
+			class="flex items-center justify-center rounded-md bg-success/10 text-success h-8 w-8 shrink-0"
+		>
 			<Activity class="h-4 w-4" />
 		</div>
 		<div class="min-w-0">
@@ -189,7 +193,9 @@
 				>
 					<Filter class="h-3.5 w-3.5 shrink-0" />
 					<span class="hidden sm:inline"
-						>{hostFilter ? (hosts.find((h) => h[0] === hostFilter)?.[1] ?? 'Host') : 'All hosts'}</span
+						>{hostFilter
+							? (hosts.find((h) => h[0] === hostFilter)?.[1] ?? 'Host')
+							: 'All hosts'}</span
 					>
 					<ChevronDown class="hidden sm:inline-block h-3 w-3 opacity-40" />
 				</button>
@@ -290,14 +296,19 @@
 		</div>
 	{:else}
 		<!-- Mobile cards -->
-		<div class="md:hidden p-3 flex flex-col gap-2 {tableLoading ? 'opacity-50 pointer-events-none' : ''}">
+		<div
+			class="md:hidden p-3 flex flex-col gap-2 {tableLoading
+				? 'opacity-50 pointer-events-none'
+				: ''}"
+		>
 			{#each displayed as c (c.host_id + c.container_id)}
 				{@const pct = memoryPercent(c.memory_used_bytes, c.memory_limit_bytes)}
 				<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 				<div
 					class="rounded-lg border bg-card cursor-pointer"
 					onclick={() => openDrawer(c)}
-					onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openDrawer(c))}
+					onkeydown={(e) =>
+						(e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openDrawer(c))}
 					role="button"
 					tabindex="0"
 				>
@@ -317,7 +328,8 @@
 							<a
 								href={`/hosts/${c.host_id}`}
 								onclick={(e) => e.stopPropagation()}
-								class="text-xs text-primary hover:underline w-fit focus-visible:ring-2 focus-visible:ring-primary/50 rounded">{c.host_name}</a
+								class="text-xs text-primary hover:underline w-fit focus-visible:ring-2 focus-visible:ring-primary/50 rounded"
+								>{c.host_name}</a
 							>
 						</div>
 						{#if c.image}
@@ -359,7 +371,9 @@
 		<div class="hidden md:block overflow-auto max-h-[65vh]">
 			<table class="w-full min-w-[1000px]">
 				<thead>
-					<tr class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)] whitespace-nowrap">
+					<tr
+						class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)] whitespace-nowrap"
+					>
 						{#each ['Name', 'Host', 'Status', 'Health', 'Image', 'CPU', 'Memory', 'Network', 'Ports'] as label}
 							<th
 								scope="col"
@@ -379,7 +393,8 @@
 						<tr
 							class="hover:bg-muted/20 transition-colors cursor-pointer"
 							onclick={() => openDrawer(c)}
-							onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openDrawer(c))}
+							onkeydown={(e) =>
+								(e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openDrawer(c))}
 							tabindex="0"
 							role="button"
 						>
@@ -395,7 +410,8 @@
 									<a
 										href={`/hosts/${c.host_id}`}
 										onclick={(e) => e.stopPropagation()}
-										class="text-sm text-primary hover:underline focus-visible:ring-2 focus-visible:ring-primary/50 rounded">{c.host_name}</a
+										class="text-sm text-primary hover:underline focus-visible:ring-2 focus-visible:ring-primary/50 rounded"
+										>{c.host_name}</a
 									>
 								</div>
 							</td>
@@ -429,10 +445,15 @@
 							</td>
 							<td class="px-4 py-3 text-center whitespace-nowrap">
 								<div class="flex flex-col items-center">
-									<span class="text-sm text-muted-foreground">{formatBytes(c.memory_used_bytes)}</span>
+									<span class="text-sm text-muted-foreground"
+										>{formatBytes(c.memory_used_bytes)}</span
+									>
 									{#if c.memory_limit_bytes > 0}
 										<div class="w-20 h-1.5 rounded-full bg-muted mt-1">
-											<div class="h-full rounded-full {memBarClass(pct)}" style="width: {pct}%"></div>
+											<div
+												class="h-full rounded-full {memBarClass(pct)}"
+												style="width: {pct}%"
+											></div>
 										</div>
 									{/if}
 								</div>

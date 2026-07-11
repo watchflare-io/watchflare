@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { X, ExternalLink } from 'lucide-svelte';
-	import { formatBytes, cpuBarClass, memBarClass, healthBadgeClass, memoryPercent } from '$lib/utils';
+	import {
+		formatBytes,
+		cpuBarClass,
+		memBarClass,
+		healthBadgeClass,
+		memoryPercent
+	} from '$lib/utils';
 	import { formatRate } from '$lib/chart-utils';
 	import { userStore } from '$lib/stores/user';
 	import type { ContainerMetric, GlobalContainer } from '$lib/types';

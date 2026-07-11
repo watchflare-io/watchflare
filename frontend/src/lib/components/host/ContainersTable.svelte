@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { formatBytes, parsePortBadges, cpuBarClass, memBarClass, healthBadgeClass, memoryPercent } from '$lib/utils';
+	import {
+		formatBytes,
+		parsePortBadges,
+		cpuBarClass,
+		memBarClass,
+		healthBadgeClass,
+		memoryPercent
+	} from '$lib/utils';
 	import { formatRate } from '$lib/chart-utils';
 	import { userStore } from '$lib/stores/user';
 	import type { ContainerMetric } from '$lib/types';
