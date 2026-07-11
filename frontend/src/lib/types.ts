@@ -465,6 +465,7 @@ export interface SmtpSettings {
 	helo_name: string;
 	notification_email: string;
 	enabled: boolean;
+	categories: NotificationCategory[];
 }
 
 export interface UpdateSMTPSettingsRequest {
@@ -479,6 +480,7 @@ export interface UpdateSMTPSettingsRequest {
 	helo_name: string;
 	notification_email: string;
 	enabled: boolean;
+	categories: NotificationCategory[];
 }
 
 export interface GetSMTPSettingsResponse {
@@ -626,6 +628,19 @@ export interface HostTableProps {
 // ===== Notification channels =====
 
 export type NotificationCategory = 'alerts' | 'transactional';
+
+export const NOTIFICATION_CATEGORIES: {
+	value: NotificationCategory;
+	label: string;
+	hint: string;
+}[] = [
+	{ value: 'alerts', label: 'Alerts', hint: 'Monitoring alerts and resolutions' },
+	{
+		value: 'transactional',
+		label: 'Transactional',
+		hint: 'Account and security emails (not sent yet)'
+	}
+];
 
 export interface NotificationChannel {
 	id: string;

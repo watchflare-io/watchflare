@@ -249,3 +249,61 @@ func TestTestSMTPConnection_MissingNotificationEncryptionKey(t *testing.T) {
 	// Server misconfiguration must return 500, not 400
 	assert.Equal(t, http.StatusInternalServerError, w2.Code)
 }
+
+func TestUpdateSMTPSettings_Categories(t *testing.T) {
+	setupTestDB(t)
+	defer teardownTestDB()
+	defer teardownSMTPSettings()
+
+	r := setupSettingsRouter()
+	cookie := registerAndGetCookie(t, "smtpcat@test.com")
+
+	// present + valid → stored as given
+	putSMTPCategories(t, r, cookie, `["transactional"]`)
+	if got := getSMTPCategories(t, r, cookie); len(got) != 1 || got[0] != "transactional" {
+		t.Fatalf("categories = %v, want [transactional]", got)
+	}
+
+	// present + empty → stored empty (tool silent)
+	putSMTPCategories(t, r, cookie, `[]`)
+	if got := getSMTPCategories(t, r, cookie); len(got) != 0 {
+		t.Fatalf("categories = %v, want empty", got)
+	}
+
+	// omitted → defaults to alerts
+	putSMTPRaw(t, r, cookie, `{"host":"smtp.example.com","from_name":"WF","from_address":"a@b.co","enabled":true}`)
+	if got := getSMTPCategories(t, r, cookie); len(got) != 1 || got[0] != "alerts" {
+		t.Fatalf("categories = %v, want [alerts]", got)
+	}
+}
+
+func putSMTPCategories(t *testing.T, r *gin.Engine, cookie *http.Cookie, catsJSON string) {
+	t.Helper()
+	putSMTPRaw(t, r, cookie, `{"host":"smtp.example.com","from_name":"WF","from_address":"a@b.co","enabled":true,"categories":`+catsJSON+`}`)
+}
+
+func putSMTPRaw(t *testing.T, r *gin.Engine, cookie *http.Cookie, body string) {
+	t.Helper()
+	req, _ := http.NewRequest("PUT", "/settings/smtp", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(cookie)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+}
+
+func getSMTPCategories(t *testing.T, r *gin.Engine, cookie *http.Cookie) []string {
+	t.Helper()
+	req, _ := http.NewRequest("GET", "/settings/smtp", nil)
+	req.AddCookie(cookie)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	require.Equal(t, http.StatusOK, w.Code)
+	var resp struct {
+		SMTP struct {
+			Categories []string `json:"categories"`
+		} `json:"smtp"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	return resp.SMTP.Categories
+}

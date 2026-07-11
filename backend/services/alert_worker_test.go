@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 	"watchflare/backend/models"
+	"watchflare/backend/notifications"
 
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -209,4 +211,27 @@ func TestNewAlertWorker_SetsDefault(t *testing.T) {
 
 	w := NewAlertWorker(30 * time.Second)
 	assert.Same(t, w, DefaultAlertWorker)
+}
+
+func TestShouldEmailAlerts(t *testing.T) {
+	cases := []struct {
+		name    string
+		enabled bool
+		cats    []string
+		want    bool
+	}{
+		{"enabled with alerts", true, []string{notifications.CategoryAlerts}, true},
+		{"enabled with alerts and transactional", true, []string{"transactional", notifications.CategoryAlerts}, true},
+		{"enabled without alerts", true, []string{"transactional"}, false},
+		{"enabled empty categories", true, []string{}, false},
+		{"disabled with alerts", false, []string{notifications.CategoryAlerts}, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &models.SmtpSettings{Enabled: tc.enabled, Categories: pq.StringArray(tc.cats)}
+			if got := shouldEmailAlerts(s); got != tc.want {
+				t.Fatalf("shouldEmailAlerts(enabled=%v, cats=%v) = %v, want %v", tc.enabled, tc.cats, got, tc.want)
+			}
+		})
+	}
 }

@@ -5,7 +5,9 @@
 	import Toggle from '$lib/components/ui/Toggle.svelte';
 	import RightSidebar from '$lib/components/RightSidebar.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	import type { NotificationChannel } from '$lib/types';
+	import CategorySelector from '$lib/components/CategorySelector.svelte';
+	import type { NotificationChannel, NotificationCategory } from '$lib/types';
+	import { NOTIFICATION_CATEGORIES } from '$lib/types';
 	import {
 		ApiError,
 		listNotificationChannels,
@@ -24,6 +26,7 @@
 	let formName = $state('');
 	let formUrl = $state('');
 	let formEnabled = $state(true);
+	let formCategories = $state<NotificationCategory[]>(['alerts']);
 	let formNameError = $state('');
 	let formUrlError = $state('');
 	let saving = $state(false);
@@ -141,6 +144,7 @@
 		formName = '';
 		formUrl = '';
 		formEnabled = true;
+		formCategories = ['alerts'];
 		formNameError = '';
 		formUrlError = '';
 		drawerTestMessage = null;
@@ -158,6 +162,7 @@
 		formName = channel.name;
 		formUrl = '';
 		formEnabled = channel.enabled;
+		formCategories = channel.categories ?? [];
 		drawerOpen = true;
 	}
 
@@ -199,7 +204,8 @@
 				await updateNotificationChannel(editingChannel.id, {
 					name: formName.trim(),
 					url: formUrl.trim(),
-					enabled: formEnabled
+					enabled: formEnabled,
+					categories: formCategories
 				});
 				const fresh = await listNotificationChannels();
 				channels = fresh.channels;
@@ -207,7 +213,8 @@
 				const res = await createNotificationChannel({
 					name: formName.trim(),
 					url: formUrl.trim(),
-					enabled: formEnabled
+					enabled: formEnabled,
+					categories: formCategories
 				});
 				channels = [...channels, res.channel];
 			}
@@ -336,6 +343,7 @@
 					<tr>
 						<th class="px-3 py-2 text-left font-medium whitespace-nowrap">Name</th>
 						<th class="px-3 py-2 text-left font-medium whitespace-nowrap">Service</th>
+						<th class="px-3 py-2 text-left font-medium whitespace-nowrap">Categories</th>
 						<th class="px-3 py-2 text-left font-medium whitespace-nowrap">Status</th>
 						<th class="px-3 py-2 text-right font-medium whitespace-nowrap">Actions</th>
 					</tr>
@@ -357,6 +365,21 @@
 								<span class="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
 									{serviceFromMaskedUrl(channel.url_masked)}
 								</span>
+							</td>
+							<td class="px-3 py-2 whitespace-nowrap">
+								{#if channel.categories && channel.categories.length > 0}
+									<div class="flex items-center gap-1">
+										{#each channel.categories as cat (cat)}
+											<span
+												class="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+											>
+												{NOTIFICATION_CATEGORIES.find((c) => c.value === cat)?.label ?? cat}
+											</span>
+										{/each}
+									</div>
+								{:else}
+									<span class="text-xs text-muted-foreground">None</span>
+								{/if}
 							</td>
 							<td class="px-3 py-2 whitespace-nowrap">
 								<Toggle
@@ -413,7 +436,7 @@
 						{#if result?.text}
 							<tr>
 								<td
-									colspan="4"
+									colspan="5"
 									class="px-3 pb-2 text-xs {result.ok ? 'text-success' : 'text-destructive'}"
 								>
 									{#if result.ok}
@@ -525,6 +548,15 @@
 					Disable to keep the channel without firing notifications.
 				</p>
 			</div>
+		</div>
+
+		<div class="mb-4 flex flex-col gap-1.5">
+			<span class="text-sm font-medium text-foreground">Categories</span>
+			<CategorySelector
+				categories={formCategories}
+				onChange={(next) => (formCategories = next)}
+				idPrefix="channel-cat"
+			/>
 		</div>
 
 		{#if drawerTestMessage}

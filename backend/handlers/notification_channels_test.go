@@ -7,10 +7,12 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"sync"
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -365,4 +367,66 @@ func TestTestNotificationChannel_NotifierError(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadGateway, w.Code)
+}
+
+func TestNormalizeCategories_NoFallback(t *testing.T) {
+	cases := []struct {
+		name string
+		in   []string
+		want []string
+	}{
+		{"valid deduped", []string{"alerts", "alerts", "transactional"}, []string{"alerts", "transactional"}},
+		{"drops invalid", []string{"alerts", "bogus"}, []string{"alerts"}},
+		{"empty stays empty", []string{}, []string{}},
+		{"all invalid stays empty", []string{"bogus", "x"}, []string{}},
+		{"nil stays empty", nil, []string{}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := normalizeCategories(tc.in)
+			if len(got) != len(tc.want) || (len(got) > 0 && !reflect.DeepEqual(got, tc.want)) {
+				t.Fatalf("normalizeCategories(%v) = %v, want %v", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDefaultCategories(t *testing.T) {
+	if got := defaultCategories(nil); len(got) != 1 || got[0] != "alerts" {
+		t.Fatalf("defaultCategories(nil) = %v, want [alerts]", got)
+	}
+	if got := defaultCategories([]string{}); len(got) != 0 {
+		t.Fatalf("defaultCategories([]) = %v, want empty", got)
+	}
+	if got := defaultCategories([]string{"transactional"}); len(got) != 1 || got[0] != "transactional" {
+		t.Fatalf("defaultCategories([transactional]) = %v, want [transactional]", got)
+	}
+}
+
+func TestUpdateChannel_EmptyCategoriesPersistsEmpty(t *testing.T) {
+	setupTestDB(t)
+	defer teardownTestDB()
+	defer teardownNotificationChannels()
+	setupNotificationsService(t)
+
+	ctx := context.Background()
+	repo := notifications.Default.Repo()
+
+	ch := &notifications.Channel{Name: "cat-test", URLEncrypted: "x", Categories: pq.StringArray{"alerts"}, Enabled: true}
+	if err := repo.Create(ctx, ch); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	t.Cleanup(func() { _ = repo.Delete(ctx, ch.ID) })
+
+	if err := repo.Update(ctx, ch.ID, map[string]any{"categories": pq.StringArray(normalizeCategories([]string{}))}); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	got, err := repo.Get(ctx, ch.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if len(got.Categories) != 0 {
+		t.Fatalf("categories = %v, want empty", got.Categories)
+	}
 }

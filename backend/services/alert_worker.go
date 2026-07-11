@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -382,6 +383,12 @@ func resolveIncident(hostID, metricType string, now time.Time) {
 	}
 }
 
+// shouldEmailAlerts reports whether alert/resolution emails should be sent:
+// SMTP must be enabled and subscribed to the alerts category.
+func shouldEmailAlerts(s *models.SmtpSettings) bool {
+	return s.Enabled && slices.Contains([]string(s.Categories), notifications.CategoryAlerts)
+}
+
 // sendAlertEmail delivers an alert notification email.
 func sendAlertEmail(host *models.Host, metricType string, threshold, currentValue float64, startedAt time.Time, recipient string) error {
 	var s models.SmtpSettings
@@ -391,8 +398,8 @@ func sendAlertEmail(host *models.Host, metricType string, threshold, currentValu
 		}
 		return err
 	}
-	if !s.Enabled {
-		return nil // SMTP disabled: skip silently
+	if !shouldEmailAlerts(&s) {
+		return nil // SMTP disabled or not subscribed to the alerts category
 	}
 
 	var plainPassword string
@@ -469,8 +476,8 @@ func sendResolutionEmail(host *models.Host, metricType string, startedAt, resolv
 		}
 		return err
 	}
-	if !s.Enabled {
-		return nil
+	if !shouldEmailAlerts(&s) {
+		return nil // SMTP disabled or not subscribed to the alerts category
 	}
 
 	var plainPassword string

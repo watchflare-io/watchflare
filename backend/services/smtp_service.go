@@ -10,6 +10,7 @@ import (
 	"watchflare/backend/encryption"
 	"watchflare/backend/models"
 
+	"github.com/lib/pq"
 	"github.com/wneessen/go-mail"
 	"gorm.io/gorm"
 )
@@ -35,17 +36,18 @@ func newConfigError(msg string) error    { return &SMTPConfigError{msg: msg} }
 // SMTPSettingsResponse is the API representation of SMTP settings.
 // The password is never returned: only a flag indicating whether one is stored.
 type SMTPSettingsResponse struct {
-	Host              string `json:"host"`
-	Port              int    `json:"port"`
-	Username          string `json:"username"`
-	PasswordSet       bool   `json:"password_set"`
-	FromAddress       string `json:"from_address"`
-	FromName          string `json:"from_name"`
-	TLSMode           string `json:"tls_mode"`
-	AuthType          string `json:"auth_type"`
-	HeloName          string `json:"helo_name"`
-	NotificationEmail string `json:"notification_email"`
-	Enabled           bool   `json:"enabled"`
+	Host              string   `json:"host"`
+	Port              int      `json:"port"`
+	Username          string   `json:"username"`
+	PasswordSet       bool     `json:"password_set"`
+	FromAddress       string   `json:"from_address"`
+	FromName          string   `json:"from_name"`
+	TLSMode           string   `json:"tls_mode"`
+	AuthType          string   `json:"auth_type"`
+	HeloName          string   `json:"helo_name"`
+	NotificationEmail string   `json:"notification_email"`
+	Enabled           bool     `json:"enabled"`
+	Categories        []string `json:"categories"`
 }
 
 // SMTPSettingsInput carries the data for creating or updating SMTP settings.
@@ -61,6 +63,7 @@ type SMTPSettingsInput struct {
 	HeloName          string
 	NotificationEmail string
 	Enabled           bool
+	Categories        []string
 }
 
 // GetSMTPSettings returns the current SMTP settings with the password masked.
@@ -69,7 +72,7 @@ func GetSMTPSettings() (*SMTPSettingsResponse, error) {
 	var s models.SmtpSettings
 	err := database.DB.First(&s).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return &SMTPSettingsResponse{Port: 587, TLSMode: TLSModeStartTLS, AuthType: SMTPAuthPlain}, nil
+		return &SMTPSettingsResponse{Port: 587, TLSMode: TLSModeStartTLS, AuthType: SMTPAuthPlain, Categories: []string{"alerts"}}, nil
 	}
 	if err != nil {
 		return nil, err
@@ -86,6 +89,7 @@ func GetSMTPSettings() (*SMTPSettingsResponse, error) {
 		HeloName:          s.HeloName,
 		NotificationEmail: s.NotificationEmail,
 		Enabled:           s.Enabled,
+		Categories:        []string(s.Categories),
 	}, nil
 }
 
@@ -110,6 +114,7 @@ func UpdateSMTPSettings(input SMTPSettingsInput) error {
 	s.HeloName = input.HeloName
 	s.NotificationEmail = input.NotificationEmail
 	s.Enabled = input.Enabled
+	s.Categories = pq.StringArray(input.Categories)
 
 	if input.Password != "" {
 		if config.AppConfig.NotificationEncryptionKey == "" {

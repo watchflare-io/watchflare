@@ -138,7 +138,7 @@ func CreateNotificationChannel(c *gin.Context) {
 		return
 	}
 
-	categories := normalizeCategories(req.Categories)
+	categories := defaultCategories(req.Categories)
 	enabled := true
 	if req.Enabled != nil {
 		enabled = *req.Enabled
@@ -333,16 +333,13 @@ func TestNotificationChannel(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "test notification sent"})
 }
 
-// Trims, drops empty and unknown values, deduplicates, falls back to
-// [CategoryAlerts] when nothing valid remains.
+// Trims, drops empty and unknown values, deduplicates. May return empty.
 func normalizeCategories(in []string) []string {
 	seen := map[string]bool{}
 	out := make([]string, 0, len(in))
 	for _, raw := range in {
 		v := strings.TrimSpace(raw)
-		switch v {
-		case notifications.CategoryAlerts, notifications.CategoryTransactional:
-		default:
+		if v != notifications.CategoryAlerts && v != notifications.CategoryTransactional {
 			continue
 		}
 		if seen[v] {
@@ -351,8 +348,15 @@ func normalizeCategories(in []string) []string {
 		seen[v] = true
 		out = append(out, v)
 	}
-	if len(out) == 0 {
+	return out
+}
+
+// defaultCategories applies the omitted-vs-present rule: an omitted field
+// (nil slice) defaults to the alerts category; a present field (including an
+// empty slice) is normalized as given and may end up empty.
+func defaultCategories(in []string) []string {
+	if in == nil {
 		return []string{notifications.CategoryAlerts}
 	}
-	return out
+	return normalizeCategories(in)
 }
