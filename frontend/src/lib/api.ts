@@ -37,7 +37,8 @@ import type {
 	NotificationChannelResponse,
 	CreateNotificationChannelInput,
 	UpdateNotificationChannelInput,
-	GetServicesResponse
+	GetServicesResponse,
+	GlobalContainer
 } from './types';
 import { capitalizeFirst } from './utils';
 
@@ -717,4 +718,9 @@ export async function testNotificationChannelDraft(url: string): Promise<{ messa
 		method: 'POST',
 		body: JSON.stringify({ url })
 	});
+}
+
+// Container API calls
+export async function listContainers(): Promise<{ containers: GlobalContainer[] }> {
+	return apiRequest<{ containers: GlobalContainer[] }>('/containers');
 }

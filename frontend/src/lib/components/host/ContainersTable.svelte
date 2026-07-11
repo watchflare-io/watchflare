@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { formatBytes, parsePortBadges } from '$lib/utils';
+	import {
+		formatBytes,
+		parsePortBadges,
+		cpuBarClass,
+		memBarClass,
+		healthBadgeClass,
+		memoryPercent
+	} from '$lib/utils';
 	import { formatRate } from '$lib/chart-utils';
 	import { userStore } from '$lib/stores/user';
 	import type { ContainerMetric } from '$lib/types';
@@ -37,7 +44,7 @@
 	}
 
 	// Derive the latest metric per container, preserving static fields
-	// (image, runtime, ports) from any non-empty record — these are absent
+	// (image, runtime, ports) from any non-empty record, these are absent
 	// from SSE updates which only carry live metrics.
 	const latestContainers = $derived(
 		(() => {
@@ -134,30 +141,6 @@
 		})()
 	);
 
-	function memoryPercent(m: ContainerMetric): number {
-		if (!m.memory_limit_bytes || m.memory_limit_bytes === 0) return 0;
-		return Math.min(100, (m.memory_used_bytes / m.memory_limit_bytes) * 100);
-	}
-
-	function cpuBarClass(cpu: number): string {
-		if (cpu >= 80) return 'bg-danger';
-		if (cpu >= 50) return 'bg-warning';
-		return 'bg-success';
-	}
-
-	function memBarClass(pct: number): string {
-		if (pct >= 90) return 'bg-danger';
-		if (pct >= 70) return 'bg-warning';
-		return 'bg-primary';
-	}
-
-	function healthBadgeClass(health: string): string {
-		if (health === 'healthy') return 'bg-success/10 text-success border-success/20';
-		if (health === 'unhealthy') return 'bg-destructive/10 text-destructive border-destructive/20';
-		if (health === 'starting') return 'bg-warning/10 text-warning border-warning/20';
-		return 'bg-muted text-muted-foreground border-border';
-	}
-
 	function healthLabel(health: string): string {
 		return health || 'None';
 	}
@@ -216,7 +199,7 @@
 	<!-- Mobile cards -->
 	<div class="sm:hidden p-3 flex flex-col gap-2">
 		{#each displayedContainers as container (container.container_id)}
-			{@const pct = memoryPercent(container)}
+			{@const pct = memoryPercent(container.memory_used_bytes, container.memory_limit_bytes)}
 			{@const badges = parsePortBadges(container.ports ?? '')}
 			{@const extraPorts = badges.length > 2 ? badges.length - 2 : 0}
 			<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
@@ -249,7 +232,7 @@
 					{/if}
 					<div class="flex items-baseline gap-2">
 						<span class="w-16 shrink-0 text-xs text-muted-foreground">Status</span>
-						<span class="text-sm">{container.status || '—'}</span>
+						<span class="text-sm">{container.status || '-'}</span>
 					</div>
 					<div class="flex items-center gap-2">
 						<span class="w-16 shrink-0 text-xs text-muted-foreground">Health</span>
@@ -346,7 +329,7 @@
 			</thead>
 			<tbody class="divide-y">
 				{#each displayedContainers as container (container.container_id)}
-					{@const pct = memoryPercent(container)}
+					{@const pct = memoryPercent(container.memory_used_bytes, container.memory_limit_bytes)}
 					{@const badges = parsePortBadges(container.ports ?? '')}
 					{@const extraPorts = badges.length > 2 ? badges.length - 2 : 0}
 					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
@@ -369,7 +352,7 @@
 							</div>
 						</td>
 						<td class="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
-							{container.status || '—'}
+							{container.status || '-'}
 						</td>
 						<td class="px-4 py-3 whitespace-nowrap">
 							<span
@@ -382,7 +365,7 @@
 						</td>
 						<td class="px-4 py-3 max-w-xs">
 							<span class="text-sm text-muted-foreground truncate block" title={container.image}>
-								{container.image ? truncateImage(container.image) : '—'}
+								{container.image ? truncateImage(container.image) : '-'}
 							</span>
 						</td>
 						<td class="px-4 py-3 text-center">
@@ -431,7 +414,7 @@
 									{/if}
 								</div>
 							{:else}
-								<span class="text-sm text-muted-foreground">—</span>
+								<span class="text-sm text-muted-foreground">-</span>
 							{/if}
 						</td>
 					</tr>
