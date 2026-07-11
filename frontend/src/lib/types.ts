@@ -635,7 +635,11 @@ export const NOTIFICATION_CATEGORIES: {
 	hint: string;
 }[] = [
 	{ value: 'alerts', label: 'Alerts', hint: 'Monitoring alerts and resolutions' },
-	{ value: 'transactional', label: 'Transactional', hint: 'Account and security emails (not sent yet)' }
+	{
+		value: 'transactional',
+		label: 'Transactional',
+		hint: 'Account and security emails (not sent yet)'
+	}
 ];
 
 export interface NotificationChannel {

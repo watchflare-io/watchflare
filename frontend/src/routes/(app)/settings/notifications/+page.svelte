@@ -3,7 +3,13 @@
 	import { fly } from 'svelte/transition';
 	import { userStore } from '$lib/stores/user';
 	import { Check, Send, TriangleAlert, X } from 'lucide-svelte';
-	import type { SmtpTLSMode, SmtpAuthType, AlertRule, AlertMetricType, NotificationCategory } from '$lib/types';
+	import type {
+		SmtpTLSMode,
+		SmtpAuthType,
+		AlertRule,
+		AlertMetricType,
+		NotificationCategory
+	} from '$lib/types';
 	import { ALERT_METRIC_TYPES, ALERT_METRIC_LABELS } from '$lib/types';
 	import CategorySelector from '$lib/components/CategorySelector.svelte';
 	import {
