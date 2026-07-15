@@ -638,7 +638,7 @@ export const NOTIFICATION_CATEGORIES: {
 	{
 		value: 'transactional',
 		label: 'Transactional',
-		hint: 'Account and security emails (not sent yet)'
+		hint: 'Account and security emails (login, password, 2FA, email changes)'
 	}
 ];
 
