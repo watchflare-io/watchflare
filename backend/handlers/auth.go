@@ -123,6 +123,9 @@ func Login(c *gin.Context) {
 	}
 
 	setJWTCookie(c, result.Token)
+	if user, err := services.GetUser(result.UserID); err == nil {
+		notifyAccountEvent(services.AccountEventLogin, []string{user.Email}, services.AccountEventMeta{IP: c.ClientIP()})
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }
 
@@ -153,6 +156,9 @@ func ChangePassword(c *gin.Context) {
 		return
 	}
 
+	if user, err := services.GetUser(userID); err == nil {
+		notifyAccountEvent(services.AccountEventPasswordChanged, []string{user.Email}, services.AccountEventMeta{})
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Password changed successfully",
 	})
@@ -171,6 +177,8 @@ func ChangeEmail(c *gin.Context) {
 		return
 	}
 
+	oldUser, oldErr := services.GetUser(userID)
+
 	if err := services.ChangeEmail(userID, req.NewEmail); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -181,6 +189,9 @@ func ChangeEmail(c *gin.Context) {
 		return
 	}
 
+	if oldErr == nil {
+		notifyAccountEvent(services.AccountEventEmailChanged, []string{oldUser.Email, req.NewEmail}, services.AccountEventMeta{})
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Email updated successfully",
 	})
