@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"slices"
+	"strings"
 	"time"
 
 	"watchflare/backend/config"
@@ -17,21 +19,36 @@ import (
 	"gorm.io/gorm"
 )
 
-// AccountEvent identifies a security-relevant account event.
 type AccountEvent string
 
 const (
-	AccountEventLogin           AccountEvent = "login"
-	AccountEventPasswordChanged AccountEvent = "password_changed"
-	AccountEventTOTPEnabled     AccountEvent = "totp_enabled"
-	AccountEventTOTPDisabled    AccountEvent = "totp_disabled"
-	AccountEventEmailChanged    AccountEvent = "email_changed"
+	AccountEventLogin               AccountEvent = "login"
+	AccountEventPasswordChanged     AccountEvent = "password_changed"
+	AccountEventTOTPEnabled         AccountEvent = "totp_enabled"
+	AccountEventTOTPDisabled        AccountEvent = "totp_disabled"
+	AccountEventEmailChanged        AccountEvent = "email_changed"
+	AccountEventEmailChangedConfirm AccountEvent = "email_changed_confirm"
 )
 
-// AccountEventMeta carries optional context for a transactional notification.
 type AccountEventMeta struct {
-	IP string
-	At time.Time
+	IP        string
+	UserAgent string
+	NewEmail  string
+	At        time.Time
+}
+
+func displayIP(ip string) string {
+	parsed := net.ParseIP(ip)
+	if parsed == nil {
+		return ip
+	}
+	if parsed.IsLoopback() {
+		return "127.0.0.1"
+	}
+	if v4 := parsed.To4(); v4 != nil {
+		return v4.String()
+	}
+	return ip
 }
 
 func shouldEmailTransactional(s *models.SmtpSettings) bool {
@@ -44,29 +61,49 @@ func buildTransactionalContent(event AccountEvent, meta AccountEventMeta) (subje
 		at = time.Now()
 	}
 	ts := at.Format(time.RFC1123)
+	const signoff = "\n\nSent from Watchflare"
 	switch event {
 	case AccountEventLogin:
-		subject = "New Watchflare login"
+		subject = "New login to your Watchflare account"
+		var b strings.Builder
+		b.WriteString("A new login to your Watchflare account has just been recorded.\n\n")
+		fmt.Fprintf(&b, "Time:   %s\n", ts)
 		if meta.IP != "" {
-			body = fmt.Sprintf("A new login to your Watchflare account was detected from IP %s at %s. If this was not you, change your password immediately.", meta.IP, ts)
-		} else {
-			body = fmt.Sprintf("A new login to your Watchflare account was detected at %s. If this was not you, change your password immediately.", ts)
+			fmt.Fprintf(&b, "IP:     %s\n", displayIP(meta.IP))
 		}
+		if meta.UserAgent != "" {
+			fmt.Fprintf(&b, "Device: %s\n", meta.UserAgent)
+		}
+		b.WriteString("\nIf this was you, no action is needed. If it wasn't, change your password now to keep your account secure.")
+		b.WriteString(signoff)
+		body = b.String()
 	case AccountEventPasswordChanged:
-		subject = "Watchflare password changed"
-		body = fmt.Sprintf("Your Watchflare password was changed at %s. If this was not you, secure your account immediately.", ts)
+		subject = "Your Watchflare password was changed"
+		body = fmt.Sprintf("Your Watchflare password has just been changed.\n\nTime: %s\n\nIf this was you, no action is needed. If it wasn't, your account may be compromised, secure it right away.%s", ts, signoff)
 	case AccountEventTOTPEnabled:
 		subject = "Two-factor authentication enabled"
-		body = fmt.Sprintf("Two-factor authentication was enabled on your Watchflare account at %s.", ts)
+		body = fmt.Sprintf("Two-factor authentication has just been enabled on your Watchflare account.\n\nTime: %s\n\nIf this was you, no action is needed. If it wasn't, secure your account right away.%s", ts, signoff)
 	case AccountEventTOTPDisabled:
 		subject = "Two-factor authentication disabled"
-		body = fmt.Sprintf("Two-factor authentication was disabled on your Watchflare account at %s. If this was not you, secure your account immediately.", ts)
+		body = fmt.Sprintf("Two-factor authentication has just been disabled on your Watchflare account.\n\nTime: %s\n\nIf this was you, no action is needed. If it wasn't, secure your account right away.%s", ts, signoff)
 	case AccountEventEmailChanged:
-		subject = "Watchflare email changed"
-		body = fmt.Sprintf("The email address on your Watchflare account was changed at %s. If this was not you, secure your account immediately.", ts)
+		subject = "Your Watchflare email was changed"
+		var b strings.Builder
+		if meta.NewEmail != "" {
+			fmt.Fprintf(&b, "The email address on your Watchflare account has just been changed to %s.\n\n", meta.NewEmail)
+		} else {
+			b.WriteString("The email address on your Watchflare account has just been changed.\n\n")
+		}
+		fmt.Fprintf(&b, "Time: %s\n\n", ts)
+		b.WriteString("If this was you, no action is needed. If it wasn't, secure your account right away.")
+		b.WriteString(signoff)
+		body = b.String()
+	case AccountEventEmailChangedConfirm:
+		subject = "Your Watchflare email is now active"
+		body = fmt.Sprintf("This address is now the email address for your Watchflare account.\n\nTime: %s\n\nIf you did not request this change, secure the account right away.%s", ts, signoff)
 	default:
 		subject = "Watchflare account notification"
-		body = fmt.Sprintf("An account event occurred at %s.", ts)
+		body = fmt.Sprintf("An account event occurred at %s.%s", ts, signoff)
 	}
 	return subject, body
 }

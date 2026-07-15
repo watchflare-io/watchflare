@@ -66,7 +66,7 @@ func VerifyTOTP(c *gin.Context) {
 	}
 	setJWTCookie(c, token)
 	if user, err := services.GetUser(userID); err == nil {
-		notifyAccountEvent(services.AccountEventLogin, []string{user.Email}, services.AccountEventMeta{IP: c.ClientIP()})
+		notifyAccountEvent(services.AccountEventLogin, []string{user.Email}, services.AccountEventMeta{IP: c.ClientIP(), UserAgent: c.Request.UserAgent()})
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "login successful"})
 }

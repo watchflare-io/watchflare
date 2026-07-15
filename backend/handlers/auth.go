@@ -124,7 +124,7 @@ func Login(c *gin.Context) {
 
 	setJWTCookie(c, result.Token)
 	if user, err := services.GetUser(result.UserID); err == nil {
-		notifyAccountEvent(services.AccountEventLogin, []string{user.Email}, services.AccountEventMeta{IP: c.ClientIP()})
+		notifyAccountEvent(services.AccountEventLogin, []string{user.Email}, services.AccountEventMeta{IP: c.ClientIP(), UserAgent: c.Request.UserAgent()})
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }
@@ -190,8 +190,9 @@ func ChangeEmail(c *gin.Context) {
 	}
 
 	if oldErr == nil {
-		notifyAccountEvent(services.AccountEventEmailChanged, []string{oldUser.Email, req.NewEmail}, services.AccountEventMeta{})
+		notifyAccountEvent(services.AccountEventEmailChanged, []string{oldUser.Email}, services.AccountEventMeta{NewEmail: req.NewEmail})
 	}
+	notifyAccountEvent(services.AccountEventEmailChangedConfirm, []string{req.NewEmail}, services.AccountEventMeta{})
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Email updated successfully",
 	})
