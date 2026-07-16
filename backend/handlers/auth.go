@@ -32,36 +32,30 @@ func getUserID(c *gin.Context) (string, bool) {
 	return id, true
 }
 
-// RegisterRequest represents the registration request body
 type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
 	Username string `json:"username" binding:"max=50"`
 }
 
-// LoginRequest represents the login request body
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
 
-// ChangePasswordRequest represents the change password request body
 type ChangePasswordRequest struct {
 	CurrentPassword string `json:"current_password" binding:"required"`
 	NewPassword     string `json:"new_password" binding:"required,min=8"`
 }
 
-// ChangeEmailRequest represents the change email request body
 type ChangeEmailRequest struct {
 	NewEmail string `json:"new_email" binding:"required,email"`
 }
 
-// ChangeUsernameRequest represents the change username request body
 type ChangeUsernameRequest struct {
 	Username string `json:"username" binding:"min=1,max=50"`
 }
 
-// UpdatePreferencesRequest represents the update preferences request body
 type UpdatePreferencesRequest struct {
 	DefaultTimeRange       string `json:"default_time_range"`
 	Theme                  string `json:"theme"`
@@ -123,6 +117,9 @@ func Login(c *gin.Context) {
 	}
 
 	setJWTCookie(c, result.Token)
+	if user, err := services.GetUser(result.UserID); err == nil {
+		notifyAccountEvent(services.AccountEventLogin, []string{user.Email}, services.AccountEventMeta{IP: c.ClientIP(), UserAgent: c.Request.UserAgent()})
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }
 
@@ -153,6 +150,9 @@ func ChangePassword(c *gin.Context) {
 		return
 	}
 
+	if user, err := services.GetUser(userID); err == nil {
+		notifyAccountEvent(services.AccountEventPasswordChanged, []string{user.Email}, services.AccountEventMeta{})
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Password changed successfully",
 	})
@@ -171,6 +171,8 @@ func ChangeEmail(c *gin.Context) {
 		return
 	}
 
+	oldUser, oldErr := services.GetUser(userID)
+
 	if err := services.ChangeEmail(userID, req.NewEmail); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -181,6 +183,10 @@ func ChangeEmail(c *gin.Context) {
 		return
 	}
 
+	if oldErr == nil {
+		notifyAccountEvent(services.AccountEventEmailChanged, []string{oldUser.Email}, services.AccountEventMeta{NewEmail: req.NewEmail})
+	}
+	notifyAccountEvent(services.AccountEventEmailChangedConfirm, []string{req.NewEmail}, services.AccountEventMeta{})
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Email updated successfully",
 	})

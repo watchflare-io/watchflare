@@ -65,6 +65,9 @@ func VerifyTOTP(c *gin.Context) {
 		return
 	}
 	setJWTCookie(c, token)
+	if user, err := services.GetUser(userID); err == nil {
+		notifyAccountEvent(services.AccountEventLogin, []string{user.Email}, services.AccountEventMeta{IP: c.ClientIP(), UserAgent: c.Request.UserAgent()})
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "login successful"})
 }
 
@@ -110,6 +113,9 @@ func EnableTOTPHandler(c *gin.Context) {
 		}
 		return
 	}
+	if user, err := services.GetUser(userID); err == nil {
+		notifyAccountEvent(services.AccountEventTOTPEnabled, []string{user.Email}, services.AccountEventMeta{})
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"message":      "2fa enabled",
 		"backup_codes": backupCodes,
@@ -139,6 +145,9 @@ func DisableTOTPHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to disable 2fa"})
 		}
 		return
+	}
+	if user, err := services.GetUser(userID); err == nil {
+		notifyAccountEvent(services.AccountEventTOTPDisabled, []string{user.Email}, services.AccountEventMeta{})
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "2fa disabled"})
 }

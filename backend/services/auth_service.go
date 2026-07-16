@@ -83,7 +83,7 @@ func Login(email, password string) (*LoginResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &LoginResult{Token: token}, nil
+	return &LoginResult{Token: token, UserID: user.ID}, nil
 }
 
 // ChangePassword updates a user's password after verifying the current one.
