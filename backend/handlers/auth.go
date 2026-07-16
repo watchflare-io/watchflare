@@ -32,36 +32,30 @@ func getUserID(c *gin.Context) (string, bool) {
 	return id, true
 }
 
-// RegisterRequest represents the registration request body
 type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
 	Username string `json:"username" binding:"max=50"`
 }
 
-// LoginRequest represents the login request body
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
 
-// ChangePasswordRequest represents the change password request body
 type ChangePasswordRequest struct {
 	CurrentPassword string `json:"current_password" binding:"required"`
 	NewPassword     string `json:"new_password" binding:"required,min=8"`
 }
 
-// ChangeEmailRequest represents the change email request body
 type ChangeEmailRequest struct {
 	NewEmail string `json:"new_email" binding:"required,email"`
 }
 
-// ChangeUsernameRequest represents the change username request body
 type ChangeUsernameRequest struct {
 	Username string `json:"username" binding:"min=1,max=50"`
 }
 
-// UpdatePreferencesRequest represents the update preferences request body
 type UpdatePreferencesRequest struct {
 	DefaultTimeRange       string `json:"default_time_range"`
 	Theme                  string `json:"theme"`
