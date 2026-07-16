@@ -80,7 +80,7 @@ export interface Host {
 	reactivated_at: string | null;
 	agent_version: string | null;
 	agent_uuid: string;
-	// Package update counts — included in list responses
+	// Package update counts, included in list responses
 	outdated_count?: number;
 	security_count?: number;
 }
@@ -291,9 +291,7 @@ export interface MetricsUpdateEvent extends Metric {
 	host_id: string;
 }
 
-export interface AggregatedMetricsUpdateEvent extends AggregatedMetric {
-	// Same as AggregatedMetric
-}
+export interface AggregatedMetricsUpdateEvent extends AggregatedMetric {}
 
 // ===== API Responses =====
 
@@ -410,7 +408,7 @@ export interface GetPackageHistoryResponse {
 	pagination: Pagination;
 }
 
-// Global package view — deduplicated across all hosts
+// Global package view: deduplicated across all hosts
 export type GlobalPackageStatus = 'security' | 'outdated' | 'up_to_date' | 'not_checked';
 
 export interface GlobalPackage {
@@ -426,12 +424,13 @@ export interface GlobalPackage {
 export interface ListGlobalPackagesResponse {
 	packages: GlobalPackage[];
 	pagination: Pagination;
-	total_packages: number; // global unfiltered count
-	outdated_count: number; // global unfiltered
-	security_count: number; // global unfiltered
-	outdated_hosts_count: number; // global unfiltered — hosts with ≥1 outdated/security package
-	security_hosts_count: number; // global unfiltered — hosts with ≥1 security package
-	available_managers: string[]; // global unfiltered, for the manager filter dropdown
+	// Counts below are global and unfiltered (independent of pagination and filters).
+	total_packages: number;
+	outdated_count: number;
+	security_count: number;
+	outdated_hosts_count: number; // hosts with ≥1 outdated/security package
+	security_hosts_count: number; // hosts with ≥1 security package
+	available_managers: string[]; // for the manager filter dropdown
 }
 
 export interface ListGlobalPackagesParams {
@@ -457,7 +456,7 @@ export interface SmtpSettings {
 	host: string;
 	port: number;
 	username: string;
-	password_set: boolean; // true if a password is stored — plaintext is never returned
+	password_set: boolean; // true if a password is stored; plaintext is never returned
 	from_address: string;
 	from_name: string;
 	tls_mode: SmtpTLSMode;
