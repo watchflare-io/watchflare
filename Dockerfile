@@ -1,23 +1,29 @@
-# Stage 1: Build frontend
-FROM node:24-alpine AS frontend-builder
+# syntax=docker/dockerfile:1
+
+# Stage 1: Build frontend (runs natively on the build host, output is arch-independent)
+FROM --platform=$BUILDPLATFORM node:24-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci
 COPY frontend/ .
 RUN npm run build
 
-# Stage 2: Build backend (with embedded frontend)
-FROM golang:1.26-alpine AS backend-builder
+# Stage 2: Build backend with embedded frontend (cross-compiled, no QEMU emulation)
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS backend-builder
+ARG TARGETOS TARGETARCH
 WORKDIR /app
 COPY shared/ ./shared/
 COPY backend/go.mod backend/go.sum ./backend/
-RUN cd backend && go mod download
+RUN --mount=type=cache,target=/go/pkg/mod cd backend && go mod download
 COPY backend/ ./backend/
 COPY --from=frontend-builder /app/frontend/build ./backend/frontend/dist
-RUN cd backend && CGO_ENABLED=0 go build -tags embed_frontend -o watchflare-hub
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    cd backend && CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -tags embed_frontend -o watchflare-hub
 
-# Stage 3: Prepare data directories
-FROM alpine AS data-init
+# Stage 3: Prepare data directories (arch-independent)
+FROM --platform=$BUILDPLATFORM alpine AS data-init
 RUN mkdir -p /var/lib/watchflare && chmod 750 /var/lib/watchflare
 
 # Stage 4: Runtime (FROM scratch)
