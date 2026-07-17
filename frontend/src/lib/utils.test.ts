@@ -277,6 +277,10 @@ describe('parsePortBadges', () => {
 	it('handles mixed published and exposed-only ports', () => {
 		expect(parsePortBadges('8080:80/tcp, 9000/tcp')).toEqual(['8080', '9000']);
 	});
+
+	it('deduplicates identical badges (e.g. same port over tcp and udp)', () => {
+		expect(parsePortBadges('53:53/tcp, 53:53/udp')).toEqual(['53']);
+	});
 });
 
 describe('isSystemContainer', () => {

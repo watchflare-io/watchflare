@@ -287,7 +287,7 @@ export function isSystemContainer(
 // Returns: array of public port strings (or private port if no public binding)
 export function parsePortBadges(ports: string): string[] {
 	if (!ports) return [];
-	return ports.split(', ').map((p) => {
+	const badges = ports.split(', ').map((p) => {
 		const colonIdx = p.indexOf(':');
 		if (colonIdx !== -1) {
 			return p.substring(0, colonIdx);
@@ -295,6 +295,7 @@ export function parsePortBadges(ports: string): string[] {
 		const slashIdx = p.indexOf('/');
 		return slashIdx !== -1 ? p.substring(0, slashIdx) : p;
 	});
+	return [...new Set(badges)];
 }
 
 export function toggleCategory(
