@@ -33,8 +33,22 @@
 	let runtimeFilter = $state('');
 	let livenessFilter: ContainerLiveness = $state('all');
 
+	let sortColumn = $state<
+		'name' | 'host' | 'status' | 'health' | 'image' | 'cpu' | 'memory' | 'network' | 'ports'
+	>('name');
+	let sortOrder = $state<'asc' | 'desc'>('asc');
+
 	let drawerOpen = $state(false);
 	let selected: GlobalContainer | null = $state(null);
+
+	function handleSort(col: typeof sortColumn) {
+		if (sortColumn === col) {
+			sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+		} else {
+			sortColumn = col;
+			sortOrder = 'asc';
+		}
+	}
 
 	let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -45,13 +59,61 @@
 	);
 	const runtimes = $derived([...new Set(containers.map((c) => c.runtime).filter(Boolean))].sort());
 
-	const displayed = $derived(
+	const filtered = $derived(
 		filterContainers(containers, {
 			search: searchQuery,
 			host: hostFilter,
 			runtime: runtimeFilter,
 			liveness: livenessFilter
 		})
+	);
+
+	const displayed = $derived(
+		(() => {
+			const healthOrder: Record<string, number> = {
+				healthy: 0,
+				starting: 1,
+				unhealthy: 2,
+				'': 3
+			};
+
+			return [...filtered].sort((a, b) => {
+				let cmp = 0;
+				switch (sortColumn) {
+					case 'name':
+						cmp = a.container_name.localeCompare(b.container_name);
+						break;
+					case 'host':
+						cmp = a.host_name.localeCompare(b.host_name);
+						break;
+					case 'status':
+						cmp = (a.status ?? '').localeCompare(b.status ?? '');
+						break;
+					case 'health':
+						cmp = (healthOrder[a.health ?? ''] ?? 3) - (healthOrder[b.health ?? ''] ?? 3);
+						break;
+					case 'image':
+						cmp = (a.image ?? '').localeCompare(b.image ?? '');
+						break;
+					case 'cpu':
+						cmp = a.cpu_percent - b.cpu_percent;
+						break;
+					case 'memory':
+						cmp = a.memory_used_bytes - b.memory_used_bytes;
+						break;
+					case 'network':
+						cmp =
+							a.network_rx_bytes_per_sec +
+							a.network_tx_bytes_per_sec -
+							(b.network_rx_bytes_per_sec + b.network_tx_bytes_per_sec);
+						break;
+					case 'ports':
+						cmp = (a.ports ?? '').localeCompare(b.ports ?? '');
+						break;
+				}
+				return sortOrder === 'asc' ? cmp : -cmp;
+			});
+		})()
 	);
 
 	const total = $derived(containers.length);
@@ -280,6 +342,26 @@
 	{/if}
 </div>
 
+{#snippet sortIcon(column: string)}
+	{#if sortColumn === column}
+		<svg class="h-3 w-3" viewBox="0 0 12 12" fill="currentColor">
+			{#if sortOrder === 'asc'}
+				<path d="M6 2l4 5H2z" />
+			{:else}
+				<path d="M6 10l4-5H2z" />
+			{/if}
+		</svg>
+	{:else}
+		<svg
+			class="h-3 w-3 opacity-40 group-hover:opacity-100 transition-opacity"
+			viewBox="0 0 12 12"
+			fill="currentColor"
+		>
+			<path d="M6 10l4-5H2z" />
+		</svg>
+	{/if}
+{/snippet}
+
 <ContainerDetailDrawer
 	container={selected}
 	open={drawerOpen}
@@ -374,12 +456,22 @@
 					<tr
 						class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)] whitespace-nowrap"
 					>
-						{#each ['Name', 'Host', 'Status', 'Health', 'Image', 'CPU', 'Memory', 'Network', 'Ports'] as label}
+						{#each [['name', 'Name'], ['host', 'Host'], ['status', 'Status'], ['health', 'Health'], ['image', 'Image'], ['cpu', 'CPU'], ['memory', 'Memory'], ['network', 'Network'], ['ports', 'Ports']] as const as [col, label]}
 							<th
 								scope="col"
 								class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
 							>
-								{label}
+								<button
+									type="button"
+									onclick={() => handleSort(col)}
+									class="group inline-flex items-center gap-1 h-8 rounded-md px-2.5 select-none transition-colors hover:bg-table-header-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary {sortColumn ===
+									col
+										? 'bg-table-header-active text-foreground'
+										: ''}"
+								>
+									{label}
+									{@render sortIcon(col)}
+								</button>
 							</th>
 						{/each}
 					</tr>
