@@ -13,7 +13,7 @@ export type ConnectionState =
 	| 'error';
 
 /**
- * Minified sensor reading format from backend SSE
+ * Minified sensor reading format from Hub SSE
  */
 interface MinifiedSensorReading {
 	k: string; // sensor key
@@ -21,7 +21,7 @@ interface MinifiedSensorReading {
 }
 
 /**
- * Minified metrics format from backend SSE
+ * Minified metrics format from Hub SSE
  */
 interface MinifiedMetrics {
 	h: string; // host_id
@@ -52,7 +52,7 @@ interface MinifiedMetrics {
 }
 
 /**
- * Minified container metrics format from backend SSE
+ * Minified container metrics format from Hub SSE
  */
 interface MinifiedContainerMetric {
 	i: string; // container_id

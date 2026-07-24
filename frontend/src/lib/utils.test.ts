@@ -24,7 +24,7 @@ import {
 import type { GlobalContainer, NotificationCategory } from './types';
 
 describe('capitalizeFirst', () => {
-	it('capitalizes a lowercase backend message', () => {
+	it('capitalizes a lowercase Hub message', () => {
 		expect(capitalizeFirst('invalid credentials')).toBe('Invalid credentials');
 	});
 

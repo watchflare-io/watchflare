@@ -145,7 +145,7 @@
 		if (collectErrorTimeout) clearTimeout(collectErrorTimeout);
 	});
 
-	// Reload silently when backend pushes a new package inventory.
+	// Reload silently when the Hub pushes a new package inventory.
 	// seenSignal captures the value at mount time so we only react to signals
 	// that arrive AFTER this component is rendered (not pre-existing ones).
 	let seenSignal = ctx.packageInventorySignal;

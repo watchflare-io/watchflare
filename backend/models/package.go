@@ -25,7 +25,7 @@ const (
 )
 
 // CheckablePackageManagers is the static list of package managers that have
-// update checkers on the agent side. After any inventory, the backend bulk-marks
+// update checkers on the agent side. After any inventory, the Hub bulk-marks
 // all packages belonging to these managers as update_checked = true.
 var CheckablePackageManagers = []string{
 	"dpkg",         // apt (Debian/Ubuntu)

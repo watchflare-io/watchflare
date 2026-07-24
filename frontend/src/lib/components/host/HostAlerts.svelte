@@ -30,8 +30,8 @@
 			<div class="flex-1">
 				<p class="text-sm font-medium text-foreground">Clock Synchronization Error</p>
 				<p class="text-sm text-muted-foreground mt-1">
-					The agent's system clock is out of sync with the backend (&gt;5 min difference).
-					Heartbeats are being rejected.
+					The agent's system clock is out of sync with the Hub (&gt;5 min difference). Heartbeats
+					are being rejected.
 				</p>
 			</div>
 		</div>

@@ -11,9 +11,8 @@ Instead, please use [GitHub Security Advisories](https://github.com/watchflare-i
 ## Scope
 
 The following are in scope:
-- Watchflare backend (Go)
+- Watchflare Hub (Go + embedded SvelteKit frontend)
 - Watchflare agent (Go)
-- Watchflare frontend (SvelteKit)
 - Docker images published on GHCR
 - Installation scripts
 

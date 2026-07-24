@@ -32,7 +32,7 @@
 					<strong>{alert.total_dropped} metrics</strong>
 				</p>
 				<p class="text-xs text-muted-foreground mt-1">
-					Backend unavailable for {formatDuration(alert.downtime_duration)}
+					Hub unavailable for {formatDuration(alert.downtime_duration)}
 					({new Date(alert.first_dropped_at).toLocaleString()} → {new Date(
 						alert.last_dropped_at
 					).toLocaleString()})

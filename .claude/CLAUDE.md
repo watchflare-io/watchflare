@@ -68,7 +68,7 @@ Connection: `postgresql://watchflare:watchflare_dev@localhost:5432/watchflare` (
 - **SSE minification**: metric fields compressed to 1-2 chars in `backend/sse/broker.go`, decoded in `frontend/src/lib/sse.js`. Both must be updated together.
 - **TimescaleDB continuous aggregates**: 10m/15m/2h/8h buckets for time ranges. Migrations embedded via `//go:embed`
 - **Agent security**: runs as unprivileged `watchflare` user. HMAC-SHA256 per RPC, ±5min timestamp window
-- **WAL**: append-only metrics buffer when backend unreachable, auto-replay on reconnect
+- **WAL**: append-only metrics buffer when Hub unreachable, auto-replay on reconnect
 - **Clock desync**: detected in gRPC interceptor, tracked in HeartbeatCache, shown as frontend banner
 
 ## Critical Patterns

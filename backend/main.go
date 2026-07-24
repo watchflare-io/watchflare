@@ -81,7 +81,7 @@ func main() {
 	go syncWorker.Start()
 
 	// Prime the cache from the last-known DB state so the stale checker can
-	// transition hosts whose agents died during the backend downtime to offline.
+	// transition hosts whose agents died during the Hub downtime to offline.
 	// Without this, the cache would be empty at boot and the DB-only status
 	// would stay "online" forever for dead agents.
 	var primedHosts []models.Host
@@ -142,7 +142,7 @@ func main() {
 		}
 	}()
 
-	slog.Info("Watchflare backend started")
+	slog.Info("Watchflare Hub started")
 
 	// Wait for shutdown signal
 	sigCh := make(chan os.Signal, 1)

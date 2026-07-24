@@ -8,7 +8,7 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 COPY frontend/ .
 RUN npm run build
 
-# Stage 2: Build backend with embedded frontend (cross-compiled, no QEMU emulation)
+# Stage 2: Build the Hub (Go backend + embedded frontend, cross-compiled, no QEMU emulation)
 FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS backend-builder
 ARG TARGETOS TARGETARCH
 WORKDIR /app

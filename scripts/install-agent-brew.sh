@@ -9,8 +9,8 @@ set -e
 # Options:
 #   --uninstall           Remove the agent via Homebrew
 #   --token=TOKEN or --token TOKEN   Registration token
-#   --host=HOST   or --host HOST     Backend hostname (default: localhost)
-#   --port=PORT   or --port PORT     Backend port (default: 50051)
+#   --host=HOST   or --host HOST     Hub hostname (default: localhost)
+#   --port=PORT   or --port PORT     Hub port (default: 50051)
 #   --containers          Enable container metrics collection (Docker/Podman/Colima)
 
 RED='\033[0;31m'

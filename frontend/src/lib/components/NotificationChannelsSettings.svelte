@@ -80,7 +80,7 @@
 		return null;
 	}
 
-	// Mirrors the backend cooldown granularity: per-URL for draft tests, per-id
+	// Mirrors the Hub cooldown granularity: per-URL for draft tests, per-id
 	// for saved channels. Empty when neither applies (button is disabled then).
 	function drawerTestKey(): string {
 		const url = formUrl.trim();

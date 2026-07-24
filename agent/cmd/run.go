@@ -61,7 +61,7 @@ func Run() {
 	}
 	defer grpcClient.Close()
 
-	slog.Info("connected to backend", "host", cfg.ServerHost, "port", cfg.ServerPort)
+	slog.Info("connected to Hub", "host", cfg.ServerHost, "port", cfg.ServerPort)
 	if cfg.CACertFile != "" {
 		slog.Info("TLS enabled", "ca_cert", cfg.CACertFile)
 	}
@@ -182,7 +182,7 @@ func loadConfig() (*config.Config, error) {
 	return cfg, nil
 }
 
-// runHeartbeat sends periodic heartbeats to the backend and dispatches any commands received.
+// runHeartbeat sends periodic heartbeats to the Hub and dispatches any commands received.
 func runHeartbeat(ctx context.Context, grpcClient *client.Client, cfg *config.Config, forceCollectCh, forceUpdateCh chan<- struct{}) {
 	ticker := time.NewTicker(time.Duration(cfg.HeartbeatInterval) * time.Second)
 	defer ticker.Stop()
@@ -384,7 +384,7 @@ func collectAndSendPackages(ctx context.Context, grpcClient *client.Client, cfg 
 	hasChanges := packages.HasChanges(added, removed, updated)
 
 	// If any package has an available update, always send a full inventory so the
-	// backend has current available_version / has_security_update for every package —
+	// Hub has current available_version / has_security_update for every package —
 	// not just the ones that changed in this delta.
 	if !forceFull && !isFirstRun {
 		for _, pkg := range allPackages {
@@ -483,7 +483,7 @@ func runServiceCollector(ctx context.Context, grpcClient *client.Client, cfg *co
 	}
 }
 
-// collectAndSendServiceInventory collects the current service inventory and sends it to the backend.
+// collectAndSendServiceInventory collects the current service inventory and sends it to the Hub.
 func collectAndSendServiceInventory(ctx context.Context, grpcClient *client.Client, cfg *config.Config, col *services.Collector) {
 	svcs, err := col.CollectInventory(ctx)
 	if err != nil {

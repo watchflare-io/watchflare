@@ -107,7 +107,7 @@ func Install() {
 		fmt.Println("  → Configuration file already exists")
 		needsRegistration = false
 	} else if token != "" {
-		fmt.Println("  → Registering agent with backend...")
+		fmt.Println("  → Registering agent with Hub...")
 
 		if host == "" {
 			host = "localhost"
@@ -165,7 +165,7 @@ func Install() {
 				fmt.Println(" ⚠")
 				fmt.Println()
 				fmt.Println("  ⚠ WARNING: Clock synchronization error detected!")
-				fmt.Println("  The system clock is out of sync with the backend (>5min difference).")
+				fmt.Println("  The system clock is out of sync with the Hub (>5min difference).")
 				fmt.Println("  Ensure the system clock is synchronized and restart the agent.")
 			} else {
 				fmt.Println(" ✓")
@@ -199,7 +199,7 @@ func Install() {
 	} else {
 		if token != "" {
 			fmt.Println("Registration details:")
-			fmt.Printf("  Backend: %s:%s\n", host, port)
+			fmt.Printf("  Hub: %s:%s\n", host, port)
 			fmt.Println()
 		}
 
@@ -216,7 +216,7 @@ func Install() {
 }
 
 // hasClockSyncError returns true if the log content indicates a clock
-// synchronization error between the agent and the backend.
+// synchronization error between the agent and the Hub.
 func hasClockSyncError(logContent string) bool {
-	return strings.Contains(logContent, "clock out of sync with backend")
+	return strings.Contains(logContent, "clock out of sync with Hub")
 }

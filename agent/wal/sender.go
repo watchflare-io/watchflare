@@ -126,13 +126,13 @@ func (s *Sender) replayWAL() error {
 		return nil
 	}
 
-	slog.Warn("WAL recovery: pending metrics from previous backend downtime", "count", len(records))
+	slog.Warn("WAL recovery: pending metrics from previous Hub downtime", "count", len(records))
 
 	success := true
 	for i, data := range records {
 		if err := s.sendRecord(data, false, nil); err != nil {
 			if errors.IsTimestampError(err) {
-				slog.Error("WAL recovery failed: clock out of sync with backend",
+				slog.Error("WAL recovery failed: clock out of sync with Hub",
 					"record", fmt.Sprintf("%d/%d", i+1, len(records)),
 					"hint", "ensure system clock is synchronized and restart the agent")
 			} else {
@@ -232,7 +232,7 @@ func (s *Sender) collectAndSend() {
 		isLastRecord := i == len(records)-1
 		if err := s.sendRecord(record, isLastRecord, containerMetrics); err != nil {
 			if errors.IsTimestampError(err) {
-				slog.Error("send failed: clock out of sync with backend",
+				slog.Error("send failed: clock out of sync with Hub",
 					"record", fmt.Sprintf("%d/%d", i+1, len(records)),
 					"retry_in", s.metricsInterval,
 					"hint", "ensure system clock is synchronized and restart the agent")

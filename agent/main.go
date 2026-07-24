@@ -88,7 +88,7 @@ func printHelp() {
 	fmt.Println("Installation & Setup:")
 	fmt.Println("  install    --token=TOKEN [--host=HOST] [--port=PORT] [--containers]  Install and register the agent")
 	fmt.Println("  uninstall                                                             Remove the agent")
-	fmt.Println("  register   --token=TOKEN [--host=HOST] [--port=PORT] [--containers]  Re-register with a new backend")
+	fmt.Println("  register   --token=TOKEN [--host=HOST] [--port=PORT] [--containers]  Re-register the agent")
 	fmt.Println()
 	fmt.Println("Service Control:")
 	fmt.Println("  status     Show agent status")

@@ -82,7 +82,7 @@ export function formatPercent(value: number): string {
 	return Math.round(value * 10) / 10 + '%';
 }
 
-// Capitalize the first character of a string. Used to render backend error
+// Capitalize the first character of a string. Used to render Hub error
 // messages, which are lowercase by Go convention, with a leading capital.
 export function capitalizeFirst(s: string): string {
 	if (!s) return s;

@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// Client handles gRPC communication with the backend
+// Client handles gRPC communication with the Hub
 type Client struct {
 	conn   *grpc.ClientConn
 	client pb.AgentServiceClient
@@ -129,7 +129,7 @@ type RegistrationResponse struct {
 	Reactivated bool   // True if existing agent was reactivated (UUID reused)
 }
 
-// Register attempts to register the agent with the backend
+// Register attempts to register the agent with the Hub
 // Returns registration credentials and TLS information
 func (c *Client) Register(r RegisterRequest) (*RegistrationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -219,7 +219,7 @@ func SaveCACertificate(caCertPEM, certPath string) error {
 	return nil
 }
 
-// SendHeartbeat sends a heartbeat to the backend and returns any pending commands.
+// SendHeartbeat sends a heartbeat to the Hub and returns any pending commands.
 func (c *Client) SendHeartbeat(agentID, agentKey, ipv4, ipv6, agentVersion string) ([]*pb.PendingCommand, error) {
 	timestamp := time.Now().Unix()
 
@@ -254,7 +254,7 @@ func (c *Client) SendHeartbeat(agentID, agentKey, ipv4, ipv6, agentVersion strin
 	return resp.Commands, nil
 }
 
-// SendMetrics sends system metrics to the backend
+// SendMetrics sends system metrics to the Hub
 func (c *Client) SendMetrics(agentID, agentKey, agentVersion string, m *metrics.SystemMetrics) error {
 	timestamp := time.Now().Unix()
 
@@ -361,7 +361,7 @@ type PackageInventoryData struct {
 	TotalPackageCount    int32
 }
 
-// SendPackageInventory sends package inventory to the backend
+// SendPackageInventory sends package inventory to the Hub
 func (c *Client) SendPackageInventory(agentID, agentKey string, data *PackageInventoryData) error {
 	timestamp := time.Now().Unix()
 
@@ -400,7 +400,7 @@ func (c *Client) SendPackageInventory(agentID, agentKey string, data *PackageInv
 	return nil
 }
 
-// SendServiceInventory sends service inventory to the backend
+// SendServiceInventory sends service inventory to the Hub
 func (c *Client) SendServiceInventory(agentID, agentKey string, svcs []*services.Service) error {
 	timestamp := time.Now().Unix()
 
@@ -444,7 +444,7 @@ func (c *Client) SendServiceInventory(agentID, agentKey string, svcs []*services
 	return nil
 }
 
-// ReportServiceHealth sends service health status to the backend
+// ReportServiceHealth sends service health status to the Hub
 func (c *Client) ReportServiceHealth(agentID, agentKey string, health []*services.ServiceHealth, collectedAt time.Time) error {
 	timestamp := time.Now().Unix()
 

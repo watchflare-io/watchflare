@@ -246,7 +246,7 @@ type RegisterHostResponse struct {
 	AgentId       string                 `protobuf:"bytes,3,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`          // UUID of the host
 	AgentKey      string                 `protobuf:"bytes,4,opt,name=agent_key,json=agentKey,proto3" json:"agent_key,omitempty"`       // Key for authenticating future requests
 	CaCert        string                 `protobuf:"bytes,5,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"`             // CA certificate in PEM format for TLS verification
-	ServerName    string                 `protobuf:"bytes,6,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"` // TLS SNI server name for backend verification (e.g., "watchflare")
+	ServerName    string                 `protobuf:"bytes,6,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"` // TLS SNI server name for Hub verification (e.g., "watchflare")
 	Reactivated   bool                   `protobuf:"varint,7,opt,name=reactivated,proto3" json:"reactivated,omitempty"`                // True if existing agent was reactivated (UUID reused), false if new registration
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -477,7 +477,7 @@ func (x *HeartbeatResponse) GetCommands() []*PendingCommand {
 	return nil
 }
 
-// PendingCommand represents a command dispatched from the backend to the agent
+// PendingCommand represents a command dispatched from the Hub to the agent
 type PendingCommand struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CommandId     string                 `protobuf:"bytes,1,opt,name=command_id,json=commandId,proto3" json:"command_id,omitempty"` // UUID for deduplication
@@ -954,7 +954,7 @@ func (x *ContainerMetric) GetPorts() string {
 }
 
 // HostInfo contains slowly-changing host properties sent with every metrics cycle.
-// The backend only writes to DB if at least one field has changed.
+// The Hub only writes to DB if at least one field has changed.
 type HostInfo struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	PlatformVersion  string                 `protobuf:"bytes,1,opt,name=platform_version,json=platformVersion,proto3" json:"platform_version,omitempty"`       // gopsutil PlatformVersion: "43", "22.04"
@@ -1542,7 +1542,7 @@ func (x *Package) GetHasSecurityUpdate() bool {
 	return false
 }
 
-// SendPackageInventoryRequest sends package inventory (delta or full) to backend
+// SendPackageInventoryRequest sends package inventory (delta or full) to the Hub
 type SendPackageInventoryRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	AgentId   string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`    // UUID of the host

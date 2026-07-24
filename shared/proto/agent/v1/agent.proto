@@ -12,16 +12,16 @@ service AgentService {
   // Heartbeat is called every 5 seconds by the agent
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
 
-  // SendMetrics sends system metrics to the backend
+  // SendMetrics sends system metrics to the Hub
   rpc SendMetrics(SendMetricsRequest) returns (SendMetricsResponse);
 
   // ReportDroppedMetrics reports metrics that were dropped after max retries
   rpc ReportDroppedMetrics(ReportDroppedMetricsRequest) returns (ReportDroppedMetricsResponse);
 
-  // SendPackageInventory sends package inventory to the backend
+  // SendPackageInventory sends package inventory to the Hub
   rpc SendPackageInventory(SendPackageInventoryRequest) returns (SendPackageInventoryResponse);
 
-  // SendServiceInventory sends the list of systemd services to the backend
+  // SendServiceInventory sends the list of systemd services to the Hub
   rpc SendServiceInventory(SendServiceInventoryRequest) returns (SendServiceInventoryResponse);
 
   // ReportServiceHealth reports current health state of monitored services
@@ -68,7 +68,7 @@ message RegisterHostResponse {
   string agent_id = 3;      // UUID of the host
   string agent_key = 4;     // Key for authenticating future requests
   string ca_cert = 5;       // CA certificate in PEM format for TLS verification
-  string server_name = 6;   // TLS SNI server name for backend verification (e.g., "watchflare")
+  string server_name = 6;   // TLS SNI server name for Hub verification (e.g., "watchflare")
   bool reactivated = 7;     // True if existing agent was reactivated (UUID reused), false if new registration
 }
 
@@ -89,7 +89,7 @@ message HeartbeatResponse {
   repeated PendingCommand commands = 3;  // Commands to execute (empty if none)
 }
 
-// PendingCommand represents a command dispatched from the backend to the agent
+// PendingCommand represents a command dispatched from the Hub to the agent
 message PendingCommand {
   string command_id = 1;  // UUID for deduplication
   string type = 2;        // "collect_packages" | "update_agent"
@@ -162,7 +162,7 @@ message ContainerMetric {
 }
 
 // HostInfo contains slowly-changing host properties sent with every metrics cycle.
-// The backend only writes to DB if at least one field has changed.
+// The Hub only writes to DB if at least one field has changed.
 message HostInfo {
   string platform_version = 1;  // gopsutil PlatformVersion: "43", "22.04"
   string kernel_version = 2;    // gopsutil KernelVersion: "6.17.1-300.fc43.aarch64"
@@ -236,7 +236,7 @@ message Package {
   bool has_security_update = 10;     // True if available_version is a security update
 }
 
-// SendPackageInventoryRequest sends package inventory (delta or full) to backend
+// SendPackageInventoryRequest sends package inventory (delta or full) to the Hub
 message SendPackageInventoryRequest {
   string agent_id = 1;               // UUID of the host
   string agent_key = 2;              // Authentication key

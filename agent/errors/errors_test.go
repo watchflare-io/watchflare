@@ -45,7 +45,7 @@ func TestIsTimestampError_True(t *testing.T) {
 }
 
 func TestIsTimestampError_MessageContains(t *testing.T) {
-	// Backend may include extra context — Contains() should still match
+	// Hub may include extra context, Contains() should still match
 	err := status.Error(codes.InvalidArgument, "error: "+timestampErrorMsg+", delta=6m")
 	if !IsTimestampError(err) {
 		t.Error("expected true when message contains the timestamp error phrase")

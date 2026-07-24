@@ -38,13 +38,13 @@ type AgentServiceClient interface {
 	RegisterHost(ctx context.Context, in *RegisterHostRequest, opts ...grpc.CallOption) (*RegisterHostResponse, error)
 	// Heartbeat is called every 5 seconds by the agent
 	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error)
-	// SendMetrics sends system metrics to the backend
+	// SendMetrics sends system metrics to the Hub
 	SendMetrics(ctx context.Context, in *SendMetricsRequest, opts ...grpc.CallOption) (*SendMetricsResponse, error)
 	// ReportDroppedMetrics reports metrics that were dropped after max retries
 	ReportDroppedMetrics(ctx context.Context, in *ReportDroppedMetricsRequest, opts ...grpc.CallOption) (*ReportDroppedMetricsResponse, error)
-	// SendPackageInventory sends package inventory to the backend
+	// SendPackageInventory sends package inventory to the Hub
 	SendPackageInventory(ctx context.Context, in *SendPackageInventoryRequest, opts ...grpc.CallOption) (*SendPackageInventoryResponse, error)
-	// SendServiceInventory sends the list of systemd services to the backend
+	// SendServiceInventory sends the list of systemd services to the Hub
 	SendServiceInventory(ctx context.Context, in *SendServiceInventoryRequest, opts ...grpc.CallOption) (*SendServiceInventoryResponse, error)
 	// ReportServiceHealth reports current health state of monitored services
 	ReportServiceHealth(ctx context.Context, in *ReportServiceHealthRequest, opts ...grpc.CallOption) (*ReportServiceHealthResponse, error)
@@ -138,13 +138,13 @@ type AgentServiceServer interface {
 	RegisterHost(context.Context, *RegisterHostRequest) (*RegisterHostResponse, error)
 	// Heartbeat is called every 5 seconds by the agent
 	Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error)
-	// SendMetrics sends system metrics to the backend
+	// SendMetrics sends system metrics to the Hub
 	SendMetrics(context.Context, *SendMetricsRequest) (*SendMetricsResponse, error)
 	// ReportDroppedMetrics reports metrics that were dropped after max retries
 	ReportDroppedMetrics(context.Context, *ReportDroppedMetricsRequest) (*ReportDroppedMetricsResponse, error)
-	// SendPackageInventory sends package inventory to the backend
+	// SendPackageInventory sends package inventory to the Hub
 	SendPackageInventory(context.Context, *SendPackageInventoryRequest) (*SendPackageInventoryResponse, error)
-	// SendServiceInventory sends the list of systemd services to the backend
+	// SendServiceInventory sends the list of systemd services to the Hub
 	SendServiceInventory(context.Context, *SendServiceInventoryRequest) (*SendServiceInventoryResponse, error)
 	// ReportServiceHealth reports current health state of monitored services
 	ReportServiceHealth(context.Context, *ReportServiceHealthRequest) (*ReportServiceHealthResponse, error)

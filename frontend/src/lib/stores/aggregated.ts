@@ -25,7 +25,7 @@ function createAggregatedStore() {
 		error: null
 	});
 
-	// Bucket sizes in ms for each time range (must match backend intervals)
+	// Bucket sizes in ms for each time range (must match Hub intervals)
 	const bucketMs: Record<string, number> = {
 		'12h': 10 * 60 * 1000,
 		'24h': 15 * 60 * 1000,

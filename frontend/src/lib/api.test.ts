@@ -121,7 +121,7 @@ describe('login', () => {
 			expect.unreachable('should have thrown');
 		} catch (err) {
 			expect(err).toBeInstanceOf(ApiError);
-			// ApiError capitalizes backend messages (lowercase by Go convention).
+			// ApiError capitalizes Hub messages (lowercase by Go convention).
 			expect((err as ApiError).message).toBe('Invalid credentials');
 		}
 	});
@@ -308,7 +308,7 @@ describe('error handling (via login)', () => {
 			expect.unreachable('should have thrown');
 		} catch (err) {
 			expect(err).toBeInstanceOf(ApiError);
-			// ApiError capitalizes backend messages (lowercase by Go convention).
+			// ApiError capitalizes Hub messages (lowercase by Go convention).
 			expect((err as ApiError).message).toBe('Rate limited');
 			expect((err as ApiError).status).toBe(429);
 		}

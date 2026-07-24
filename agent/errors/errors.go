@@ -8,12 +8,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// timestampErrorMsg is the exact message returned by the backend gRPC interceptor
+// timestampErrorMsg is the exact message returned by the Hub gRPC interceptor
 // when the agent clock is more than 5 minutes out of sync.
 const timestampErrorMsg = "Timestamp outside acceptable window"
 
 // IsTimestampError checks if an error is a timestamp synchronization issue.
-// The backend returns codes.InvalidArgument with a specific message when the
+// The Hub returns codes.InvalidArgument with a specific message when the
 // agent clock is more than 5 minutes out of sync.
 func IsTimestampError(err error) bool {
 	if err == nil {
@@ -30,7 +30,7 @@ func IsTimestampError(err error) bool {
 // FormatError formats an error with helpful context
 func FormatError(err error, context string) string {
 	if IsTimestampError(err) {
-		return fmt.Sprintf("%s failed: CLOCK SYNC ERROR - System time is out of sync with the backend (>5min difference). "+
+		return fmt.Sprintf("%s failed: CLOCK SYNC ERROR - System time is out of sync with the Hub (>5min difference). "+
 			"Ensure the system clock is synchronized and restart the agent. Original error: %v", context, err)
 	}
 	return fmt.Sprintf("%s failed: %v", context, err)

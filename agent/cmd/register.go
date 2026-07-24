@@ -18,7 +18,7 @@ import (
 // AgentVersion is set by main.go from the build-time Version variable
 var AgentVersion = "dev"
 
-// Register handles agent registration with the backend
+// Register handles agent registration with the Hub
 func Register() {
 	fmt.Println("Watchflare Agent Registration")
 	fmt.Println("==============================")
@@ -80,7 +80,7 @@ func Register() {
 	}
 }
 
-// runRegistration performs agent registration with the backend.
+// runRegistration performs agent registration with the Hub.
 // Called by Register() (standalone command) and Install() (inline during installation).
 func runRegistration(token, host, port string, containers bool) (bool, error) {
 	if err := config.EnsureDirectories(); err != nil {
@@ -102,10 +102,10 @@ func runRegistration(token, host, port string, containers bool) (bool, error) {
 		slog.Info("IPv6 detected", "ipv6", info.IPv6Address)
 	}
 
-	slog.Info("connecting to backend", "host", host, "port", port)
+	slog.Info("connecting to Hub", "host", host, "port", port)
 	grpcClient, err := client.NewForRegistration(host, port)
 	if err != nil {
-		return false, fmt.Errorf("failed to connect to backend: %w", err)
+		return false, fmt.Errorf("failed to connect to Hub: %w", err)
 	}
 	defer grpcClient.Close()
 
