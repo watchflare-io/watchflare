@@ -13,6 +13,7 @@ set -e
 #   --token=TOKEN or --token TOKEN   Registration token
 #   --host=HOST   or --host HOST     Backend hostname (default: localhost)
 #   --port=PORT   or --port PORT     Backend port (default: 50051)
+#   --containers          Enable container metrics collection (Docker/Podman/Colima)
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -35,6 +36,7 @@ LOCAL_MODE=false
 TOKEN=""
 HOST=""
 PORT=""
+CONTAINERS=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -46,13 +48,14 @@ while [[ $# -gt 0 ]]; do
         --host) HOST="$2"; shift 2 ;;
         --port=*) PORT="${1#*=}"; shift ;;
         --port) PORT="$2"; shift 2 ;;
+        --containers) CONTAINERS=true; shift ;;
         -h|--help)
-            echo "Usage: sudo $0 [--uninstall] [--local] [--token=TOKEN] [--host=HOST] [--port=PORT]"
+            echo "Usage: sudo $0 [--uninstall] [--local] [--token=TOKEN] [--host=HOST] [--port=PORT] [--containers]"
             exit 0
             ;;
         *)
             echo -e "${RED}Unknown argument: $1${NC}"
-            echo "Usage: sudo $0 [--uninstall] [--local] [--token=TOKEN] [--host=HOST] [--port=PORT]"
+            echo "Usage: sudo $0 [--uninstall] [--local] [--token=TOKEN] [--host=HOST] [--port=PORT] [--containers]"
             exit 1
             ;;
     esac
@@ -269,6 +272,7 @@ INSTALL_ARGS=()
 [ -n "$TOKEN" ] && INSTALL_ARGS+=(--token="$TOKEN")
 [ -n "$HOST" ]  && INSTALL_ARGS+=(--host="$HOST")
 [ -n "$PORT" ]  && INSTALL_ARGS+=(--port="$PORT")
+[ "$CONTAINERS" = true ] && INSTALL_ARGS+=(--containers)
 if ! "${INSTALL_DIR}/${BINARY_NAME}" install "${INSTALL_ARGS[@]}"; then
     echo -e "  ${RED}→ Installation failed${NC}"
     exit 1

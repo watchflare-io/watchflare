@@ -11,6 +11,7 @@ set -e
 #   --token=TOKEN or --token TOKEN   Registration token
 #   --host=HOST   or --host HOST     Backend hostname (default: localhost)
 #   --port=PORT   or --port PORT     Backend port (default: 50051)
+#   --containers          Enable container metrics collection (Docker/Podman/Colima)
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -21,6 +22,7 @@ UNINSTALL=false
 TOKEN=""
 HOST=""
 PORT=""
+CONTAINERS=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -31,13 +33,14 @@ while [[ $# -gt 0 ]]; do
         --host) HOST="$2"; shift 2 ;;
         --port=*) PORT="${1#*=}"; shift ;;
         --port) PORT="$2"; shift 2 ;;
+        --containers) CONTAINERS=true; shift ;;
         -h|--help)
-            echo "Usage: $0 [--uninstall] [--token=TOKEN] [--host=HOST] [--port=PORT]"
+            echo "Usage: $0 [--uninstall] [--token=TOKEN] [--host=HOST] [--port=PORT] [--containers]"
             exit 0
             ;;
         *)
             echo -e "${RED}Unknown argument: $1${NC}"
-            echo "Usage: $0 [--uninstall] [--token=TOKEN] [--host=HOST] [--port=PORT]"
+            echo "Usage: $0 [--uninstall] [--token=TOKEN] [--host=HOST] [--port=PORT] [--containers]"
             exit 1
             ;;
     esac
@@ -103,8 +106,10 @@ echo ""
 if [ -n "$TOKEN" ]; then
     HOST="${HOST:-localhost}"
     PORT="${PORT:-50051}"
+    REGISTER_ARGS=(--token="$TOKEN" --host="$HOST" --port="$PORT")
+    [ "$CONTAINERS" = true ] && REGISTER_ARGS+=(--containers)
     echo "Registering agent..."
-    if watchflare-agent-launcher register --token="$TOKEN" --host="$HOST" --port="$PORT"; then
+    if watchflare-agent-launcher register "${REGISTER_ARGS[@]}"; then
         echo -e "${GREEN}✓ Registration successful${NC}"
         echo ""
         echo "Starting service..."
@@ -115,7 +120,7 @@ if [ -n "$TOKEN" ]; then
     fi
 else
     echo -e "${YELLOW}No token provided. Register manually before starting:${NC}"
-    echo "  watchflare-agent-launcher register --token=YOUR_TOKEN --host=YOUR_HOST"
+    echo "  watchflare-agent-launcher register --token=YOUR_TOKEN --host=YOUR_HOST [--containers]"
     echo "  brew services start watchflare-agent"
 fi
 
