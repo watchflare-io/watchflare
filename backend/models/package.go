@@ -53,7 +53,7 @@ type Package struct {
 	InstalledAt       *time.Time `json:"installed_at"`
 	PackageSize       int64      `json:"package_size"`
 	Description       string     `gorm:"type:varchar(100)" json:"description"`
-	AvailableVersion  string     `gorm:"type:varchar(100)" json:"available_version"`   // Empty if up to date
+	AvailableVersion  string     `gorm:"type:varchar(100)" json:"available_version"` // Empty if up to date
 	HasSecurityUpdate bool       `gorm:"not null;default:false" json:"has_security_update"`
 	UpdateChecked     bool       `gorm:"not null;default:false" json:"update_checked"` // True if an update checker covers this package manager
 	FirstSeen         time.Time  `gorm:"not null;default:now()" json:"first_seen"`
