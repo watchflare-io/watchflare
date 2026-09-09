@@ -250,9 +250,7 @@ export async function verifyTOTP(
 export async function setupTOTP(password?: string): Promise<TOTPSetupResponse> {
 	return apiRequest<TOTPSetupResponse>('/2fa/setup', {
 		method: 'POST',
-		...(password !== undefined && password !== ''
-			? { body: JSON.stringify({ password }) }
-			: {})
+		...(password !== undefined && password !== '' ? { body: JSON.stringify({ password }) } : {})
 	});
 }
 
