@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { setupTOTP, enableTOTP } from '$lib/api';
+	import { setupTOTP, enableTOTP, ApiError } from '$lib/api';
 	import { lockBodyScroll } from '$lib/actions/lockBodyScroll';
 	import { autofocus } from '$lib/actions/autofocus';
 	import QRCode from 'qrcode';
@@ -7,18 +7,21 @@
 
 	const {
 		open = false,
+		requirePassword = false,
 		onClose,
 		onEnabled
 	}: {
 		open?: boolean;
+		requirePassword?: boolean;
 		onClose: () => void;
 		onEnabled: () => void;
 	} = $props();
 
-	let step: 'qr' | 'verify' | 'backup' = $state('qr');
+	let step: 'password' | 'qr' | 'verify' | 'backup' = $state('qr');
 	let otpauthURL = $state('');
 	let secret = $state('');
 	let code = $state('');
+	let password = $state('');
 	let backupCodes: string[] = $state([]);
 	let backupSaved = $state(false);
 	let error = $state('');
@@ -29,12 +32,17 @@
 
 	$effect(() => {
 		if (open) {
-			step = 'qr';
+			step = requirePassword ? 'password' : 'qr';
 			code = '';
+			password = '';
 			backupCodes = [];
 			backupSaved = false;
 			error = '';
-			loadSetup();
+			otpauthURL = '';
+			secret = '';
+			if (!requirePassword) {
+				loadSetup();
+			}
 		}
 	});
 
@@ -44,17 +52,28 @@
 		}
 	});
 
-	async function loadSetup() {
+	async function loadSetup(pwd?: string) {
 		loading = true;
+		error = '';
 		try {
-			const res = await setupTOTP();
+			const res = await setupTOTP(pwd);
 			otpauthURL = res.otpauth_url;
 			secret = res.secret;
-		} catch {
-			error = 'Failed to start 2FA setup. Please try again.';
+			step = 'qr';
+		} catch (err) {
+			if (err instanceof ApiError && err.isForbidden) {
+				error = 'Incorrect password. Please try again.';
+			} else {
+				error = 'Failed to start 2FA setup. Please try again.';
+			}
 		} finally {
 			loading = false;
 		}
+	}
+
+	async function handlePasswordSubmit() {
+		if (!password) return;
+		await loadSetup(password);
 	}
 
 	async function handleEnable() {
@@ -90,6 +109,19 @@
 	function formatSecret(s: string): string {
 		return s.replace(/(.{4})/g, '$1 ').trim();
 	}
+
+	const title = $derived(
+		requirePassword ? 'Change authenticator' : 'Enable Two-Factor Authentication'
+	);
+	const confirmLabel = $derived(
+		requirePassword
+			? loading
+				? 'Confirming...'
+				: 'Confirm'
+			: loading
+				? 'Verifying...'
+				: 'Enable 2FA'
+	);
 </script>
 
 {#if open}
@@ -110,12 +142,12 @@
 			class="w-full max-w-md rounded-lg border bg-card shadow-lg"
 			role="dialog"
 			aria-modal="true"
-			aria-label="Set up two-factor authentication"
+			aria-label={title}
 			tabindex="-1"
 			onclick={(e) => e.stopPropagation()}
 		>
 			<div class="flex items-center justify-between border-b px-6 py-4">
-				<h2 class="text-base font-semibold text-foreground">Enable Two-Factor Authentication</h2>
+				<h2 class="text-base font-semibold text-foreground">{title}</h2>
 				<button
 					onclick={onClose}
 					class="text-muted-foreground hover:text-foreground rounded focus-visible:ring-2 focus-visible:ring-primary"
@@ -130,7 +162,40 @@
 					</div>
 				{/if}
 
-				{#if step === 'qr'}
+				{#if step === 'password'}
+					<p class="text-sm text-muted-foreground mb-4">
+						Enter your account password to change your authenticator app.
+					</p>
+					<form
+						onsubmit={(e) => {
+							e.preventDefault();
+							handlePasswordSubmit();
+						}}
+					>
+						<div class="mb-6">
+							<label for="setup-password" class="block text-sm font-medium text-foreground mb-2">
+								Account password
+							</label>
+							<input
+								id="setup-password"
+								type="password"
+								bind:value={password}
+								placeholder="Enter your password"
+								autocomplete="current-password"
+								use:autofocus
+								disabled={loading}
+								class="w-full rounded-lg border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
+							/>
+						</div>
+						<button
+							type="submit"
+							disabled={loading || !password}
+							class="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							{loading ? 'Verifying...' : 'Continue'}
+						</button>
+					</form>
+				{:else if step === 'qr'}
 					<p class="text-sm text-muted-foreground mb-4">
 						Scan this QR code with your authenticator app (Proton Authenticator, Google
 						Authenticator, 2FAS, etc.).
@@ -212,7 +277,7 @@
 								disabled={loading || code.length < 6}
 								class="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								{loading ? 'Verifying...' : 'Enable 2FA'}
+								{confirmLabel}
 							</button>
 						</div>
 					</form>
@@ -223,7 +288,7 @@
 					</p>
 					<div class="rounded-lg border bg-muted/50 p-4 mb-4">
 						<div class="grid grid-cols-2 gap-2 mb-3">
-							{#each backupCodes as bc}
+							{#each backupCodes as bc (bc)}
 								<code class="text-xs font-mono text-foreground tracking-wider">{bc}</code>
 							{/each}
 						</div>

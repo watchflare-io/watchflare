@@ -89,6 +89,7 @@
 	}
 
 	let showSetupModal = $state(false);
+	let setupRequirePassword = $state(false);
 	let showDisableConfirm = $state(false);
 	let showRegenModal = $state(false);
 	let totpVerifyCode = $state('');
@@ -443,6 +444,15 @@
 				</div>
 				<div class="flex items-center gap-2">
 					<button
+						onclick={() => {
+							setupRequirePassword = true;
+							showSetupModal = true;
+						}}
+						class="rounded-lg border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary"
+					>
+						Change authenticator
+					</button>
+					<button
 						onclick={openRegenModal}
 						class="rounded-lg border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary"
 					>
@@ -462,6 +472,7 @@
 				</div>
 				<button
 					onclick={() => {
+						setupRequirePassword = false;
 						showSetupModal = true;
 					}}
 					class="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary"
@@ -475,11 +486,14 @@
 
 <TwoFactorSetupModal
 	open={showSetupModal}
+	requirePassword={setupRequirePassword}
 	onClose={() => {
 		showSetupModal = false;
+		setupRequirePassword = false;
 	}}
 	onEnabled={() => {
 		showSetupModal = false;
+		setupRequirePassword = false;
 		userStore.load();
 	}}
 />

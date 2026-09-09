@@ -78,7 +78,7 @@ func TestEnableTOTPHandler_ValidCode(t *testing.T) {
 
 	user, _, _ := services.Register("totp-enable@example.com", "password123", "")
 	testTOTPUserID = user.ID
-	_, secret, _ := services.GenerateTOTPSecret(user.ID, user.Email)
+	_, secret, _ := services.GenerateTOTPSecret(user.ID, user.Email, "")
 	code, _ := totp.GenerateCode(secret, time.Now())
 
 	r := setupTOTPRouter()
@@ -102,7 +102,7 @@ func TestDisableTOTPHandler_InvalidCode(t *testing.T) {
 
 	user, _, _ := services.Register("totp-disable@example.com", "password123", "")
 	testTOTPUserID = user.ID
-	_, secret, _ := services.GenerateTOTPSecret(user.ID, user.Email)
+	_, secret, _ := services.GenerateTOTPSecret(user.ID, user.Email, "")
 	code, _ := totp.GenerateCode(secret, time.Now())
 	services.EnableTOTP(user.ID, code)
 
@@ -124,7 +124,7 @@ func TestEnableTOTPHandler_InvalidCode(t *testing.T) {
 
 	user, _, _ := services.Register("totp-enable-invalid@example.com", "password123", "")
 	testTOTPUserID = user.ID
-	services.GenerateTOTPSecret(user.ID, user.Email)
+	services.GenerateTOTPSecret(user.ID, user.Email, "")
 
 	r := setupTOTPRouter()
 	body, _ := json.Marshal(map[string]string{"code": "000000"})
@@ -142,7 +142,7 @@ func TestRegenerateBackupCodesHandler_InvalidCode(t *testing.T) {
 
 	user, _, _ := services.Register("totp-regen-invalid@example.com", "password123", "")
 	testTOTPUserID = user.ID
-	_, secret, _ := services.GenerateTOTPSecret(user.ID, user.Email)
+	_, secret, _ := services.GenerateTOTPSecret(user.ID, user.Email, "")
 	code, _ := totp.GenerateCode(secret, time.Now())
 	services.EnableTOTP(user.ID, code)
 
@@ -154,5 +154,70 @@ func TestRegenerateBackupCodesHandler_InvalidCode(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// Reported bug: a wrong code here returned 401, logging the user out.
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestSetupTOTP_WhenEnabled_RequiresPassword(t *testing.T) {
+	setupTestDB(t)
+	defer teardownTestDB()
+
+	user, _, _ := services.Register("totp-setup-pw@example.com", "password123", "")
+	testTOTPUserID = user.ID
+	_, secret, _ := services.GenerateTOTPSecret(user.ID, user.Email, "")
+	code, _ := totp.GenerateCode(secret, time.Now())
+	services.EnableTOTP(user.ID, code)
+
+	r := setupTOTPRouter()
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/2fa/setup", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	var resp map[string]string
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.Equal(t, "password required", resp["error"])
+}
+
+func TestSetupTOTP_WhenEnabled_WithPassword(t *testing.T) {
+	setupTestDB(t)
+	defer teardownTestDB()
+
+	user, _, _ := services.Register("totp-setup-ok@example.com", "password123", "")
+	testTOTPUserID = user.ID
+	_, secret, _ := services.GenerateTOTPSecret(user.ID, user.Email, "")
+	code, _ := totp.GenerateCode(secret, time.Now())
+	services.EnableTOTP(user.ID, code)
+
+	r := setupTOTPRouter()
+	body, _ := json.Marshal(map[string]string{"password": "password123"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/2fa/setup", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var resp map[string]string
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.Contains(t, resp["otpauth_url"], "otpauth://totp/")
+	assert.NotEmpty(t, resp["secret"])
+}
+
+func TestSetupTOTP_WhenEnabled_WrongPassword(t *testing.T) {
+	setupTestDB(t)
+	defer teardownTestDB()
+
+	user, _, _ := services.Register("totp-setup-badpw@example.com", "password123", "")
+	testTOTPUserID = user.ID
+	_, secret, _ := services.GenerateTOTPSecret(user.ID, user.Email, "")
+	code, _ := totp.GenerateCode(secret, time.Now())
+	services.EnableTOTP(user.ID, code)
+
+	r := setupTOTPRouter()
+	body, _ := json.Marshal(map[string]string{"password": "nope"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/2fa/setup", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
 	assert.Equal(t, http.StatusForbidden, w.Code)
 }

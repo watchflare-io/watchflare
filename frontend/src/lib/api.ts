@@ -247,8 +247,13 @@ export async function verifyTOTP(
 	);
 }
 
-export async function setupTOTP(): Promise<TOTPSetupResponse> {
-	return apiRequest<TOTPSetupResponse>('/2fa/setup', { method: 'POST' });
+export async function setupTOTP(password?: string): Promise<TOTPSetupResponse> {
+	return apiRequest<TOTPSetupResponse>('/2fa/setup', {
+		method: 'POST',
+		...(password !== undefined && password !== ''
+			? { body: JSON.stringify({ password }) }
+			: {})
+	});
 }
 
 export async function enableTOTP(code: string): Promise<TOTPEnableResponse> {

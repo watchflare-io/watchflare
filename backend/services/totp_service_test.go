@@ -74,7 +74,7 @@ func TestGenerateTOTPSecret(t *testing.T) {
 
 	user := createTestUserForTOTP(t)
 
-	url, secret, err := GenerateTOTPSecret(user.ID, user.Email)
+	url, secret, err := GenerateTOTPSecret(user.ID, user.Email, "")
 
 	assert.NoError(t, err)
 	assert.Contains(t, url, "otpauth://totp/")
@@ -92,7 +92,7 @@ func TestEnableTOTP(t *testing.T) {
 	defer teardownTOTPDB()
 
 	user := createTestUserForTOTP(t)
-	_, secret, _ := GenerateTOTPSecret(user.ID, user.Email)
+	_, secret, _ := GenerateTOTPSecret(user.ID, user.Email, "")
 
 	code, err := totp.GenerateCode(secret, time.Now())
 	assert.NoError(t, err)
@@ -115,7 +115,7 @@ func TestEnableTOTP_InvalidCode(t *testing.T) {
 	defer teardownTOTPDB()
 
 	user := createTestUserForTOTP(t)
-	GenerateTOTPSecret(user.ID, user.Email)
+	GenerateTOTPSecret(user.ID, user.Email, "")
 
 	_, err := EnableTOTP(user.ID, "000000")
 	assert.Error(t, err)
@@ -127,7 +127,7 @@ func TestDisableTOTP_WithTOTPCode(t *testing.T) {
 	defer teardownTOTPDB()
 
 	user := createTestUserForTOTP(t)
-	_, secret, _ := GenerateTOTPSecret(user.ID, user.Email)
+	_, secret, _ := GenerateTOTPSecret(user.ID, user.Email, "")
 	enableCode, _ := totp.GenerateCode(secret, time.Now())
 	EnableTOTP(user.ID, enableCode)
 
@@ -146,7 +146,7 @@ func TestDisableTOTP_WithBackupCode(t *testing.T) {
 	defer teardownTOTPDB()
 
 	user := createTestUserForTOTP(t)
-	_, secret, _ := GenerateTOTPSecret(user.ID, user.Email)
+	_, secret, _ := GenerateTOTPSecret(user.ID, user.Email, "")
 	enableCode, _ := totp.GenerateCode(secret, time.Now())
 	backupCodes, _ := EnableTOTP(user.ID, enableCode)
 
@@ -163,7 +163,7 @@ func TestRegenerateBackupCodes(t *testing.T) {
 	defer teardownTOTPDB()
 
 	user := createTestUserForTOTP(t)
-	_, secret, _ := GenerateTOTPSecret(user.ID, user.Email)
+	_, secret, _ := GenerateTOTPSecret(user.ID, user.Email, "")
 	code, _ := totp.GenerateCode(secret, time.Now())
 	oldCodes, _ := EnableTOTP(user.ID, code)
 
@@ -173,4 +173,62 @@ func TestRegenerateBackupCodes(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, newCodes, 8)
 	assert.NotEqual(t, oldCodes[0], newCodes[0])
+}
+
+func TestGenerateTOTPSecret_WhenEnabled_RequiresPassword(t *testing.T) {
+	setupTOTPDB(t)
+	defer teardownTOTPDB()
+
+	user := createTestUserForTOTP(t)
+	_, secret, _ := GenerateTOTPSecret(user.ID, user.Email, "")
+	code, _ := totp.GenerateCode(secret, time.Now())
+	_, err := EnableTOTP(user.ID, code)
+	assert.NoError(t, err)
+
+	_, _, err = GenerateTOTPSecret(user.ID, user.Email, "")
+	assert.EqualError(t, err, "password required")
+
+	var dbUser models.User
+	database.DB.Where("id = ?", user.ID).First(&dbUser)
+	assert.True(t, dbUser.TOTPEnabled)
+}
+
+func TestGenerateTOTPSecret_WhenEnabled_InvalidPassword(t *testing.T) {
+	setupTOTPDB(t)
+	defer teardownTOTPDB()
+
+	user := createTestUserForTOTP(t)
+	_, secret, _ := GenerateTOTPSecret(user.ID, user.Email, "")
+	code, _ := totp.GenerateCode(secret, time.Now())
+	_, err := EnableTOTP(user.ID, code)
+	assert.NoError(t, err)
+
+	_, _, err = GenerateTOTPSecret(user.ID, user.Email, "wrong-password")
+	assert.EqualError(t, err, "invalid password")
+
+	var dbUser models.User
+	database.DB.Where("id = ?", user.ID).First(&dbUser)
+	assert.True(t, dbUser.TOTPEnabled)
+}
+
+func TestGenerateTOTPSecret_WhenEnabled_KeepsEnabled(t *testing.T) {
+	setupTOTPDB(t)
+	defer teardownTOTPDB()
+
+	user := createTestUserForTOTP(t)
+	_, oldSecret, _ := GenerateTOTPSecret(user.ID, user.Email, "")
+	code, _ := totp.GenerateCode(oldSecret, time.Now())
+	_, err := EnableTOTP(user.ID, code)
+	assert.NoError(t, err)
+
+	url, newSecret, err := GenerateTOTPSecret(user.ID, user.Email, "password123")
+	assert.NoError(t, err)
+	assert.Contains(t, url, "otpauth://totp/")
+	assert.NotEmpty(t, newSecret)
+	assert.NotEqual(t, oldSecret, newSecret)
+
+	var dbUser models.User
+	database.DB.Where("id = ?", user.ID).First(&dbUser)
+	assert.True(t, dbUser.TOTPEnabled, "changing authenticator must not disable 2FA")
+	assert.NotNil(t, dbUser.TOTPSecret)
 }

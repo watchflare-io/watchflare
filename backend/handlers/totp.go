@@ -81,9 +81,28 @@ func SetupTOTP(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
-	otpauthURL, secret, err := services.GenerateTOTPSecret(userID, user.Email)
+
+	var req struct {
+		Password string `json:"password"`
+	}
+	// First-time setup may omit a body; changing an existing authenticator sends a password.
+	if c.Request.ContentLength != 0 {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	otpauthURL, secret, err := services.GenerateTOTPSecret(userID, user.Email, req.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate 2fa secret"})
+		switch err.Error() {
+		case "password required":
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		case "invalid password":
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate 2fa secret"})
+		}
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
