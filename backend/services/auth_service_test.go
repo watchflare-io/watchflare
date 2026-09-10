@@ -2,6 +2,8 @@ package services
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"testing"
 	"watchflare/backend/config"
 	"watchflare/backend/database"
@@ -62,8 +64,49 @@ func TestRegister_ClosedAfterFirstUser(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, _, err = Register("second@example.com", "password123", "second")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "registration is closed")
+	assert.ErrorIs(t, err, ErrRegistrationClosed)
+}
+
+func TestRegister_ConcurrentOnlyOneSucceeds(t *testing.T) {
+	setupAuthDB(t)
+	defer teardownAuthDB()
+
+	const n = 8
+	type result struct {
+		err error
+	}
+	results := make(chan result, n)
+
+	for i := 0; i < n; i++ {
+		i := i
+		go func() {
+			email := fmt.Sprintf("admin%d@example.com", i)
+			_, _, err := Register(email, "password123", "admin")
+			results <- result{err: err}
+		}()
+	}
+
+	var success, closed, other int
+	for i := 0; i < n; i++ {
+		r := <-results
+		switch {
+		case r.err == nil:
+			success++
+		case errors.Is(r.err, ErrRegistrationClosed):
+			closed++
+		default:
+			other++
+			t.Logf("unexpected error: %v", r.err)
+		}
+	}
+
+	assert.Equal(t, 1, success, "exactly one Register must succeed")
+	assert.Equal(t, n-1, closed, "all other Register calls must see registration closed")
+	assert.Equal(t, 0, other)
+
+	var count int64
+	database.DB.Model(&models.User{}).Count(&count)
+	assert.Equal(t, int64(1), count)
 }
 
 func TestLogin(t *testing.T) {

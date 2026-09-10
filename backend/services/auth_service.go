@@ -14,16 +14,18 @@ import (
 	"gorm.io/gorm"
 )
 
-// Register creates the first admin user. Returns an error if a user already exists.
-func Register(email, password, username string) (*models.User, string, error) {
-	var count int64
-	if err := database.DB.Model(&models.User{}).Count(&count).Error; err != nil {
-		return nil, "", err
-	}
-	if count > 0 {
-		return nil, "", errors.New("registration is closed - admin user already exists")
-	}
+// ErrRegistrationClosed is returned when an admin user already exists.
+var ErrRegistrationClosed = errors.New("registration is closed - admin user already exists")
 
+// adminRegisterLockKey serializes first-admin creation across concurrent Hub processes.
+// Stable bigint chosen for Watchflare; not a secret.
+const adminRegisterLockKey int64 = 0x5761546368666c72 // "WaTchflr"
+
+// Register creates the first admin user. Returns an error if a user already exists.
+//
+// Concurrent Register calls are serialized with a Postgres transaction-scoped
+// advisory lock so only one admin can be created even under a race.
+func Register(email, password, username string) (*models.User, string, error) {
 	// Derive username from email prefix if not provided.
 	if username == "" {
 		if idx := strings.Index(email, "@"); idx > 0 {
@@ -38,7 +40,23 @@ func Register(email, password, username string) (*models.User, string, error) {
 	if err := user.HashPassword(password); err != nil {
 		return nil, "", err
 	}
-	if err := database.DB.Create(user).Error; err != nil {
+
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("SELECT pg_advisory_xact_lock(?)", adminRegisterLockKey).Error; err != nil {
+			return err
+		}
+
+		var count int64
+		if err := tx.Model(&models.User{}).Count(&count).Error; err != nil {
+			return err
+		}
+		if count > 0 {
+			return ErrRegistrationClosed
+		}
+
+		return tx.Create(user).Error
+	})
+	if err != nil {
 		return nil, "", err
 	}
 
