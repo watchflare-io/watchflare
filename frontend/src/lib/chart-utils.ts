@@ -19,6 +19,16 @@ export function formatTooltipDate(date: Date, timeFormat: '12h' | '24h' = '24h')
 	});
 }
 
+/** Escape text for safe interpolation into HTML (tooltips, etc.). */
+export function escapeHtml(text: string): string {
+	return text
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
 // Format bytes per second (for disk I/O and network charts)
 export function formatRate(bytesPerSec: number, unit: 'bytes' | 'bits' = 'bytes'): string {
 	if (unit === 'bits') {

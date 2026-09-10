@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatRate, formatTemperature, formatTooltipDate } from './chart-utils';
+import { formatRate, formatTemperature, formatTooltipDate, escapeHtml } from './chart-utils';
 
 describe('formatRate (bytes mode)', () => {
 	it('returns 0 B/s for 0', () => {
@@ -100,5 +100,19 @@ describe('formatTooltipDate', () => {
 	it('accepts 12h format', () => {
 		const result = formatTooltipDate(new Date('2024-06-15T10:30:45Z'), '12h');
 		expect(result).toBeTruthy();
+	});
+});
+
+describe('escapeHtml', () => {
+	it('escapes ampersand, angles, and quotes', () => {
+		expect(escapeHtml(`a&b<c>"d"'e'`)).toBe('a&amp;b&lt;c&gt;&quot;d&quot;&#39;e&#39;');
+	});
+
+	it('leaves safe labels unchanged', () => {
+		expect(escapeHtml('nginx:latest')).toBe('nginx:latest');
+	});
+
+	it('neutralizes a script payload used as a series label', () => {
+		expect(escapeHtml('<img src=x onerror=alert(1)>')).toBe('&lt;img src=x onerror=alert(1)&gt;');
 	});
 });

@@ -221,7 +221,12 @@
 			}
 
 			const ts = u.data[0][idx];
-			let html = `<div style="margin-bottom:4px;font-weight:500;">${formatTooltipDate(new Date(ts * 1000), timeFormat)}</div>`;
+			const frag = document.createDocumentFragment();
+
+			const dateEl = document.createElement('div');
+			dateEl.style.cssText = 'margin-bottom:4px;font-weight:500;';
+			dateEl.textContent = formatTooltipDate(new Date(ts * 1000), timeFormat);
+			frag.appendChild(dateEl);
 
 			let hasValue = false;
 			for (let i = 1; i < u.series.length; i++) {
@@ -230,7 +235,7 @@
 				const val = u.data[i][idx];
 				if (val == null) continue;
 				hasValue = true;
-				const color = (s as any)._stroke ?? s.stroke ?? '#888';
+				const color = String((s as any)._stroke ?? s.stroke ?? '#888');
 				const formatted = s.value
 					? (s.value as (u: uPlot, v: number | null, si: number, i: number | null) => string)(
 							u,
@@ -239,11 +244,25 @@
 							idx
 						)
 					: String(val);
-				html += `<div style="display:flex;align-items:center;gap:6px;">
-					<span style="width:8px;height:8px;border-radius:2px;background:${color};display:inline-block;"></span>
-					<span style="color:var(--color-muted-foreground);">${s.label}:</span>
-					<span style="font-weight:500;">${formatted}</span>
-				</div>`;
+
+				// Build with DOM + textContent so agent-supplied labels cannot inject HTML.
+				const row = document.createElement('div');
+				row.style.cssText = 'display:flex;align-items:center;gap:6px;';
+
+				const swatch = document.createElement('span');
+				swatch.style.cssText = 'width:8px;height:8px;border-radius:2px;display:inline-block;';
+				swatch.style.backgroundColor = color;
+
+				const labelEl = document.createElement('span');
+				labelEl.style.color = 'var(--color-muted-foreground)';
+				labelEl.textContent = `${s.label ?? ''}:`;
+
+				const valueEl = document.createElement('span');
+				valueEl.style.fontWeight = '500';
+				valueEl.textContent = formatted;
+
+				row.append(swatch, labelEl, valueEl);
+				frag.appendChild(row);
 			}
 
 			if (!hasValue) {
@@ -251,7 +270,7 @@
 				return;
 			}
 
-			tooltip.innerHTML = html;
+			tooltip.replaceChildren(frag);
 			tooltip.style.display = 'block';
 
 			const left = u.cursor.left ?? 0;
