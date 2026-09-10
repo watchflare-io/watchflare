@@ -18,6 +18,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pquerna/otp/totp"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -62,8 +63,28 @@ func ParsePreAuthToken(token string) (string, error) {
 	return userID, nil
 }
 
-// GenerateTOTPSecret creates and saves an unconfirmed TOTP secret; returns the otpauth URL and plaintext secret.
-func GenerateTOTPSecret(userID, email string) (string, string, error) {
+// GenerateTOTPSecret creates and saves a TOTP secret; returns the otpauth URL and plaintext secret.
+//
+// First-time setup (2FA disabled): password may be empty. The secret is stored with
+// totp_enabled left false until EnableTOTP confirms a code.
+//
+// Changing an existing authenticator (2FA enabled): password is required. The secret
+// is replaced but totp_enabled stays true so a stolen JWT alone cannot turn 2FA off.
+func GenerateTOTPSecret(userID, email, password string) (string, string, error) {
+	var user models.User
+	if err := database.DB.Where("id = ?", userID).First(&user).Error; err != nil {
+		return "", "", errors.New("user not found")
+	}
+
+	if user.TOTPEnabled {
+		if password == "" {
+			return "", "", errors.New("password required")
+		}
+		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+			return "", "", errors.New("invalid password")
+		}
+	}
+
 	key, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      "Watchflare",
 		AccountName: email,
@@ -77,12 +98,17 @@ func GenerateTOTPSecret(userID, email string) (string, string, error) {
 		return "", "", fmt.Errorf("encrypt totp secret: %w", err)
 	}
 
+	updates := map[string]interface{}{
+		"totp_secret": encrypted,
+	}
+	if !user.TOTPEnabled {
+		// Pending first-time setup: must not look enabled until EnableTOTP succeeds.
+		updates["totp_enabled"] = false
+	}
+
 	if err := database.DB.Model(&models.User{}).
 		Where("id = ?", userID).
-		Updates(map[string]interface{}{
-			"totp_secret":  encrypted,
-			"totp_enabled": false,
-		}).Error; err != nil {
+		Updates(updates).Error; err != nil {
 		return "", "", fmt.Errorf("save totp secret: %w", err)
 	}
 
