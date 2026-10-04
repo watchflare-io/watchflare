@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -130,6 +131,11 @@ func Run() {
 		go runServiceHealthReporter(ctx, grpcClient, cfg, svcCollector)
 	} else {
 		slog.Info("systemd service collector unavailable, skipping")
+	}
+
+	// Start container image update checker in background (opt-in with container metrics)
+	if *cfg.ContainerMetrics {
+		go runImageUpdateChecker(ctx, grpcClient, cfg)
 	}
 
 	// Start update checker in background
@@ -520,6 +526,76 @@ func runServiceHealthReporter(ctx context.Context, grpcClient *client.Client, cf
 			return
 		}
 	}
+}
+
+// imageUpdateScanInterval is how often running containers are listed locally.
+// Registry lookups are cached by the checker (6h), so only new images hit the registry.
+const imageUpdateScanInterval = 5 * time.Minute
+
+// runImageUpdateChecker checks running containers for newer registry images and
+// sends the result to the Hub whenever it changes.
+func runImageUpdateChecker(ctx context.Context, grpcClient *client.Client, cfg *config.Config) {
+	slog.Info("container image update checker started")
+	checker := metrics.NewImageUpdateChecker()
+	lastSent := ""
+
+	select {
+	case <-time.After(90 * time.Second):
+	case <-ctx.Done():
+		return
+	}
+
+	ticker := time.NewTicker(imageUpdateScanInterval)
+	defer ticker.Stop()
+
+	for {
+		lastSent = checkAndSendImageUpdates(ctx, grpcClient, cfg, checker, lastSent)
+		select {
+		case <-ticker.C:
+		case <-ctx.Done():
+			slog.Info("container image update checker stopped")
+			return
+		}
+	}
+}
+
+// checkAndSendImageUpdates runs one check and sends it if it differs from the last
+// sent result. It returns the fingerprint of what the Hub now has.
+func checkAndSendImageUpdates(ctx context.Context, grpcClient *client.Client, cfg *config.Config, checker *metrics.ImageUpdateChecker, lastSent string) string {
+	updates, err := checker.Check(ctx)
+	if err != nil {
+		slog.Debug("container image update check failed", "error", err)
+		return lastSent
+	}
+
+	fingerprint := imageUpdatesFingerprint(updates)
+	if fingerprint == lastSent {
+		return lastSent
+	}
+	if err := grpcClient.SendContainerImageUpdates(cfg.AgentID, cfg.AgentKey, updates); err != nil {
+		slog.Warn("failed to send container image updates", "error", err)
+		return lastSent
+	}
+
+	available := 0
+	for _, u := range updates {
+		if u.Status == metrics.ImageStatusUpdateAvailable {
+			available++
+		}
+	}
+	slog.Info("container image updates sent", "containers", len(updates), "updates_available", available)
+	return fingerprint
+}
+
+// imageUpdatesFingerprint identifies a check result; it changes when containers,
+// statuses or check times change.
+func imageUpdatesFingerprint(updates []metrics.ImageUpdate) string {
+	var b strings.Builder
+	b.WriteString("v1")
+	for _, u := range updates {
+		fmt.Fprintf(&b, "|%s %s %s %s %s %d %s %s %d", u.ContainerID, u.Image, u.Status, u.LocalDigest, u.RemoteDigest, u.CheckedAt.Unix(), u.LocalVersion, u.RemoteVersion, u.CommitsBehind)
+	}
+	return b.String()
 }
 
 // convertPackagesToProto converts agent Package structs to protobuf Package structs

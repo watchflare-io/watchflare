@@ -6,6 +6,7 @@ import type {
 	TimeRange,
 	GlobalContainer,
 	ContainerLiveness,
+	ImageUpdateStatus,
 	NotificationCategory
 } from './types';
 import { toasts } from './stores/toasts';
@@ -332,6 +333,54 @@ export function memoryPercent(used: number, limit: number): number {
 	return Math.min(100, (used / limit) * 100);
 }
 
+export function imageUpdateLabel(status: ImageUpdateStatus): string {
+	switch (status) {
+		case 'update_available':
+			return 'Update available';
+		case 'up_to_date':
+			return 'Up to date';
+		case 'pinned':
+			return 'Pinned';
+		case 'local':
+			return 'Not in registry';
+		case 'error':
+			return 'Check failed';
+		default:
+			return 'Not checked';
+	}
+}
+
+export function imageUpdateBadgeClass(status: ImageUpdateStatus): string {
+	if (status === 'update_available') return 'bg-warning/10 text-warning border-warning/20';
+	if (status === 'up_to_date') return 'bg-success/10 text-success border-success/20';
+	if (status === 'error') return 'bg-destructive/10 text-destructive border-destructive/20';
+	return 'bg-muted text-muted-foreground border-border';
+}
+
+// Display form of an image version: "2025-08-05+277" → "2025-08-05 +277 commits".
+export function formatImageVersion(version: string): string {
+	const m = version.match(/^(.+)\+(\d+)$/);
+	if (!m) return version || 'unknown';
+	return `${m[1]} +${m[2]} ${m[2] === '1' ? 'commit' : 'commits'}`;
+}
+
+// Summary of an available update: "1.29.1 → 1.30.0", or "2 commits behind" for
+// rolling builds, where the commit distance says more than the versions.
+export function imageVersionChange(
+	c: Pick<GlobalContainer, 'image_local_version' | 'image_remote_version' | 'image_commits_behind'>
+): string {
+	const n = c.image_commits_behind;
+	if (n > 0) return `${n} ${n === 1 ? 'commit' : 'commits'} behind`;
+	return `${c.image_local_version || 'unknown'} → ${c.image_remote_version || 'unknown'}`;
+}
+
+// Shortens "sha256:<64 hex>" to "sha256:<12 hex>" for display.
+export function shortDigest(digest: string): string {
+	if (!digest) return '-';
+	const [algo, hex] = digest.split(':');
+	return hex ? `${algo}:${hex.slice(0, 12)}` : digest.slice(0, 19);
+}
+
 // Container filtering helpers
 export function containerIsLive(hostStatus: string): boolean {
 	return hostStatus === 'online';
@@ -339,7 +388,13 @@ export function containerIsLive(hostStatus: string): boolean {
 
 export function filterContainers(
 	containers: GlobalContainer[],
-	opts: { search: string; host: string; runtime: string; liveness: ContainerLiveness }
+	opts: {
+		search: string;
+		host: string;
+		runtime: string;
+		liveness: ContainerLiveness;
+		updatesOnly?: boolean;
+	}
 ): GlobalContainer[] {
 	const q = opts.search.trim().toLowerCase();
 	return containers.filter((c) => {
@@ -350,6 +405,7 @@ export function filterContainers(
 		if (opts.runtime && c.runtime !== opts.runtime) return false;
 		if (opts.liveness === 'live' && !containerIsLive(c.host_status)) return false;
 		if (opts.liveness === 'stale' && containerIsLive(c.host_status)) return false;
+		if (opts.updatesOnly && c.image_update_status !== 'update_available') return false;
 		return true;
 	});
 }

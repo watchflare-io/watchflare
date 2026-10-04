@@ -19,13 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AgentService_RegisterHost_FullMethodName         = "/agent.v1.AgentService/RegisterHost"
-	AgentService_Heartbeat_FullMethodName            = "/agent.v1.AgentService/Heartbeat"
-	AgentService_SendMetrics_FullMethodName          = "/agent.v1.AgentService/SendMetrics"
-	AgentService_ReportDroppedMetrics_FullMethodName = "/agent.v1.AgentService/ReportDroppedMetrics"
-	AgentService_SendPackageInventory_FullMethodName = "/agent.v1.AgentService/SendPackageInventory"
-	AgentService_SendServiceInventory_FullMethodName = "/agent.v1.AgentService/SendServiceInventory"
-	AgentService_ReportServiceHealth_FullMethodName  = "/agent.v1.AgentService/ReportServiceHealth"
+	AgentService_RegisterHost_FullMethodName              = "/agent.v1.AgentService/RegisterHost"
+	AgentService_Heartbeat_FullMethodName                 = "/agent.v1.AgentService/Heartbeat"
+	AgentService_SendMetrics_FullMethodName               = "/agent.v1.AgentService/SendMetrics"
+	AgentService_ReportDroppedMetrics_FullMethodName      = "/agent.v1.AgentService/ReportDroppedMetrics"
+	AgentService_SendPackageInventory_FullMethodName      = "/agent.v1.AgentService/SendPackageInventory"
+	AgentService_SendServiceInventory_FullMethodName      = "/agent.v1.AgentService/SendServiceInventory"
+	AgentService_ReportServiceHealth_FullMethodName       = "/agent.v1.AgentService/ReportServiceHealth"
+	AgentService_SendContainerImageUpdates_FullMethodName = "/agent.v1.AgentService/SendContainerImageUpdates"
 )
 
 // AgentServiceClient is the client API for AgentService service.
@@ -48,6 +49,8 @@ type AgentServiceClient interface {
 	SendServiceInventory(ctx context.Context, in *SendServiceInventoryRequest, opts ...grpc.CallOption) (*SendServiceInventoryResponse, error)
 	// ReportServiceHealth reports current health state of monitored services
 	ReportServiceHealth(ctx context.Context, in *ReportServiceHealthRequest, opts ...grpc.CallOption) (*ReportServiceHealthResponse, error)
+	// SendContainerImageUpdates reports whether newer images exist in the registry for running containers
+	SendContainerImageUpdates(ctx context.Context, in *SendContainerImageUpdatesRequest, opts ...grpc.CallOption) (*SendContainerImageUpdatesResponse, error)
 }
 
 type agentServiceClient struct {
@@ -128,6 +131,16 @@ func (c *agentServiceClient) ReportServiceHealth(ctx context.Context, in *Report
 	return out, nil
 }
 
+func (c *agentServiceClient) SendContainerImageUpdates(ctx context.Context, in *SendContainerImageUpdatesRequest, opts ...grpc.CallOption) (*SendContainerImageUpdatesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendContainerImageUpdatesResponse)
+	err := c.cc.Invoke(ctx, AgentService_SendContainerImageUpdates_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AgentServiceServer is the server API for AgentService service.
 // All implementations must embed UnimplementedAgentServiceServer
 // for forward compatibility.
@@ -148,6 +161,8 @@ type AgentServiceServer interface {
 	SendServiceInventory(context.Context, *SendServiceInventoryRequest) (*SendServiceInventoryResponse, error)
 	// ReportServiceHealth reports current health state of monitored services
 	ReportServiceHealth(context.Context, *ReportServiceHealthRequest) (*ReportServiceHealthResponse, error)
+	// SendContainerImageUpdates reports whether newer images exist in the registry for running containers
+	SendContainerImageUpdates(context.Context, *SendContainerImageUpdatesRequest) (*SendContainerImageUpdatesResponse, error)
 	mustEmbedUnimplementedAgentServiceServer()
 }
 
@@ -178,6 +193,9 @@ func (UnimplementedAgentServiceServer) SendServiceInventory(context.Context, *Se
 }
 func (UnimplementedAgentServiceServer) ReportServiceHealth(context.Context, *ReportServiceHealthRequest) (*ReportServiceHealthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReportServiceHealth not implemented")
+}
+func (UnimplementedAgentServiceServer) SendContainerImageUpdates(context.Context, *SendContainerImageUpdatesRequest) (*SendContainerImageUpdatesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendContainerImageUpdates not implemented")
 }
 func (UnimplementedAgentServiceServer) mustEmbedUnimplementedAgentServiceServer() {}
 func (UnimplementedAgentServiceServer) testEmbeddedByValue()                      {}
@@ -326,6 +344,24 @@ func _AgentService_ReportServiceHealth_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AgentService_SendContainerImageUpdates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendContainerImageUpdatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).SendContainerImageUpdates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_SendContainerImageUpdates_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).SendContainerImageUpdates(ctx, req.(*SendContainerImageUpdatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AgentService_ServiceDesc is the grpc.ServiceDesc for AgentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -360,6 +396,10 @@ var AgentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReportServiceHealth",
 			Handler:    _AgentService_ReportServiceHealth_Handler,
+		},
+		{
+			MethodName: "SendContainerImageUpdates",
+			Handler:    _AgentService_SendContainerImageUpdates_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

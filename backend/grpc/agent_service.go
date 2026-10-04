@@ -909,6 +909,76 @@ func processServiceInventory(hostID string, req *pb.SendServiceInventoryRequest)
 	return len(req.Services), nil
 }
 
+// validImageUpdateStatuses are the statuses an agent may report for a container image.
+var validImageUpdateStatuses = map[string]bool{
+	"up_to_date":       true,
+	"update_available": true,
+	"pinned":           true,
+	"local":            true,
+	"error":            true,
+}
+
+// SendContainerImageUpdates stores the registry update state of a host's running containers.
+func (s *AgentServer) SendContainerImageUpdates(ctx context.Context, req *pb.SendContainerImageUpdatesRequest) (*pb.SendContainerImageUpdatesResponse, error) {
+	var host models.Host
+	result := database.DB.Where("agent_id = ? AND agent_key = ?", req.AgentId, req.AgentKey).First(&host)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return &pb.SendContainerImageUpdatesResponse{Success: false, Message: "Invalid agent credentials"}, nil
+		}
+		return nil, result.Error
+	}
+	if host.Status == models.StatusPaused {
+		return &pb.SendContainerImageUpdatesResponse{Success: true, Message: "Host is paused, image updates discarded"}, nil
+	}
+
+	count, err := processContainerImageUpdates(host.ID, req)
+	if err != nil {
+		slog.Error("failed to process container image updates", "host_id", host.ID, "error", err)
+		return &pb.SendContainerImageUpdatesResponse{Success: false, Message: fmt.Sprintf("Failed to process container image updates: %v", err)}, nil
+	}
+	slog.Debug("container image updates processed", "host_id", host.ID, "containers", count)
+	return &pb.SendContainerImageUpdatesResponse{Success: true, Message: "OK"}, nil
+}
+
+// processContainerImageUpdates replaces all image update rows of a host with the reported set.
+func processContainerImageUpdates(hostID string, req *pb.SendContainerImageUpdatesRequest) (int, error) {
+	rows := make([]models.ContainerImageUpdate, 0, len(req.Updates))
+	for _, u := range req.Updates {
+		if u.ContainerId == "" || !validImageUpdateStatuses[u.Status] {
+			continue
+		}
+		rows = append(rows, models.ContainerImageUpdate{
+			HostID:        hostID,
+			ContainerID:   u.ContainerId,
+			ContainerName: u.ContainerName,
+			Image:         u.Image,
+			LocalDigest:   u.LocalDigest,
+			RemoteDigest:  u.RemoteDigest,
+			Status:        u.Status,
+			Error:         u.Error,
+			CheckedAt:     time.Unix(u.CheckedAt, 0),
+			LocalVersion:  u.LocalVersion,
+			RemoteVersion: u.RemoteVersion,
+			CommitsBehind: int(u.CommitsBehind),
+		})
+	}
+
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("host_id = ?", hostID).Delete(&models.ContainerImageUpdate{}).Error; err != nil {
+			return err
+		}
+		if len(rows) == 0 {
+			return nil
+		}
+		return tx.Create(&rows).Error
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(rows), nil
+}
+
 // ReportServiceHealth handles live service state updates from agents.
 func (s *AgentServer) ReportServiceHealth(ctx context.Context, req *pb.ReportServiceHealthRequest) (*pb.ReportServiceHealthResponse, error) {
 	var host models.Host

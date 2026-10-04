@@ -19,6 +19,11 @@ import {
 	memoryPercent,
 	containerIsLive,
 	filterContainers,
+	imageUpdateLabel,
+	imageUpdateBadgeClass,
+	shortDigest,
+	formatImageVersion,
+	imageVersionChange,
 	toggleCategory
 } from './utils';
 import type { GlobalContainer, NotificationCategory } from './types';
@@ -380,6 +385,14 @@ function makeContainer(over: Partial<GlobalContainer> = {}): GlobalContainer {
 		health: 'healthy',
 		ports: '',
 		updated_at: new Date().toISOString(),
+		image_update_status: '',
+		image_local_digest: '',
+		image_remote_digest: '',
+		image_update_error: '',
+		image_update_checked_at: null,
+		image_local_version: '',
+		image_remote_version: '',
+		image_commits_behind: 0,
 		...over
 	};
 }
@@ -400,7 +413,8 @@ describe('filterContainers', () => {
 			image: 'nginx',
 			host_id: 'h1',
 			runtime: 'docker',
-			host_status: 'online'
+			host_status: 'online',
+			image_update_status: 'update_available'
 		}),
 		makeContainer({
 			container_id: 'c2',
@@ -427,5 +441,48 @@ describe('filterContainers', () => {
 	it('filters by liveness', () => {
 		expect(filterContainers(list, { ...base, liveness: 'live' })[0].container_id).toBe('c1');
 		expect(filterContainers(list, { ...base, liveness: 'stale' })[0].container_id).toBe('c2');
+	});
+	it('filters to containers with image updates', () => {
+		const result = filterContainers(list, { ...base, updatesOnly: true });
+		expect(result).toHaveLength(1);
+		expect(result[0].container_id).toBe('c1');
+	});
+});
+
+describe('image update helpers', () => {
+	it('labels every status', () => {
+		expect(imageUpdateLabel('update_available')).toBe('Update available');
+		expect(imageUpdateLabel('up_to_date')).toBe('Up to date');
+		expect(imageUpdateLabel('pinned')).toBe('Pinned');
+		expect(imageUpdateLabel('local')).toBe('Not in registry');
+		expect(imageUpdateLabel('error')).toBe('Check failed');
+		expect(imageUpdateLabel('')).toBe('Not checked');
+	});
+	it('highlights available updates and failures', () => {
+		expect(imageUpdateBadgeClass('update_available')).toContain('text-warning');
+		expect(imageUpdateBadgeClass('up_to_date')).toContain('text-success');
+		expect(imageUpdateBadgeClass('error')).toContain('text-destructive');
+		expect(imageUpdateBadgeClass('')).toContain('text-muted-foreground');
+	});
+	it('formats versions of rolling builds', () => {
+		expect(formatImageVersion('2.30.1')).toBe('2.30.1');
+		expect(formatImageVersion('2025-08-05+277')).toBe('2025-08-05 +277 commits');
+		expect(formatImageVersion('2025-08-05+1')).toBe('2025-08-05 +1 commit');
+		expect(formatImageVersion('')).toBe('unknown');
+	});
+	it('summarizes version changes', () => {
+		const v = (local: string, remote: string, behind = 0) => ({
+			image_local_version: local,
+			image_remote_version: remote,
+			image_commits_behind: behind
+		});
+		expect(imageVersionChange(v('1.29.1', '1.30.0'))).toBe('1.29.1 → 1.30.0');
+		expect(imageVersionChange(v('', '3.2.0'))).toBe('unknown → 3.2.0');
+		expect(imageVersionChange(v('2025-08-05+277', '2025-08-05+279', 2))).toBe('2 commits behind');
+		expect(imageVersionChange(v('', '', 1))).toBe('1 commit behind');
+	});
+	it('shortens digests', () => {
+		expect(shortDigest('sha256:' + 'a'.repeat(64))).toBe('sha256:aaaaaaaaaaaa');
+		expect(shortDigest('')).toBe('-');
 	});
 });

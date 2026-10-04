@@ -26,6 +26,9 @@ service AgentService {
 
   // ReportServiceHealth reports current health state of monitored services
   rpc ReportServiceHealth(ReportServiceHealthRequest) returns (ReportServiceHealthResponse);
+
+  // SendContainerImageUpdates reports whether newer images exist in the registry for running containers
+  rpc SendContainerImageUpdates(SendContainerImageUpdatesRequest) returns (SendContainerImageUpdatesResponse);
 }
 
 // RegisterHostRequest contains information sent during initial registration
@@ -305,6 +308,38 @@ message ReportServiceHealthRequest {
 }
 
 message ReportServiceHealthResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// =====================================================
+// Container Image Update Messages
+// =====================================================
+
+// ContainerImageUpdate describes the registry update state of the image a running container uses
+message ContainerImageUpdate {
+  string container_id = 1;    // Short (12 char) container ID, matches ContainerMetric.container_id
+  string container_name = 2;
+  string image = 3;           // Image reference the container was created from (e.g. "nginx:latest")
+  string local_digest = 4;    // Repo digest of the image the container runs (empty if unknown)
+  string remote_digest = 5;   // Digest the tag currently resolves to in the registry (empty if unknown)
+  string status = 6;          // "up_to_date", "update_available", "pinned", "local", "error"
+  string error = 7;           // Error detail when status = "error"
+  int64 checked_at = 8;       // Unix timestamp of the registry lookup
+  reserved 10, 12;            // former local_created / remote_created (build times)
+  string local_version = 9;   // Version of the running image, e.g. "2.30.1" or "2025-08-05+277" (empty if unknown)
+  string remote_version = 11; // Version of the registry image (only for update_available)
+  int32 commits_behind = 13;  // Commits between running and registry image (rolling builds, 0 if unknown)
+}
+
+message SendContainerImageUpdatesRequest {
+  string agent_id = 1;
+  string agent_key = 2;
+  int64 timestamp = 3;
+  repeated ContainerImageUpdate updates = 4;
+}
+
+message SendContainerImageUpdatesResponse {
   bool success = 1;
   string message = 2;
 }

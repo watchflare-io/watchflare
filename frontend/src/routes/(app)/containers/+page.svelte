@@ -11,13 +11,17 @@
 		healthBadgeClass,
 		memoryPercent,
 		containerIsLive,
-		filterContainers
+		filterContainers,
+		imageUpdateLabel,
+		imageUpdateBadgeClass,
+		imageVersionChange,
+		formatImageVersion
 	} from '$lib/utils';
 	import { formatRate } from '$lib/chart-utils';
 	import { userStore } from '$lib/stores/user';
 	import ContainerDetailDrawer from '$lib/components/host/ContainerDetailDrawer.svelte';
 	import HostStatusDot from '$lib/components/HostStatusDot.svelte';
-	import { Box, Activity, Clock, ChevronDown, Filter, X } from 'lucide-svelte';
+	import { Box, Activity, Clock, ChevronDown, Filter, X, CircleArrowUp } from 'lucide-svelte';
 
 	const REFRESH_MS = 60_000;
 
@@ -32,9 +36,19 @@
 	let hostFilter = $state('');
 	let runtimeFilter = $state('');
 	let livenessFilter: ContainerLiveness = $state('all');
+	let updatesOnly = $state(false);
 
 	let sortColumn = $state<
-		'name' | 'host' | 'status' | 'health' | 'image' | 'cpu' | 'memory' | 'network' | 'ports'
+		| 'name'
+		| 'host'
+		| 'status'
+		| 'health'
+		| 'image'
+		| 'update'
+		| 'cpu'
+		| 'memory'
+		| 'network'
+		| 'ports'
 	>('name');
 	let sortOrder = $state<'asc' | 'desc'>('asc');
 
@@ -64,7 +78,8 @@
 			search: searchQuery,
 			host: hostFilter,
 			runtime: runtimeFilter,
-			liveness: livenessFilter
+			liveness: livenessFilter,
+			updatesOnly
 		})
 	);
 
@@ -75,6 +90,14 @@
 				starting: 1,
 				unhealthy: 2,
 				'': 3
+			};
+			const updateOrder: Record<string, number> = {
+				update_available: 0,
+				error: 1,
+				up_to_date: 2,
+				pinned: 3,
+				local: 4,
+				'': 5
 			};
 
 			return [...filtered].sort((a, b) => {
@@ -94,6 +117,11 @@
 						break;
 					case 'image':
 						cmp = (a.image ?? '').localeCompare(b.image ?? '');
+						break;
+					case 'update':
+						cmp =
+							(updateOrder[a.image_update_status ?? ''] ?? 5) -
+							(updateOrder[b.image_update_status ?? ''] ?? 5);
 						break;
 					case 'cpu':
 						cmp = a.cpu_percent - b.cpu_percent;
@@ -119,9 +147,16 @@
 	const total = $derived(containers.length);
 	const liveCount = $derived(containers.filter((c) => containerIsLive(c.host_status)).length);
 	const staleCount = $derived(total - liveCount);
+	const updateCount = $derived(
+		containers.filter((c) => c.image_update_status === 'update_available').length
+	);
 
 	const hasActiveFilters = $derived(
-		searchQuery !== '' || hostFilter !== '' || runtimeFilter !== '' || livenessFilter !== 'all'
+		searchQuery !== '' ||
+			hostFilter !== '' ||
+			runtimeFilter !== '' ||
+			livenessFilter !== 'all' ||
+			updatesOnly
 	);
 
 	async function loadData(isInitial = false) {
@@ -144,6 +179,7 @@
 		hostFilter = '';
 		runtimeFilter = '';
 		livenessFilter = 'all';
+		updatesOnly = false;
 	}
 
 	function openDrawer(c: GlobalContainer) {
@@ -160,6 +196,14 @@
 		const h = Math.floor(m / 60);
 		if (h < 24) return `${h}h ago`;
 		return `${Math.floor(h / 24)}d ago`;
+	}
+
+	function imageUpdateTitle(c: GlobalContainer): string {
+		if (c.image_update_status === 'error' && c.image_update_error) return c.image_update_error;
+		if (c.image_update_status === 'local')
+			return 'Not available in a public registry (local build or private image)';
+		if (c.image_update_checked_at) return `Checked ${relativeAge(c.image_update_checked_at)}`;
+		return 'Not checked yet';
 	}
 
 	function truncateImage(image: string): string {
@@ -193,7 +237,7 @@
 {/if}
 
 <!-- Stat cards -->
-<div class="mb-6 grid grid-cols-3 gap-3 lg:gap-4">
+<div class="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
 	<div class="flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2.5">
 		<div
 			class="flex items-center justify-center rounded-md bg-primary/10 text-primary h-8 w-8 shrink-0"
@@ -228,6 +272,21 @@
 			<p class="text-xs text-muted-foreground truncate">Stale</p>
 			<p class="text-sm font-semibold {staleCount > 0 ? 'text-warning' : 'text-foreground'}">
 				{staleCount.toLocaleString()}
+			</p>
+		</div>
+	</div>
+	<div class="flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2.5">
+		<div
+			class="flex items-center justify-center rounded-md h-8 w-8 shrink-0 {updateCount > 0
+				? 'bg-warning/10 text-warning'
+				: 'bg-muted text-muted-foreground'}"
+		>
+			<CircleArrowUp class="h-4 w-4" />
+		</div>
+		<div class="min-w-0">
+			<p class="text-xs text-muted-foreground truncate">Image updates</p>
+			<p class="text-sm font-semibold {updateCount > 0 ? 'text-warning' : 'text-foreground'}">
+				{updateCount.toLocaleString()}
 			</p>
 		</div>
 	</div>
@@ -329,6 +388,19 @@
 		</DropdownMenu.Content>
 	</DropdownMenu.Root>
 
+	<!-- Image update filter -->
+	<button
+		type="button"
+		onclick={() => (updatesOnly = !updatesOnly)}
+		aria-pressed={updatesOnly}
+		class="inline-flex items-center gap-1.5 h-9 rounded-lg border px-3 text-sm font-medium transition-colors whitespace-nowrap {updatesOnly
+			? 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10'
+			: 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'}"
+	>
+		<CircleArrowUp class="h-3.5 w-3.5 shrink-0" />
+		<span class="hidden sm:inline">Updates only</span>
+	</button>
+
 	{#if hasActiveFilters}
 		<button
 			type="button"
@@ -400,6 +472,17 @@
 						<div class="flex items-center gap-2 min-w-0">
 							<span class="text-sm font-medium text-foreground truncate">{c.container_name}</span>
 						</div>
+						{#if c.image_update_status === 'update_available'}
+							<span
+								class="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium border {imageUpdateBadgeClass(
+									c.image_update_status
+								)}"
+								title={imageUpdateTitle(c)}
+							>
+								<CircleArrowUp class="h-3 w-3" />
+								Update
+							</span>
+						{/if}
 					</div>
 					<div class="px-4 py-2.5 flex flex-col gap-1">
 						<div class="flex items-center gap-2">
@@ -418,6 +501,9 @@
 							<p class="text-xs text-muted-foreground truncate" title={c.image}>
 								{truncateImage(c.image)}
 							</p>
+						{/if}
+						{#if c.image_update_status === 'update_available'}
+							<p class="text-xs font-mono text-warning truncate">{imageVersionChange(c)}</p>
 						{/if}
 						<div class="flex items-center gap-2">
 							<span class="w-16 shrink-0 text-xs text-muted-foreground">CPU</span>
@@ -451,12 +537,12 @@
 
 		<!-- Desktop table -->
 		<div class="hidden md:block overflow-auto max-h-[65vh]">
-			<table class="w-full min-w-[1000px]">
+			<table class="w-full min-w-[1100px]">
 				<thead>
 					<tr
 						class="bg-table-header sticky top-0 z-10 [box-shadow:0_1px_0_var(--border)] whitespace-nowrap"
 					>
-						{#each [['name', 'Name'], ['host', 'Host'], ['status', 'Status'], ['health', 'Health'], ['image', 'Image'], ['cpu', 'CPU'], ['memory', 'Memory'], ['network', 'Network'], ['ports', 'Ports']] as const as [col, label]}
+						{#each [['name', 'Name'], ['host', 'Host'], ['status', 'Status'], ['health', 'Health'], ['image', 'Image'], ['update', 'Update'], ['cpu', 'CPU'], ['memory', 'Memory'], ['network', 'Network'], ['ports', 'Ports']] as const as [col, label]}
 							<th
 								scope="col"
 								class="px-4 py-2.5 text-left text-sm font-semibold text-muted-foreground"
@@ -524,6 +610,31 @@
 									{c.image ? truncateImage(c.image) : '-'}
 								</span>
 							</td>
+							<td class="px-4 py-3 whitespace-nowrap">
+								<span
+									class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium border {imageUpdateBadgeClass(
+										c.image_update_status ?? ''
+									)}"
+									title={imageUpdateTitle(c)}
+								>
+									{#if c.image_update_status === 'update_available'}
+										<CircleArrowUp class="h-3 w-3" />
+									{/if}
+									{imageUpdateLabel(c.image_update_status ?? '')}
+								</span>
+								{#if c.image_update_status === 'update_available'}
+									<p
+										class="mt-1 text-xs font-mono text-muted-foreground"
+										title="running → registry"
+									>
+										{imageVersionChange(c)}
+									</p>
+								{:else if c.image_local_version}
+									<p class="mt-1 text-xs font-mono text-muted-foreground">
+										{formatImageVersion(c.image_local_version)}
+									</p>
+								{/if}
+							</td>
 							<td class="px-4 py-3 text-center">
 								<div class="flex flex-col items-center">
 									<span class="text-sm text-muted-foreground">{c.cpu_percent.toFixed(1)}%</span>
@@ -577,7 +688,7 @@
 						</tr>
 					{:else}
 						<tr>
-							<td colspan="9" class="px-4 py-16 text-center text-sm text-muted-foreground">
+							<td colspan="10" class="px-4 py-16 text-center text-sm text-muted-foreground">
 								No matching containers
 							</td>
 						</tr>

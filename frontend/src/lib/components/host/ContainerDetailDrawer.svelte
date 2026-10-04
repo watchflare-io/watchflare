@@ -5,7 +5,13 @@
 		cpuBarClass,
 		memBarClass,
 		healthBadgeClass,
-		memoryPercent
+		memoryPercent,
+		imageUpdateLabel,
+		imageUpdateBadgeClass,
+		shortDigest,
+		formatRelativeTime,
+		formatImageVersion,
+		imageVersionChange
 	} from '$lib/utils';
 	import { formatRate } from '$lib/chart-utils';
 	import { userStore } from '$lib/stores/user';
@@ -35,8 +41,21 @@
 		container ? memoryPercent(container.memory_used_bytes, container.memory_limit_bytes) : 0
 	);
 
+	// Image update info only exists on the global container list (GlobalContainer).
+	const imageUpdate = $derived(container && 'image_update_status' in container ? container : null);
+
 	const portList = $derived(container?.ports ? container.ports.split(', ').filter(Boolean) : []);
 </script>
+
+{#snippet imageRow(label: string, version: string, digest: string)}
+	<span class="text-muted-foreground">{label}</span>
+	<span class="flex flex-col">
+		<span class="text-foreground">{formatImageVersion(version)}</span>
+		{#if digest}
+			<span class="font-mono text-muted-foreground" title={digest}>{shortDigest(digest)}</span>
+		{/if}
+	</span>
+{/snippet}
 
 <RightSidebar {open} {onClose} size="wide">
 	<!-- Header -->
@@ -102,6 +121,51 @@
 					{container.image || '-'}
 				</p>
 			</div>
+
+			<!-- Image update -->
+			{#if imageUpdate}
+				<div class="flex flex-col gap-1.5">
+					<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+						Image update
+					</p>
+					<div class="flex items-center gap-2 flex-wrap">
+						<span
+							class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border {imageUpdateBadgeClass(
+								imageUpdate.image_update_status
+							)}"
+						>
+							{imageUpdateLabel(imageUpdate.image_update_status)}
+						</span>
+						{#if imageUpdate.image_update_checked_at}
+							<span class="text-xs text-muted-foreground">
+								checked {formatRelativeTime(imageUpdate.image_update_checked_at)}
+							</span>
+						{/if}
+					</div>
+					{#if imageUpdate.image_update_status === 'error' && imageUpdate.image_update_error}
+						<p class="text-xs text-destructive">{imageUpdate.image_update_error}</p>
+					{/if}
+					{#if imageUpdate.image_update_status === 'update_available' && imageUpdate.image_commits_behind > 0}
+						<p class="text-xs text-warning">{imageVersionChange(imageUpdate)}</p>
+					{/if}
+					{#if imageUpdate.image_local_digest || imageUpdate.image_local_version}
+						<div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+							{@render imageRow(
+								'Running',
+								imageUpdate.image_local_version,
+								imageUpdate.image_local_digest
+							)}
+							{#if imageUpdate.image_update_status === 'update_available'}
+								{@render imageRow(
+									'Registry',
+									imageUpdate.image_remote_version,
+									imageUpdate.image_remote_digest
+								)}
+							{/if}
+						</div>
+					{/if}
+				</div>
+			{/if}
 
 			<!-- Ports -->
 			{#if portList.length > 0}

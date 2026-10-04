@@ -717,4 +717,23 @@ export interface GlobalContainer {
 	health: string;
 	ports: string;
 	updated_at: string;
+	// Registry update check of the image the container runs ('' = not checked yet)
+	image_update_status: ImageUpdateStatus;
+	image_local_digest: string;
+	image_remote_digest: string;
+	image_update_error: string;
+	image_update_checked_at: string | null;
+	// Versions of the running and the registry image ('' if unknown). Rolling builds
+	// without version tags use "<release>+<commits>" and set image_commits_behind.
+	image_local_version: string;
+	image_remote_version: string;
+	image_commits_behind: number;
 }
+
+export type ImageUpdateStatus =
+	| ''
+	| 'up_to_date'
+	| 'update_available'
+	| 'pinned'
+	| 'local'
+	| 'error';

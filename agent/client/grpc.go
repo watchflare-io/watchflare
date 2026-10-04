@@ -486,3 +486,53 @@ func (c *Client) ReportServiceHealth(agentID, agentKey string, health []*service
 
 	return nil
 }
+
+// SendContainerImageUpdates sends the registry update state of running containers to the Hub
+func (c *Client) SendContainerImageUpdates(agentID, agentKey string, updates []metrics.ImageUpdate) error {
+	timestamp := time.Now().Unix()
+
+	pbUpdates := make([]*pb.ContainerImageUpdate, 0, len(updates))
+	for _, u := range updates {
+		pbUpdates = append(pbUpdates, &pb.ContainerImageUpdate{
+			ContainerId:   u.ContainerID,
+			ContainerName: u.ContainerName,
+			Image:         u.Image,
+			LocalDigest:   u.LocalDigest,
+			RemoteDigest:  u.RemoteDigest,
+			Status:        u.Status,
+			Error:         u.Error,
+			CheckedAt:     u.CheckedAt.Unix(),
+			LocalVersion:  u.LocalVersion,
+			RemoteVersion: u.RemoteVersion,
+			CommitsBehind: int32(u.CommitsBehind),
+		})
+	}
+
+	req := &pb.SendContainerImageUpdatesRequest{
+		AgentId:   agentID,
+		AgentKey:  agentKey,
+		Timestamp: timestamp,
+		Updates:   pbUpdates,
+	}
+
+	// Attach HMAC authentication metadata
+	ctx := context.Background()
+	ctx, err := security.AttachAuthMetadata(ctx, agentID, agentKey, timestamp, req)
+	if err != nil {
+		return fmt.Errorf("failed to attach auth metadata: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	resp, err := c.client.SendContainerImageUpdates(ctx, req)
+	if err != nil {
+		return fmt.Errorf("send container image updates failed: %w", err)
+	}
+
+	if !resp.Success {
+		return fmt.Errorf("container image updates rejected: %s", resp.Message)
+	}
+
+	return nil
+}

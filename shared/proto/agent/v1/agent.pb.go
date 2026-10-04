@@ -2118,6 +2118,251 @@ func (x *ReportServiceHealthResponse) GetMessage() string {
 	return ""
 }
 
+// ContainerImageUpdate describes the registry update state of the image a running container uses
+type ContainerImageUpdate struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"` // Short (12 char) container ID, matches ContainerMetric.container_id
+	ContainerName string                 `protobuf:"bytes,2,opt,name=container_name,json=containerName,proto3" json:"container_name,omitempty"`
+	Image         string                 `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`                                        // Image reference the container was created from (e.g. "nginx:latest")
+	LocalDigest   string                 `protobuf:"bytes,4,opt,name=local_digest,json=localDigest,proto3" json:"local_digest,omitempty"`         // Repo digest of the image the container runs (empty if unknown)
+	RemoteDigest  string                 `protobuf:"bytes,5,opt,name=remote_digest,json=remoteDigest,proto3" json:"remote_digest,omitempty"`      // Digest the tag currently resolves to in the registry (empty if unknown)
+	Status        string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`                                      // "up_to_date", "update_available", "pinned", "local", "error"
+	Error         string                 `protobuf:"bytes,7,opt,name=error,proto3" json:"error,omitempty"`                                        // Error detail when status = "error"
+	CheckedAt     int64                  `protobuf:"varint,8,opt,name=checked_at,json=checkedAt,proto3" json:"checked_at,omitempty"`              // Unix timestamp of the registry lookup
+	LocalVersion  string                 `protobuf:"bytes,9,opt,name=local_version,json=localVersion,proto3" json:"local_version,omitempty"`      // Version of the running image, e.g. "2.30.1" or "2025-08-05+277" (empty if unknown)
+	RemoteVersion string                 `protobuf:"bytes,11,opt,name=remote_version,json=remoteVersion,proto3" json:"remote_version,omitempty"`  // Version of the registry image (only for update_available)
+	CommitsBehind int32                  `protobuf:"varint,13,opt,name=commits_behind,json=commitsBehind,proto3" json:"commits_behind,omitempty"` // Commits between running and registry image (rolling builds, 0 if unknown)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContainerImageUpdate) Reset() {
+	*x = ContainerImageUpdate{}
+	mi := &file_agent_v1_agent_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerImageUpdate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerImageUpdate) ProtoMessage() {}
+
+func (x *ContainerImageUpdate) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_v1_agent_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerImageUpdate.ProtoReflect.Descriptor instead.
+func (*ContainerImageUpdate) Descriptor() ([]byte, []int) {
+	return file_agent_v1_agent_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ContainerImageUpdate) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *ContainerImageUpdate) GetContainerName() string {
+	if x != nil {
+		return x.ContainerName
+	}
+	return ""
+}
+
+func (x *ContainerImageUpdate) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+func (x *ContainerImageUpdate) GetLocalDigest() string {
+	if x != nil {
+		return x.LocalDigest
+	}
+	return ""
+}
+
+func (x *ContainerImageUpdate) GetRemoteDigest() string {
+	if x != nil {
+		return x.RemoteDigest
+	}
+	return ""
+}
+
+func (x *ContainerImageUpdate) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *ContainerImageUpdate) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *ContainerImageUpdate) GetCheckedAt() int64 {
+	if x != nil {
+		return x.CheckedAt
+	}
+	return 0
+}
+
+func (x *ContainerImageUpdate) GetLocalVersion() string {
+	if x != nil {
+		return x.LocalVersion
+	}
+	return ""
+}
+
+func (x *ContainerImageUpdate) GetRemoteVersion() string {
+	if x != nil {
+		return x.RemoteVersion
+	}
+	return ""
+}
+
+func (x *ContainerImageUpdate) GetCommitsBehind() int32 {
+	if x != nil {
+		return x.CommitsBehind
+	}
+	return 0
+}
+
+type SendContainerImageUpdatesRequest struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	AgentId       string                  `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	AgentKey      string                  `protobuf:"bytes,2,opt,name=agent_key,json=agentKey,proto3" json:"agent_key,omitempty"`
+	Timestamp     int64                   `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Updates       []*ContainerImageUpdate `protobuf:"bytes,4,rep,name=updates,proto3" json:"updates,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendContainerImageUpdatesRequest) Reset() {
+	*x = SendContainerImageUpdatesRequest{}
+	mi := &file_agent_v1_agent_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendContainerImageUpdatesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendContainerImageUpdatesRequest) ProtoMessage() {}
+
+func (x *SendContainerImageUpdatesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_v1_agent_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendContainerImageUpdatesRequest.ProtoReflect.Descriptor instead.
+func (*SendContainerImageUpdatesRequest) Descriptor() ([]byte, []int) {
+	return file_agent_v1_agent_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *SendContainerImageUpdatesRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+func (x *SendContainerImageUpdatesRequest) GetAgentKey() string {
+	if x != nil {
+		return x.AgentKey
+	}
+	return ""
+}
+
+func (x *SendContainerImageUpdatesRequest) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *SendContainerImageUpdatesRequest) GetUpdates() []*ContainerImageUpdate {
+	if x != nil {
+		return x.Updates
+	}
+	return nil
+}
+
+type SendContainerImageUpdatesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendContainerImageUpdatesResponse) Reset() {
+	*x = SendContainerImageUpdatesResponse{}
+	mi := &file_agent_v1_agent_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendContainerImageUpdatesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendContainerImageUpdatesResponse) ProtoMessage() {}
+
+func (x *SendContainerImageUpdatesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_v1_agent_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendContainerImageUpdatesResponse.ProtoReflect.Descriptor instead.
+func (*SendContainerImageUpdatesResponse) Descriptor() ([]byte, []int) {
+	return file_agent_v1_agent_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *SendContainerImageUpdatesResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *SendContainerImageUpdatesResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_agent_v1_agent_proto protoreflect.FileDescriptor
 
 const file_agent_v1_agent_proto_rawDesc = "" +
@@ -2310,7 +2555,29 @@ const file_agent_v1_agent_proto_rawDesc = "" +
 	"\fcollected_at\x18\x05 \x01(\x03R\vcollectedAt\"Q\n" +
 	"\x1bReportServiceHealthResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\x88\x05\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x8a\x03\n" +
+	"\x14ContainerImageUpdate\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12%\n" +
+	"\x0econtainer_name\x18\x02 \x01(\tR\rcontainerName\x12\x14\n" +
+	"\x05image\x18\x03 \x01(\tR\x05image\x12!\n" +
+	"\flocal_digest\x18\x04 \x01(\tR\vlocalDigest\x12#\n" +
+	"\rremote_digest\x18\x05 \x01(\tR\fremoteDigest\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\tR\x06status\x12\x14\n" +
+	"\x05error\x18\a \x01(\tR\x05error\x12\x1d\n" +
+	"\n" +
+	"checked_at\x18\b \x01(\x03R\tcheckedAt\x12#\n" +
+	"\rlocal_version\x18\t \x01(\tR\flocalVersion\x12%\n" +
+	"\x0eremote_version\x18\v \x01(\tR\rremoteVersion\x12%\n" +
+	"\x0ecommits_behind\x18\r \x01(\x05R\rcommitsBehindJ\x04\b\n" +
+	"\x10\vJ\x04\b\f\x10\r\"\xb2\x01\n" +
+	" SendContainerImageUpdatesRequest\x12\x19\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x1b\n" +
+	"\tagent_key\x18\x02 \x01(\tR\bagentKey\x12\x1c\n" +
+	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\x128\n" +
+	"\aupdates\x18\x04 \x03(\v2\x1e.agent.v1.ContainerImageUpdateR\aupdates\"W\n" +
+	"!SendContainerImageUpdatesResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xfe\x05\n" +
 	"\fAgentService\x12M\n" +
 	"\fRegisterHost\x12\x1d.agent.v1.RegisterHostRequest\x1a\x1e.agent.v1.RegisterHostResponse\x12D\n" +
 	"\tHeartbeat\x12\x1a.agent.v1.HeartbeatRequest\x1a\x1b.agent.v1.HeartbeatResponse\x12J\n" +
@@ -2318,7 +2585,8 @@ const file_agent_v1_agent_proto_rawDesc = "" +
 	"\x14ReportDroppedMetrics\x12%.agent.v1.ReportDroppedMetricsRequest\x1a&.agent.v1.ReportDroppedMetricsResponse\x12e\n" +
 	"\x14SendPackageInventory\x12%.agent.v1.SendPackageInventoryRequest\x1a&.agent.v1.SendPackageInventoryResponse\x12e\n" +
 	"\x14SendServiceInventory\x12%.agent.v1.SendServiceInventoryRequest\x1a&.agent.v1.SendServiceInventoryResponse\x12b\n" +
-	"\x13ReportServiceHealth\x12$.agent.v1.ReportServiceHealthRequest\x1a%.agent.v1.ReportServiceHealthResponseB(Z&watchflare/shared/proto/agent/v1;protob\x06proto3"
+	"\x13ReportServiceHealth\x12$.agent.v1.ReportServiceHealthRequest\x1a%.agent.v1.ReportServiceHealthResponse\x12t\n" +
+	"\x19SendContainerImageUpdates\x12*.agent.v1.SendContainerImageUpdatesRequest\x1a+.agent.v1.SendContainerImageUpdatesResponseB(Z&watchflare/shared/proto/agent/v1;protob\x06proto3"
 
 var (
 	file_agent_v1_agent_proto_rawDescOnce sync.Once
@@ -2332,31 +2600,34 @@ func file_agent_v1_agent_proto_rawDescGZIP() []byte {
 	return file_agent_v1_agent_proto_rawDescData
 }
 
-var file_agent_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_agent_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_agent_v1_agent_proto_goTypes = []any{
-	(*RegisterHostRequest)(nil),          // 0: agent.v1.RegisterHostRequest
-	(*RegisterHostResponse)(nil),         // 1: agent.v1.RegisterHostResponse
-	(*HeartbeatRequest)(nil),             // 2: agent.v1.HeartbeatRequest
-	(*HeartbeatResponse)(nil),            // 3: agent.v1.HeartbeatResponse
-	(*PendingCommand)(nil),               // 4: agent.v1.PendingCommand
-	(*Metrics)(nil),                      // 5: agent.v1.Metrics
-	(*SensorReading)(nil),                // 6: agent.v1.SensorReading
-	(*ContainerMetric)(nil),              // 7: agent.v1.ContainerMetric
-	(*HostInfo)(nil),                     // 8: agent.v1.HostInfo
-	(*SendMetricsRequest)(nil),           // 9: agent.v1.SendMetricsRequest
-	(*SendMetricsResponse)(nil),          // 10: agent.v1.SendMetricsResponse
-	(*BufferedMetric)(nil),               // 11: agent.v1.BufferedMetric
-	(*ReportDroppedMetricsRequest)(nil),  // 12: agent.v1.ReportDroppedMetricsRequest
-	(*ReportDroppedMetricsResponse)(nil), // 13: agent.v1.ReportDroppedMetricsResponse
-	(*Package)(nil),                      // 14: agent.v1.Package
-	(*SendPackageInventoryRequest)(nil),  // 15: agent.v1.SendPackageInventoryRequest
-	(*SendPackageInventoryResponse)(nil), // 16: agent.v1.SendPackageInventoryResponse
-	(*Service)(nil),                      // 17: agent.v1.Service
-	(*SendServiceInventoryRequest)(nil),  // 18: agent.v1.SendServiceInventoryRequest
-	(*SendServiceInventoryResponse)(nil), // 19: agent.v1.SendServiceInventoryResponse
-	(*ServiceHealth)(nil),                // 20: agent.v1.ServiceHealth
-	(*ReportServiceHealthRequest)(nil),   // 21: agent.v1.ReportServiceHealthRequest
-	(*ReportServiceHealthResponse)(nil),  // 22: agent.v1.ReportServiceHealthResponse
+	(*RegisterHostRequest)(nil),               // 0: agent.v1.RegisterHostRequest
+	(*RegisterHostResponse)(nil),              // 1: agent.v1.RegisterHostResponse
+	(*HeartbeatRequest)(nil),                  // 2: agent.v1.HeartbeatRequest
+	(*HeartbeatResponse)(nil),                 // 3: agent.v1.HeartbeatResponse
+	(*PendingCommand)(nil),                    // 4: agent.v1.PendingCommand
+	(*Metrics)(nil),                           // 5: agent.v1.Metrics
+	(*SensorReading)(nil),                     // 6: agent.v1.SensorReading
+	(*ContainerMetric)(nil),                   // 7: agent.v1.ContainerMetric
+	(*HostInfo)(nil),                          // 8: agent.v1.HostInfo
+	(*SendMetricsRequest)(nil),                // 9: agent.v1.SendMetricsRequest
+	(*SendMetricsResponse)(nil),               // 10: agent.v1.SendMetricsResponse
+	(*BufferedMetric)(nil),                    // 11: agent.v1.BufferedMetric
+	(*ReportDroppedMetricsRequest)(nil),       // 12: agent.v1.ReportDroppedMetricsRequest
+	(*ReportDroppedMetricsResponse)(nil),      // 13: agent.v1.ReportDroppedMetricsResponse
+	(*Package)(nil),                           // 14: agent.v1.Package
+	(*SendPackageInventoryRequest)(nil),       // 15: agent.v1.SendPackageInventoryRequest
+	(*SendPackageInventoryResponse)(nil),      // 16: agent.v1.SendPackageInventoryResponse
+	(*Service)(nil),                           // 17: agent.v1.Service
+	(*SendServiceInventoryRequest)(nil),       // 18: agent.v1.SendServiceInventoryRequest
+	(*SendServiceInventoryResponse)(nil),      // 19: agent.v1.SendServiceInventoryResponse
+	(*ServiceHealth)(nil),                     // 20: agent.v1.ServiceHealth
+	(*ReportServiceHealthRequest)(nil),        // 21: agent.v1.ReportServiceHealthRequest
+	(*ReportServiceHealthResponse)(nil),       // 22: agent.v1.ReportServiceHealthResponse
+	(*ContainerImageUpdate)(nil),              // 23: agent.v1.ContainerImageUpdate
+	(*SendContainerImageUpdatesRequest)(nil),  // 24: agent.v1.SendContainerImageUpdatesRequest
+	(*SendContainerImageUpdatesResponse)(nil), // 25: agent.v1.SendContainerImageUpdatesResponse
 }
 var file_agent_v1_agent_proto_depIdxs = []int32{
 	4,  // 0: agent.v1.HeartbeatResponse.commands:type_name -> agent.v1.PendingCommand
@@ -2371,25 +2642,28 @@ var file_agent_v1_agent_proto_depIdxs = []int32{
 	14, // 9: agent.v1.SendPackageInventoryRequest.all_packages:type_name -> agent.v1.Package
 	17, // 10: agent.v1.SendServiceInventoryRequest.services:type_name -> agent.v1.Service
 	20, // 11: agent.v1.ReportServiceHealthRequest.services:type_name -> agent.v1.ServiceHealth
-	0,  // 12: agent.v1.AgentService.RegisterHost:input_type -> agent.v1.RegisterHostRequest
-	2,  // 13: agent.v1.AgentService.Heartbeat:input_type -> agent.v1.HeartbeatRequest
-	9,  // 14: agent.v1.AgentService.SendMetrics:input_type -> agent.v1.SendMetricsRequest
-	12, // 15: agent.v1.AgentService.ReportDroppedMetrics:input_type -> agent.v1.ReportDroppedMetricsRequest
-	15, // 16: agent.v1.AgentService.SendPackageInventory:input_type -> agent.v1.SendPackageInventoryRequest
-	18, // 17: agent.v1.AgentService.SendServiceInventory:input_type -> agent.v1.SendServiceInventoryRequest
-	21, // 18: agent.v1.AgentService.ReportServiceHealth:input_type -> agent.v1.ReportServiceHealthRequest
-	1,  // 19: agent.v1.AgentService.RegisterHost:output_type -> agent.v1.RegisterHostResponse
-	3,  // 20: agent.v1.AgentService.Heartbeat:output_type -> agent.v1.HeartbeatResponse
-	10, // 21: agent.v1.AgentService.SendMetrics:output_type -> agent.v1.SendMetricsResponse
-	13, // 22: agent.v1.AgentService.ReportDroppedMetrics:output_type -> agent.v1.ReportDroppedMetricsResponse
-	16, // 23: agent.v1.AgentService.SendPackageInventory:output_type -> agent.v1.SendPackageInventoryResponse
-	19, // 24: agent.v1.AgentService.SendServiceInventory:output_type -> agent.v1.SendServiceInventoryResponse
-	22, // 25: agent.v1.AgentService.ReportServiceHealth:output_type -> agent.v1.ReportServiceHealthResponse
-	19, // [19:26] is the sub-list for method output_type
-	12, // [12:19] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	23, // 12: agent.v1.SendContainerImageUpdatesRequest.updates:type_name -> agent.v1.ContainerImageUpdate
+	0,  // 13: agent.v1.AgentService.RegisterHost:input_type -> agent.v1.RegisterHostRequest
+	2,  // 14: agent.v1.AgentService.Heartbeat:input_type -> agent.v1.HeartbeatRequest
+	9,  // 15: agent.v1.AgentService.SendMetrics:input_type -> agent.v1.SendMetricsRequest
+	12, // 16: agent.v1.AgentService.ReportDroppedMetrics:input_type -> agent.v1.ReportDroppedMetricsRequest
+	15, // 17: agent.v1.AgentService.SendPackageInventory:input_type -> agent.v1.SendPackageInventoryRequest
+	18, // 18: agent.v1.AgentService.SendServiceInventory:input_type -> agent.v1.SendServiceInventoryRequest
+	21, // 19: agent.v1.AgentService.ReportServiceHealth:input_type -> agent.v1.ReportServiceHealthRequest
+	24, // 20: agent.v1.AgentService.SendContainerImageUpdates:input_type -> agent.v1.SendContainerImageUpdatesRequest
+	1,  // 21: agent.v1.AgentService.RegisterHost:output_type -> agent.v1.RegisterHostResponse
+	3,  // 22: agent.v1.AgentService.Heartbeat:output_type -> agent.v1.HeartbeatResponse
+	10, // 23: agent.v1.AgentService.SendMetrics:output_type -> agent.v1.SendMetricsResponse
+	13, // 24: agent.v1.AgentService.ReportDroppedMetrics:output_type -> agent.v1.ReportDroppedMetricsResponse
+	16, // 25: agent.v1.AgentService.SendPackageInventory:output_type -> agent.v1.SendPackageInventoryResponse
+	19, // 26: agent.v1.AgentService.SendServiceInventory:output_type -> agent.v1.SendServiceInventoryResponse
+	22, // 27: agent.v1.AgentService.ReportServiceHealth:output_type -> agent.v1.ReportServiceHealthResponse
+	25, // 28: agent.v1.AgentService.SendContainerImageUpdates:output_type -> agent.v1.SendContainerImageUpdatesResponse
+	21, // [21:29] is the sub-list for method output_type
+	13, // [13:21] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_agent_v1_agent_proto_init() }
@@ -2403,7 +2677,7 @@ func file_agent_v1_agent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_agent_v1_agent_proto_rawDesc), len(file_agent_v1_agent_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
